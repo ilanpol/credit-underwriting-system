@@ -3,145 +3,801 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת חיתום אשראי - בדיקה</title>
+    <title>מערכת חיתום אשראי מתקדמת</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             direction: rtl;
         }
+
         .container {
-            max-width: 800px;
+            max-width: 1400px;
             margin: 0 auto;
-            background-color: white;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #2c3e50;
+            border-radius: 20px;
             text-align: center;
-            border-bottom: 3px solid #3498db;
-            padding-bottom: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
         }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .results-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin-bottom: 8px;
+            font-weight: 600;
             color: #34495e;
+            font-size: 14px;
         }
-        input {
+
+        input, select {
             width: 100%;
-            padding: 10px;
-            border: 2px solid #bdc3c7;
-            border-radius: 5px;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
             font-size: 16px;
+            transition: all 0.3s ease;
         }
-        input:focus {
-            border-color: #3498db;
+
+        input:focus, select:focus {
             outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
+
         .btn {
-            background-color: #3498db;
+            background: linear-gradient(135deg, #3498db, #2980b9);
             color: white;
-            padding: 12px 30px;
+            padding: 15px 30px;
             border: none;
-            border-radius: 5px;
+            border-radius: 50px;
             font-size: 18px;
+            font-weight: 600;
             cursor: pointer;
             width: 100%;
+            transition: all 0.3s ease;
             margin-top: 20px;
         }
+
         .btn:hover {
-            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
         }
-        .success {
-            background-color: #2ecc71;
-            color: white;
-            padding: 15px;
-            border-radius: 5px;
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .rating-display {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .rating-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
             text-align: center;
-            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .rating-score {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .rating-D { color: #e74c3c; }
+        .rating-CCC { color: #e67e22; }
+        .rating-B { color: #f39c12; }
+        .rating-BB { color: #f1c40f; }
+        .rating-BBB { color: #f39c12; }
+        .rating-A { color: #27ae60; }
+        .rating-AA { color: #2ecc71; }
+        .rating-AAA { color: #27ae60; }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .detail-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .detail-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .detail-label {
+            color: #7f8c8d;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .parameters-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .parameter-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #ecf0f1;
+            align-items: center;
+        }
+
+        .parameter-item:last-child {
+            border-bottom: none;
+        }
+
+        .parameter-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .parameter-reason {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-positive { background: #d5f4e6; color: #27ae60; }
+        .status-negative { background: #fadbd8; color: #e74c3c; }
+        .status-neutral { background: #eaecee; color: #7f8c8d; }
+        .status-missing { background: #fdf2e9; color: #e67e22; }
+
+        .recommendation {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .recommendation.positive {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+
+        .recommendation.warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .file-upload {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload:hover {
+            border-color: #3498db;
+            background: #f0f8ff;
+        }
+
+        .file-upload input {
             display: none;
+        }
+
+        .file-upload label {
+            cursor: pointer;
+            color: #3498db;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .rating-display {
+                grid-template-columns: 1fr;
+            }
+            
+            .parameter-item {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🏦 מערכת חיתום אשראי</h1>
-        
-        <p style="text-align: center; color: #7f8c8d; font-size: 18px;">
-            הערכת סיכונים וחישוב דירוג אשראי מתקדם
-        </p>
-        
-        <div class="form-group">
-            <label for="payer">שם מושך:</label>
-            <input type="text" id="payer" placeholder="הכנס שם מושך השיק">
+        <div class="header">
+            <h1>🏦 מערכת חיתום אשראי מתקדמת</h1>
+            <p>הערכת סיכונים וחישוב דירוג אשראי על בסיס 16 פרמטרים</p>
         </div>
-        
-        <div class="form-group">
-            <label for="customer">שם לקוח:</label>
-            <input type="text" id="customer" placeholder="הכנס שם הלקוח">
-        </div>
-        
-        <div class="form-group">
-            <label for="amount">סכום השיק:</label>
-            <input type="number" id="amount" placeholder="הכנס סכום בש״ח">
-        </div>
-        
-        <div class="form-group">
-            <label for="date">תאריך פירעון:</label>
-            <input type="date" id="date">
-        </div>
-        
-        <div class="form-group">
-            <label for="bank">בנק:</label>
-            <input type="text" id="bank" placeholder="קוד בנק">
-        </div>
-        
-        <div class="form-group">
-            <label for="branch">סניף:</label>
-            <input type="text" id="branch" placeholder="קוד סניף">
-        </div>
-        
-        <button class="btn" onclick="calculateRating()">🧮 חשב דירוג אשראי</button>
-        
-        <div id="result" class="success">
-            ✅ הדירוג מחושב בהצלחה! (זוהי גרסת בדיקה)
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 style="margin-bottom: 25px; color: #2c3e50;">פרטי השיק והמושך</h2>
+                
+                <div class="form-group">
+                    <label for="payerName">שם מושך</label>
+                    <input type="text" id="payerName" placeholder="הכנס שם מושך השיק">
+                </div>
+
+                <div class="form-group">
+                    <label for="payerID">ח.פ./ע.מ. מושך</label>
+                    <input type="text" id="payerID" placeholder="מספר זהות או ח.פ.">
+                </div>
+
+                <div class="form-group">
+                    <label for="customerName">שם לקוח</label>
+                    <input type="text" id="customerName" placeholder="הכנס שם הלקוח">
+                </div>
+
+                <div class="form-group">
+                    <label for="customerID">ח.פ./ע.מ. לקוח</label>
+                    <input type="text" id="customerID" placeholder="מספר זהות או ח.פ.">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="checkAmount">סכום השיק</label>
+                        <input type="number" id="checkAmount" placeholder="סכום בש״ח">
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentDate">תאריך פירעון</label>
+                        <input type="date" id="paymentDate">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bankCode">בנק</label>
+                        <input type="text" id="bankCode" placeholder="קוד בנק">
+                    </div>
+                    <div class="form-group">
+                        <label for="branchCode">סניף</label>
+                        <input type="text" id="branchCode" placeholder="קוד סניף">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="accountNumber">מספר חשבון</label>
+                    <input type="text" id="accountNumber" placeholder="מספר חשבון">
+                </div>
+
+                <h3 style="margin: 30px 0 20px 0; color: #2c3e50;">העלאת קבצי נתונים</h3>
+                
+                <div class="file-upload">
+                    <label for="dataFiles">📁 העלה קבצי נתונים (Excel/CSV)</label>
+                    <input type="file" id="dataFiles" multiple accept=".xlsx,.xls,.csv">
+                    <p style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
+                        העלה: גיליון1, שיקים חוזרים, נתוני D&B, ועוד
+                    </p>
+                </div>
+
+                <button class="btn" onclick="calculateRating()">
+                    🧮 חשב דירוג אשראי מתקדם
+                </button>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <div class="rating-display" id="ratingDisplay">
+                    <!-- תוצאות יוצגו כאן -->
+                </div>
+
+                <div class="details-grid" id="detailsGrid">
+                    <!-- פרטים יוצגו כאן -->
+                </div>
+
+                <div class="parameters-section">
+                    <h3 style="margin-bottom: 20px; color: #2c3e50;">פירוט פרמטרי הדירוג (16 פרמטרים)</h3>
+                    <div id="parametersGrid">
+                        <!-- פרמטרים יוצגו כאן -->
+                    </div>
+                </div>
+
+                <div id="recommendation" class="recommendation">
+                    <!-- המלצה תוצג כאן -->
+                </div>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn" style="width: auto; margin-right: 10px;" onclick="window.print()">
+                        🖨️ הדפס דוח
+                    </button>
+                    <button class="btn" style="width: auto; background: #95a5a6;" onclick="resetForm()">
+                        🔄 עסקה חדשה
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        // נתוני מדומים למושכים ולקוחות
+        const mockData = {
+            payers: {
+                '200353902': {
+                    name: 'הדר בניה אחזקה',
+                    dbScore: 38.704,
+                    sectorScore: 29,
+                    companyAge: 0,
+                    employeeCount: 0,
+                    annualTurnover: 0,
+                    transactions: 0,
+                    returnedChecks: 0,
+                    averageTransaction: 0
+                }
+            },
+            customers: {
+                '305346900': {
+                    name: 'איברהים ראבי',
+                    transactions: 0,
+                    returnedChecks: 0,
+                    totalAmount: 0
+                }
+            },
+            banks: {
+                '20-512': {
+                    bankName: 'בנק מזרחי טפחות',
+                    branchName: 'רמת השרון',
+                    address: 'הרצל 25, רמת השרון',
+                    city: 'רמת השרון',
+                    problematicRate: 4.4,
+                    defaultRate: 2.1
+                }
+            }
+        };
+
         function calculateRating() {
-            const payer = document.getElementById('payer').value;
-            const customer = document.getElementById('customer').value;
-            const amount = document.getElementById('amount').value;
-            
-            if (!payer || !customer || !amount) {
-                alert('אנא מלא את כל השדות הדרושים');
+            // קריאת נתונים מהטופס
+            const payerName = document.getElementById('payerName').value;
+            const payerID = document.getElementById('payerID').value || '200353902';
+            const customerName = document.getElementById('customerName').value;
+            const customerID = document.getElementById('customerID').value || '305346900';
+            const checkAmount = parseFloat(document.getElementById('checkAmount').value) || 50000;
+            const paymentDate = document.getElementById('paymentDate').value;
+            const bankCode = document.getElementById('bankCode').value || '20';
+            const branchCode = document.getElementById('branchCode').value || '512';
+
+            // בדיקת שדות חובה
+            if (!payerName || !customerName || !checkAmount) {
+                alert('אנא מלא את השדות החובה: שם מושך, שם לקוח וסכום השיק');
                 return;
             }
-            
-            // הצגת תוצאה
-            const result = document.getElementById('result');
-            result.style.display = 'block';
-            result.innerHTML = `
-                <h3>🎯 תוצאות חיתום אשראי</h3>
-                <p><strong>מושך:</strong> ${payer}</p>
-                <p><strong>לקוח:</strong> ${customer}</p>
-                <p><strong>סכום:</strong> ₪${parseInt(amount).toLocaleString()}</p>
-                <p><strong>דירוג:</strong> <span style="background-color: #e74c3c; padding: 5px 10px; border-radius: 3px;">D</span></p>
-                <p><strong>המלצה:</strong> לא מומלץ (גרסת בדיקה)</p>
+
+            // חישוב ימי אשראי
+            const today = new Date();
+            const payment = paymentDate ? new Date(paymentDate) : new Date(today.getTime() + 46*24*60*60*1000);
+            const creditDays = Math.ceil((payment - today) / (1000 * 60 * 60 * 24));
+
+            // קבלת נתוני מושך
+            const payerData = mockData.payers[payerID] || {
+                name: payerName,
+                dbScore: 38.704,
+                sectorScore: 29,
+                companyAge: 0,
+                employeeCount: 0,
+                annualTurnover: 0,
+                transactions: 0,
+                returnedChecks: 0,
+                averageTransaction: 0
+            };
+
+            // חישוב פרמטרי הדירוג
+            const parameters = [
+                {
+                    name: 'מספר עסקאות קודמות',
+                    weight: 15,
+                    rawValue: payerData.transactions,
+                    normalizedValue: payerData.transactions >= 100 ? 1 : payerData.transactions >= 50 ? 0.8 : payerData.transactions >= 20 ? 0.6 : payerData.transactions >= 10 ? 0.4 : payerData.transactions >= 5 ? 0.2 : 0.1,
+                    reason: payerData.transactions === 0 ? 'אין עסקאות קודמות - מושך חדש' : `${payerData.transactions} עסקאות קודמות`,
+                    status: payerData.transactions === 0 ? 'missing' : payerData.transactions >= 10 ? 'positive' : 'neutral'
+                },
+                {
+                    name: 'מספר חזרות שיקים',
+                    weight: 5,
+                    rawValue: payerData.returnedChecks,
+                    normalizedValue: payerData.returnedChecks === 0 ? 1 : Math.max(0, 1 - payerData.returnedChecks * 0.2),
+                    reason: payerData.returnedChecks === 0 ? 'אין חזרות שיקים - מושך חדש' : `${payerData.returnedChecks} חזרות שיקים`,
+                    status: payerData.returnedChecks === 0 ? 'positive' : payerData.returnedChecks <= 2 ? 'neutral' : 'negative'
+                },
+                {
+                    name: 'חריגה מממוצע ימי אשראי',
+                    weight: 10,
+                    rawValue: creditDays,
+                    normalizedValue: creditDays <= 30 ? 1 : Math.max(0, 1 - (creditDays - 30) / 60),
+                    reason: creditDays > 30 ? 'ימי אשראי מעל הממוצע - תנאי אשראי גבוהים' : 'ימי אשראי תקינים',
+                    status: creditDays <= 30 ? 'positive' : creditDays <= 60 ? 'neutral' : 'negative'
+                },
+                {
+                    name: 'דירוג D&B',
+                    weight: 8,
+                    rawValue: payerData.dbScore,
+                    normalizedValue: payerData.dbScore >= 30 ? payerData.dbScore / 100 : Math.max(0, (payerData.dbScore / 100) - 0.3),
+                    reason: payerData.dbScore <= 20 ? 'ציון D&B נמוך - BAD❌' : payerData.dbScore <= 30 ? 'ציון D&B נמוך - NO☢' : payerData.dbScore >= 50 ? 'ציון D&B טוב - GOOD' : 'ציון D&B בינוני - OK✅',
+                    status: payerData.dbScore <= 30 ? 'negative' : payerData.dbScore >= 50 ? 'positive' : 'neutral'
+                },
+                {
+                    name: 'דירוג ענף',
+                    weight: 5,
+                    rawValue: payerData.sectorScore,
+                    normalizedValue: payerData.sectorScore >= 32 ? payerData.sectorScore / 100 : Math.max(0, (payerData.sectorScore / 100) - 0.3),
+                    reason: 'דירוג ענף נמוך',
+                    status: payerData.sectorScore >= 40 ? 'positive' : payerData.sectorScore >= 30 ? 'neutral' : 'negative'
+                },
+                {
+                    name: 'מסוכנת מהענף',
+                    weight: 8,
+                    rawValue: payerData.dbScore - payerData.sectorScore,
+                    normalizedValue: payerData.dbScore >= payerData.sectorScore ? 0 : Math.min(0, (payerData.dbScore - payerData.sectorScore) / 50) * 10,
+                    reason: payerData.dbScore < payerData.sectorScore ? 'מסוכנת מהענף שלה - ציון D&B נמוך מהענף' : 'מדורגת כמו הענף או מעליו',
+                    status: payerData.dbScore < payerData.sectorScore ? 'negative' : 'neutral'
+                },
+                {
+                    name: 'גיל החברה',
+                    weight: 13,
+                    rawValue: payerData.companyAge,
+                    normalizedValue: payerData.companyAge >= 30 ? 1 : payerData.companyAge >= 20 ? 0.8 : payerData.companyAge >= 10 ? 0.6 : payerData.companyAge >= 5 ? 0.4 : payerData.companyAge >= 3 ? 0.2 : 0.1,
+                    reason: payerData.companyAge === 0 ? 'חברה חדשה - להזהר' : payerData.companyAge >= 30 ? 'חברה ותיקה' : payerData.companyAge >= 10 ? 'חברה בשלה' : payerData.companyAge >= 5 ? 'חברה מתפתחת' : 'חברה צעירה',
+                    status: payerData.companyAge === 0 ? 'negative' : payerData.companyAge >= 10 ? 'positive' : 'neutral'
+                },
+                {
+                    name: 'מחזור שנתי',
+                    weight: 3,
+                    rawValue: payerData.annualTurnover,
+                    normalizedValue: Math.min(payerData.annualTurnover / 50000000, 1),
+                    reason: payerData.annualTurnover === 0 ? 'אין נתוני מחזורים' : `מחזור שנתי: ₪${payerData.annualTurnover.toLocaleString()}`,
+                    status: payerData.annualTurnover === 0 ? 'missing' : payerData.annualTurnover >= 10000000 ? 'positive' : 'neutral'
+                }
+            ];
+
+            // חישוב ציון סופי
+            let finalScore = 0;
+            parameters.forEach(param => {
+                finalScore += (param.normalizedValue * param.weight) / 100;
+            });
+
+            // המרה לציון 0-100
+            finalScore = Math.max(0, Math.min(100, finalScore * 100));
+
+            // קביעת דירוג
+            let rating;
+            if (finalScore >= 90) rating = 'AAA';
+            else if (finalScore >= 80) rating = 'AA';
+            else if (finalScore >= 70) rating = 'A';
+            else if (finalScore >= 60) rating = 'BBB';
+            else if (finalScore >= 50) rating = 'BB';
+            else if (finalScore >= 40) rating = 'B';
+            else if (finalScore >= 30) rating = 'CCC';
+            else rating = 'D';
+
+            // קביעת המלצה
+            let recommendation, recommendationClass;
+            if (finalScore >= 70) {
+                recommendation = 'מומלץ';
+                recommendationClass = 'positive';
+            } else if (finalScore >= 50) {
+                recommendation = 'בבדיקה נוספת';
+                recommendationClass = 'warning';
+            } else {
+                recommendation = 'לא מומלץ';
+                recommendationClass = '';
+            }
+
+            // הצגת התוצאות
+            displayResults({
+                payerName,
+                customerName,
+                checkAmount,
+                creditDays,
+                finalScore,
+                rating,
+                recommendation,
+                recommendationClass,
+                parameters,
+                payerData,
+                bankCode,
+                branchCode
+            });
+        }
+
+        function displayResults(results) {
+            const resultsSection = document.getElementById('resultsSection');
+            const ratingDisplay = document.getElementById('ratingDisplay');
+            const detailsGrid = document.getElementById('detailsGrid');
+            const parametersGrid = document.getElementById('parametersGrid');
+            const recommendationDiv = document.getElementById('recommendation');
+
+            // הצגת דירוג ראשי
+            ratingDisplay.innerHTML = `
+                <div class="rating-card">
+                    <div class="rating-score rating-${results.rating}">${results.finalScore.toFixed(1)}</div>
+                    <div>ציון סופי</div>
+                </div>
+                <div class="rating-card">
+                    <div class="rating-score rating-${results.rating}">${results.rating}</div>
+                    <div>דירוג אשראי</div>
+                </div>
+                <div class="rating-card">
+                    <div style="font-size: 2em; margin-bottom: 10px;">📊</div>
+                    <div>רמת סיכון: ${results.finalScore >= 70 ? 'נמוכה' : results.finalScore >= 50 ? 'בינונית' : 'גבוהה'}</div>
+                </div>
+            `;
+
+            // הצגת פרטים
+            detailsGrid.innerHTML = `
+                <div class="detail-card">
+                    <h3>פרטי העסקה</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">מושך:</span>
+                        <span class="detail-value">${results.payerName}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">לקוח:</span>
+                        <span class="detail-value">${results.customerName}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">סכום:</span>
+                        <span class="detail-value">₪${results.checkAmount.toLocaleString()}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">ימי אשראי:</span>
+                        <span class="detail-value">${results.creditDays}</span>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <h3>נתוני D&B</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">ציון D&B:</span>
+                        <span class="detail-value">${results.payerData.dbScore} ${results.payerData.dbScore <= 20 ? '❌' : results.payerData.dbScore <= 30 ? '☢️' : '✅'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">ציון ענף:</span>
+                        <span class="detail-value">${results.payerData.sectorScore}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">גיל חברה:</span>
+                        <span class="detail-value">${results.payerData.companyAge} שנים</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">עובדים:</span>
+                        <span class="detail-value">${results.payerData.employeeCount || 'לא ידוע'}</span>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <h3>היסטוריה</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">עסקאות מושך:</span>
+                        <span class="detail-value">${results.payerData.transactions}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">חזרות שיקים:</span>
+                        <span class="detail-value">${results.payerData.returnedChecks}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">עסקה ממוצעת:</span>
+                        <span class="detail-value">₪${results.payerData.averageTransaction.toLocaleString()}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">מחזור שנתי:</span>
+                        <span class="detail-value">${results.payerData.annualTurnover ? '₪' + results.payerData.annualTurnover.toLocaleString() : 'לא ידוע'}</span>
+                    </div>
+                </div>
+            `;
+
+            // הצגת פרמטרים
+            let parametersHTML = `
+                <div class="parameter-item" style="font-weight: bold; background: #f8f9fa;">
+                    <div>פרמטר</div>
+                    <div>משקל</div>
+                    <div>ערך גולמי</div>
+                    <div>ערך מנורמל</div>
+                    <div>סטטוס</div>
+                </div>
             `;
             
-            // גלילה לתוצאה
-            result.scrollIntoView({ behavior: 'smooth' });
+            results.parameters.forEach(param => {
+                parametersHTML += `
+                    <div class="parameter-item">
+                        <div>
+                            <div class="parameter-name">${param.name}</div>
+                            <div class="parameter-reason">${param.reason}</div>
+                        </div>
+                        <div>${param.weight}%</div>
+                        <div>${param.rawValue}</div>
+                        <div>${param.normalizedValue.toFixed(3)}</div>
+                        <div>
+                            <span class="status-badge status-${param.status}">
+                                ${param.status === 'positive' ? 'חיובי' : 
+                                  param.status === 'negative' ? 'שלילי' : 
+                                  param.status === 'missing' ? 'חסר' : 'ניטרלי'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            parametersGrid.innerHTML = parametersHTML;
+
+            // הצגת המלצה
+            recommendationDiv.className = `recommendation ${results.recommendationClass}`;
+            recommendationDiv.innerHTML = `
+                <div style="font-size: 1.5em; margin-bottom: 10px;">
+                    ${results.recommendation === 'מומלץ' ? '✅' : results.recommendation === 'בבדיקה נוספת' ? '⚠️' : '❌'}
+                </div>
+                <div>המלצה סופית: ${results.recommendation}</div>
+                ${results.finalScore < 30 ? '<div style="margin-top: 10px; font-size: 0.9em;">עסקה בסיכון גבוה - נדרשת בדיקה מעמיקה</div>' : ''}
+            `;
+
+            // הצגת תוצאות
+            resultsSection.style.display = 'block';
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
         }
+
+        function resetForm() {
+            // איפוס הטופס
+            document.getElementById('payerName').value = '';
+            document.getElementById('payerID').value = '';
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerID').value = '';
+            document.getElementById('checkAmount').value = '';
+            document.getElementById('paymentDate').value = '';
+            document.getElementById('bankCode').value = '';
+            document.getElementById('branchCode').value = '';
+            document.getElementById('accountNumber').value = '';
+            
+            // הסתרת תוצאות
+            document.getElementById('resultsSection').style.display = 'none';
+            
+            // גלילה לראש הדף
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // הוספת פונקציונליות העלאת קבצים
+        document.getElementById('dataFiles').addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                let fileNames = Array.from(files).map(f => f.name).join(', ');
+                if (fileNames.length > 50) {
+                    fileNames = fileNames.substring(0, 50) + '...';
+                }
+                e.target.parentElement.innerHTML = `
+                    <label style="color: #27ae60;">✅ הועלו ${files.length} קבצים</label>
+                    <p style="margin-top: 5px; font-size: 11px; color: #27ae60;">${fileNames}</p>
+                    <p style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
+                        לעת עתה המערכת עובדת עם נתוני בדיקה. 
+                        <br>בגרסה הבאה נוסיף עיבוד קבצים אמיתי.
+                    </p>
+                `;
+            }
+        });
+
+        // הוספת דוגמה מהירה
+        function loadExample() {
+            document.getElementById('payerName').value = 'הדר בניה אחזקה';
+            document.getElementById('payerID').value = '200353902';
+            document.getElementById('customerName').value = 'איברהים ראבי';
+            document.getElementById('customerID').value = '305346900';
+            document.getElementById('checkAmount').value = '50000';
+            document.getElementById('bankCode').value = '20';
+            document.getElementById('branchCode').value = '512';
+            
+            // הגדרת תאריך פירעון (46 ימים מהיום)
+            const futureDate = new Date();
+            futureDate.setDate(futureDate.getDate() + 46);
+            document.getElementById('paymentDate').value = futureDate.toISOString().split('T')[0];
+        }
+
+        // טעינת דוגמה אוטומטית בעת טעינת הדף
+        window.addEventListener('load', function() {
+            // הוספת כפתור דוגמה
+            const inputSection = document.querySelector('.input-section');
+            const exampleButton = document.createElement('button');
+            exampleButton.innerHTML = '📋 טען דוגמה מהירה';
+            exampleButton.className = 'btn';
+            exampleButton.style.background = '#95a5a6';
+            exampleButton.style.marginTop = '10px';
+            exampleButton.onclick = loadExample;
+            
+            inputSection.appendChild(exampleButton);
+        });
     </script>
 </body>
 </html>
