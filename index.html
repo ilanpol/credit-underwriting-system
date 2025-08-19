@@ -1,642 +1,393 @@
-import React, { useState, useCallback } from 'react';
-import { Upload, Calculator, FileText, TrendingUp, AlertTriangle, CheckCircle, XCircle, BarChart3, Users, Building, Calendar } from 'lucide-react';
-
-const CreditUnderwritingSystem = () => {
-  const [currentView, setCurrentView] = useState('input');
-  const [formData, setFormData] = useState({
-    payerName: '',
-    customerName: '',
-    checkAmount: '',
-    paymentDate: '',
-    bank: '',
-    branch: '',
-    accountNumber: ''
-  });
-  const [uploadedFiles, setUploadedFiles] = useState({});
-  const [results, setResults] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  // רשימת הקבצים הנדרשים
-  const requiredFiles = [
-    { key: 'gilayon1', name: 'גיליון1 (כלהנתונים6.11.22.xlsx)', description: 'נתוני עסקאות היסטוריים' },
-    { key: 'returned_checks', name: 'שיקים חוזרים', description: 'תיקיית שיקים חוזרים' },
-    { key: 'main_data', name: 'חיתום אשראי (קובץ משוחזר).xlsx', description: 'scoreM_N, snifim_he, madad_se' },
-    { key: 'sigma', name: 'ניתוח נתונים', description: 'תיקיית sigma' },
-    { key: 'warnings', name: 'התרעות', description: 'קובץ התרעות (אופציונלי)' }
-  ];
-
-  const handleFileUpload = useCallback((fileKey, files) => {
-    setUploadedFiles(prev => ({
-      ...prev,
-      [fileKey]: files
-    }));
-  }, []);
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const simulateCalculation = () => {
-    setIsProcessing(true);
-    
-    // סימולציה של חישוב דירוג מלא
-    setTimeout(() => {
-      const mockResults = {
-        // נתונים בסיסיים
-        date: '17/07/2025',
-        payerName: formData.payerName,
-        customerName: formData.customerName,
-        checkAmount: parseFloat(formData.checkAmount) || 50000,
-        paymentDate: formData.paymentDate || '01/09/2025',
-        creditDays: 46,
-        commission: 1.80,
-        
-        // ציון סופי ודירוג
-        finalScore: 0.0,
-        rating: 'D',
-        recommendation: 'לא מומלץ',
-        
-        // פרמטרי דירוג עם נתונים אמיתיים
-        parameters: [
-          { name: 'מספר עסקאות קודמות', weight: 0.015, rawValue: 0, normalizedValue: 0, reason: 'אין עסקאות קודמות' },
-          { name: 'מספר חזרות שיקים', weight: 0.05, rawValue: 0, normalizedValue: 0, reason: 'אין חזרות שיקים' },
-          { name: 'חריגה מממוצע ימי אשראי', weight: 0.1, rawValue: 41, normalizedValue: 0, reason: 'ימי אשראי מעל הממוצע' },
-          { name: 'דירוג D&B', weight: 0, rawValue: 38.704, normalizedValue: 0, reason: 'ציון נמוך מהממוצע' },
-          { name: 'דירוג ענף', weight: 0.013, rawValue: 29, normalizedValue: 0, reason: 'ציון ענף נמוך' },
-          { name: 'מסוכנת מהענף', weight: 0, rawValue: 0, normalizedValue: -0.512, reason: 'ציון D&B נמוך מהענף' },
-          { name: 'גיל החברה', weight: 0.013, rawValue: 0, normalizedValue: 0, reason: 'חברה חדשה - להזהר' },
-          { name: 'מחזור שנתי', weight: -5, rawValue: 0, normalizedValue: 0, reason: 'אין נתוני מחזור' },
-          { name: 'מדד סוציואקונומי', weight: 0, rawValue: 0, normalizedValue: 0, reason: 'אין מיקום מהמערכת' },
-          { name: 'מספר התרעות', weight: 0, rawValue: 0, normalizedValue: 0, reason: 'אין התרעות בתקופה האחרונה' },
-          { name: 'המלצה', weight: 0, rawValue: 0, normalizedValue: 0, reason: 'אין המלצות' },
-          { name: 'מקור הבעלים', weight: 0.08, rawValue: 5, normalizedValue: 0, reason: 'לא ידוע' },
-          { name: 'דירוג סניף', weight: 0, rawValue: 0, normalizedValue: 0, reason: 'אין דירוג סניף' },
-          { name: 'עסקה ממוצעת למושך', weight: 0.015, rawValue: 0, normalizedValue: 0, reason: 'אין עסקאות קודמות' },
-          { name: 'מקום זהה', weight: 0, rawValue: 0, normalizedValue: 0, reason: 'מקום שונה' }
-        ],
-        
-        // נתונים היסטוריים - מושך
-        payerHistory: {
-          id: '200353902',
-          name: 'הדר בניה אחזקה',
-          firstTransaction: null,
-          lastTransaction: null,
-          transactionCount: 0,
-          totalAmount: 0,
-          averageTransaction: 0,
-          commission: 0,
-          averageCreditDays: 0,
-          averageCommissionRate: 0,
-          maxTransaction: 0,
-          returnedChecks: 0,
-          totalReturned: 0,
-          address: ''
-        },
-        
-        // נתונים היסטוריים - לקוח
-        customerHistory: {
-          id: '305346900',
-          name: 'איברהים ראבי',
-          firstTransaction: null,
-          lastTransaction: null,
-          transactionCount: 0,
-          totalAmount: 0,
-          averageTransaction: 0,
-          commission: 0,
-          averageCreditDays: 0,
-          averageCommissionRate: 0,
-          maxTransaction: 0,
-          returnedChecks: 0,
-          totalReturned: 0,
-          address: ''
-        },
-        
-        // נתוני בנק וסניף
-        bankData: {
-          bankCode: formData.bank || '20',
-          branchCode: formData.branch || '512',
-          bankName: 'בנק מזרחי טפחות',
-          branchName: 'רמת השרון',
-          address: 'הרצל 25, רמת השרון',
-          city: 'רמת השרון',
-          totalFinanced: 1600000,
-          totalChecks: 45,
-          problematicChecks: 2,
-          problematicRate: 4.4,
-          defaultRate: 2.1
-        },
-        
-        // חישובי עלות
-        costAnalysis: {
-          transactionPrice: 0.018,
-          collectionFee: 100,
-          expectedCost: 1600 + 100,
-          checkValue: 50000 - 1700,
-          profitability: 48300
-        },
-        
-        // התרעות
-        warnings: [],
-        
-        // נתוני cash usage
-        cashUsage: {
-          lastMonth: 0,
-          percentage: 0
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת חיתום אשראי</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
         }
-      };
-      
-      setResults(mockResults);
-      setCurrentView('results');
-      setIsProcessing(false);
-    }, 2000);
-  };
+        .rtl { direction: rtl; }
+        * { box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useCallback } = React;
+        const { Upload, Calculator, FileText, TrendingUp, AlertTriangle, CheckCircle, XCircle } = lucide;
 
-  const getRatingColor = (rating) => {
-    const colors = {
-      'AAA': 'bg-green-600 text-white',
-      'AA': 'bg-green-500 text-white',
-      'A': 'bg-green-400 text-white',
-      'BBB': 'bg-yellow-500 text-white',
-      'BB': 'bg-yellow-600 text-white',
-      'B': 'bg-orange-500 text-white',
-      'CCC': 'bg-red-500 text-white',
-      'D': 'bg-red-600 text-white'
-    };
-    return colors[rating] || 'bg-gray-500 text-white';
-  };
+        const CreditUnderwritingSystem = () => {
+          const [currentView, setCurrentView] = useState('input');
+          const [formData, setFormData] = useState({
+            payerName: '',
+            customerName: '',
+            checkAmount: '',
+            paymentDate: '',
+            bank: '',
+            branch: '',
+            accountNumber: ''
+          });
+          const [uploadedFiles, setUploadedFiles] = useState({});
+          const [results, setResults] = useState(null);
+          const [isProcessing, setIsProcessing] = useState(false);
 
-  if (currentView === 'input') {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6" dir="rtl">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">מערכת חיתום אשראי</h1>
-              <p className="text-gray-600">הערכת סיכונים וחישוב דירוג אשראי</p>
-            </div>
+          // רשימת הקבצים הנדרשים
+          const requiredFiles = [
+            { key: 'gilayon1', name: 'גיליון1 (כלהנתונים6.11.22.xlsx)', description: 'נתוני עסקאות היסטוריים' },
+            { key: 'returned_checks', name: 'שיקים חוזרים', description: 'תיקיית שיקים חוזרים' },
+            { key: 'main_data', name: 'חיתום אשראי (קובץ משוחזר).xlsx', description: 'scoreM_N, snifim_he, madad_se' },
+            { key: 'sigma', name: 'ניתוח נתונים', description: 'תיקיית sigma' },
+            { key: 'warnings', name: 'התרעות', description: 'קובץ התרעות (אופציונלי)' }
+          ];
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* טופס הזנת נתונים */}
-              <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">פרטי השיק</h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">שם מושך</label>
-                    <input
-                      type="text"
-                      value={formData.payerName}
-                      onChange={(e) => handleInputChange('payerName', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="הכנס שם מושך"
-                    />
-                  </div>
+          const handleFileUpload = useCallback((fileKey, files) => {
+            setUploadedFiles(prev => ({
+              ...prev,
+              [fileKey]: files
+            }));
+          }, []);
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">שם לקוח</label>
-                    <input
-                      type="text"
-                      value={formData.customerName}
-                      onChange={(e) => handleInputChange('customerName', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="הכנס שם לקוח"
-                    />
-                  </div>
+          const handleInputChange = (field, value) => {
+            setFormData(prev => ({
+              ...prev,
+              [field]: value
+            }));
+          };
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">סכום השיק</label>
-                    <input
-                      type="number"
-                      value={formData.checkAmount}
-                      onChange={(e) => handleInputChange('checkAmount', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="הכנס סכום בש״ח"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">תאריך פירעון</label>
-                    <input
-                      type="date"
-                      value={formData.paymentDate}
-                      onChange={(e) => handleInputChange('paymentDate', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">בנק</label>
-                      <input
-                        type="text"
-                        value={formData.bank}
-                        onChange={(e) => handleInputChange('bank', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="קוד בנק"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">סניף</label>
-                      <input
-                        type="text"
-                        value={formData.branch}
-                        onChange={(e) => handleInputChange('branch', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="קוד סניף"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">מספר חשבון</label>
-                    <input
-                      type="text"
-                      value={formData.accountNumber}
-                      onChange={(e) => handleInputChange('accountNumber', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="הכנס מספר חשבון"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* העלאת קבצים */}
-              <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">העלאת קבצי נתונים</h2>
-                
-                <div className="space-y-4">
-                  {requiredFiles.map((file) => (
-                    <div key={file.key} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h3 className="font-medium text-gray-800">{file.name}</h3>
-                          <p className="text-sm text-gray-600">{file.description}</p>
-                        </div>
-                        <div className="flex items-center">
-                          {uploadedFiles[file.key] ? (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <Upload className="h-5 w-5 text-gray-400" />
-                          )}
-                        </div>
-                      </div>
-                      
-                      <input
-                        type="file"
-                        multiple
-                        accept=".xlsx,.xls,.csv"
-                        onChange={(e) => handleFileUpload(file.key, e.target.files)}
-                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* כפתור חישוב */}
-            <div className="mt-8 text-center">
-              <button
-                onClick={simulateCalculation}
-                disabled={isProcessing || !formData.payerName || !formData.customerName || !formData.checkAmount}
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center mx-auto"
-              >
-                {isProcessing ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    מחשב דירוג...
-                  </>
-                ) : (
-                  <>
-                    <Calculator className="h-5 w-5 mr-2" />
-                    חשב דירוג אשראי
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (currentView === 'results' && results) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4" dir="rtl">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          const simulateCalculation = () => {
+            setIsProcessing(true);
             
-            {/* כותרת ודירוג */}
-            <div className="flex justify-between items-center mb-6 p-4 bg-gray-100 rounded-lg">
-              <div className="flex items-center space-x-4">
-                <div className={`px-6 py-3 rounded-lg font-bold text-2xl ${getRatingColor(results.rating)}`}>
-                  {results.finalScore.toFixed(1)}
-                </div>
-                <div className={`px-4 py-2 rounded-lg font-bold text-xl ${getRatingColor(results.rating)}`}>
-                  {results.rating}
-                </div>
-                <div className="text-lg font-semibold text-gray-700">
-                  ציון עסקה: {results.finalScore.toFixed(1)}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm text-gray-600">תאריך: {results.date}</div>
-                <div className="text-lg font-semibold">חיתום אשראי</div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            setTimeout(() => {
+              const mockResults = {
+                date: new Date().toLocaleDateString('he-IL'),
+                payerName: formData.payerName,
+                customerName: formData.customerName,
+                payerID: '200353902',
+                customerID: '305346900',
+                checkAmount: parseFloat(formData.checkAmount) || 50000,
+                paymentDate: formData.paymentDate || new Date().toLocaleDateString('he-IL'),
+                creditDays: 46,
+                commission: 1.80,
+                
+                finalScore: 0.0,
+                rating: 'D',
+                recommendation: 'לא מומלץ',
+                
+                dbScore: 38.704,
+                sectorScore: 29,
+                companyAge: 0,
+                employeeCount: 0,
+                annualTurnover: 0,
+                location: 'לא ידוע',
+                socioEconomicIndex: 5,
+                
+                lastAlert: 'אין תביעות מהתקופה האחרונה',
+                alertCount: 0,
+                cashUsageLastMonth: 0,
+                cashPercentage: 0,
+                
+                existingObligo: 0,
+                hadArrangement: 'לא',
+                inRejectedList: 'לא',
+                sameCityAsCustomer: 'לא',
+                
+                parameters: [
+                  { 
+                    name: 'מספר עסקאות קודמות', 
+                    weight: 0.015, 
+                    rawValue: 0, 
+                    normalizedValue: 0, 
+                    weightedScore: 0,
+                    reason: 'אין עסקאות קודמות - מושך חדש',
+                    status: 'חסר נתונים'
+                  },
+                  { 
+                    name: 'מספר חזרות שיקים', 
+                    weight: 0.05, 
+                    rawValue: 0, 
+                    normalizedValue: 0, 
+                    weightedScore: 0,
+                    reason: 'אין חזרות שיקים - מושך חדש',
+                    status: 'חיובי'
+                  },
+                  { 
+                    name: 'חריגה מממוצע ימי אשראי', 
+                    weight: 0.1, 
+                    rawValue: 41, 
+                    normalizedValue: 0, 
+                    weightedScore: 0,
+                    reason: 'ימי אשראי מעל הממוצע - תנאי אשראי גבוהים',
+                    status: 'שלילי'
+                  },
+                  { 
+                    name: 'דירוג D&B', 
+                    weight: 0, 
+                    rawValue: 38.704, 
+                    normalizedValue: 0, 
+                    weightedScore: 0,
+                    reason: 'ציון D&B נמוך - NO☢',
+                    status: 'שלילי'
+                  },
+                  { 
+                    name: 'דירוג ענף', 
+                    weight: 0.013, 
+                    rawValue: 29, 
+                    normalizedValue: 0, 
+                    weightedScore: 0,
+                    reason: 'דירוג ענף נמוך',
+                    status: 'שלילי'
+                  }
+                ],
+                
+                payerHistory: {
+                  id: '200353902',
+                  name: formData.payerName,
+                  firstTransaction: null,
+                  lastTransaction: null,
+                  transactionCount: 0,
+                  totalAmount: 0,
+                  averageTransaction: 0,
+                  commission: 0,
+                  averageCreditDays: 0,
+                  averageCommissionRate: 0,
+                  maxTransaction: 0,
+                  returnedChecks: 0,
+                  totalReturned: 0,
+                  address: ''
+                },
+                
+                customerHistory: {
+                  id: '305346900',
+                  name: formData.customerName,
+                  firstTransaction: null,
+                  lastTransaction: null,
+                  transactionCount: 0,
+                  totalAmount: 0,
+                  averageTransaction: 0,
+                  commission: 0,
+                  averageCreditDays: 0,
+                  averageCommissionRate: 0,
+                  maxTransaction: 0,
+                  returnedChecks: 0,
+                  totalReturned: 0,
+                  address: ''
+                },
+                
+                bankData: {
+                  bankCode: formData.bank || '20',
+                  branchCode: formData.branch || '512',
+                  bankName: 'בנק מזרחי טפחות',
+                  branchName: 'רמת השרון',
+                  address: 'הרצל 25, רמת השרון',
+                  city: 'רמת השרון',
+                  totalFinanced: 1600000,
+                  totalChecks: 45,
+                  problematicChecks: 2,
+                  problematicRate: 4.4,
+                  defaultRate: 2.1
+                },
+                
+                costAnalysis: {
+                  transactionPrice: 0.018,
+                  collectionFee: 100,
+                  expectedCost: 1600 + 100,
+                  checkValue: (parseFloat(formData.checkAmount) || 50000) - 1700,
+                  profitability: (parseFloat(formData.checkAmount) || 50000) - 1700
+                },
+                
+                warnings: []
+              };
               
-              {/* עמודה שמאלית - פרטי העסקה */}
-              <div className="space-y-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-blue-800 mb-2">פרטי העסקה</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>שם לקוח:</span>
-                      <span className="font-medium">{results.customerName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>שם מושך:</span>
-                      <span className="font-medium">{results.payerName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>סכום שיק:</span>
-                      <span className="font-medium">₪ {results.checkAmount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>תאריך השיק:</span>
-                      <span className="font-medium">{results.paymentDate}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>ימי אשראי:</span>
-                      <span className="font-medium">{results.creditDays}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>עמלה:</span>
-                      <span className="font-medium">{results.commission}%</span>
-                    </div>
-                  </div>
-                </div>
+              setResults(mockResults);
+              setCurrentView('results');
+              setIsProcessing(false);
+            }, 2000);
+          };
 
-                {/* חישוב עלויות */}
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-green-800 mb-2">חישוב עלויות</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>מחיר העסקה:</span>
-                      <span className="font-medium">{results.costAnalysis.transactionPrice}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>דמי גביה:</span>
-                      <span className="font-medium">₪ {results.costAnalysis.collectionFee}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>עלות צפויה:</span>
-                      <span className="font-medium">₪ {results.costAnalysis.expectedCost}</span>
-                    </div>
-                    <div className="flex justify-between font-semibold">
-                      <span>שווי לאחר הורדת העמלה:</span>
-                      <span className="text-green-600">₪ {results.costAnalysis.profitability.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
+          const getRatingColor = (rating) => {
+            const colors = {
+              'AAA': 'bg-green-600 text-white',
+              'AA': 'bg-green-500 text-white',
+              'A': 'bg-green-400 text-white',
+              'BBB': 'bg-yellow-500 text-white',
+              'BB': 'bg-yellow-600 text-white',
+              'B': 'bg-orange-500 text-white',
+              'CCC': 'bg-red-500 text-white',
+              'D': 'bg-red-600 text-white'
+            };
+            return colors[rating] || 'bg-gray-500 text-white';
+          };
 
-                {/* נתוני בנק וסניף */}
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-yellow-800 mb-2">בנק וסניף</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>שם הבנק:</span>
-                      <span className="font-medium">{results.bankData.bankName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>שם סניף:</span>
-                      <span className="font-medium">{results.bankData.branchName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>כתובת:</span>
-                      <span className="font-medium">{results.bankData.address}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>עיר:</span>
-                      <span className="font-medium">{results.bankData.city}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>אחוז שיקים בעייתיים:</span>
-                      <span className="font-medium">{results.bankData.problematicRate}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>אחוז דיפולט:</span>
-                      <span className="font-medium">{results.bankData.defaultRate}%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          if (currentView === 'input') {
+            return React.createElement('div', { className: 'min-h-screen bg-gray-50 p-6', dir: 'rtl' },
+              React.createElement('div', { className: 'max-w-6xl mx-auto' },
+                React.createElement('div', { className: 'bg-white rounded-lg shadow-lg p-8' },
+                  React.createElement('div', { className: 'text-center mb-8' },
+                    React.createElement('h1', { className: 'text-3xl font-bold text-gray-800 mb-2' }, 'מערכת חיתום אשראי'),
+                    React.createElement('p', { className: 'text-gray-600' }, 'הערכת סיכונים וחישוב דירוג אשראי')
+                  ),
+                  
+                  React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-2 gap-8' },
+                    // טופס הזנת נתונים
+                    React.createElement('div', { className: 'space-y-6' },
+                      React.createElement('h2', { className: 'text-xl font-semibold text-gray-800 mb-4' }, 'פרטי השיק'),
+                      React.createElement('div', { className: 'space-y-4' },
+                        React.createElement('div', null,
+                          React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'שם מושך'),
+                          React.createElement('input', {
+                            type: 'text',
+                            value: formData.payerName,
+                            onChange: (e) => handleInputChange('payerName', e.target.value),
+                            className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                            placeholder: 'הכנס שם מושך'
+                          })
+                        ),
+                        React.createElement('div', null,
+                          React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'שם לקוח'),
+                          React.createElement('input', {
+                            type: 'text',
+                            value: formData.customerName,
+                            onChange: (e) => handleInputChange('customerName', e.target.value),
+                            className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                            placeholder: 'הכנס שם לקוח'
+                          })
+                        ),
+                        React.createElement('div', null,
+                          React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'סכום השיק'),
+                          React.createElement('input', {
+                            type: 'number',
+                            value: formData.checkAmount,
+                            onChange: (e) => handleInputChange('checkAmount', e.target.value),
+                            className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                            placeholder: 'הכנס סכום בש״ח'
+                          })
+                        ),
+                        React.createElement('div', null,
+                          React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'תאריך פירעון'),
+                          React.createElement('input', {
+                            type: 'date',
+                            value: formData.paymentDate,
+                            onChange: (e) => handleInputChange('paymentDate', e.target.value),
+                            className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                          })
+                        )
+                      )
+                    ),
+                    
+                    // העלאת קבצים
+                    React.createElement('div', { className: 'space-y-6' },
+                      React.createElement('h2', { className: 'text-xl font-semibold text-gray-800 mb-4' }, 'העלאת קבצי נתונים'),
+                      React.createElement('div', { className: 'space-y-4' },
+                        requiredFiles.map((file) =>
+                          React.createElement('div', { key: file.key, className: 'border border-gray-200 rounded-lg p-4' },
+                            React.createElement('div', { className: 'flex items-center justify-between mb-2' },
+                              React.createElement('div', null,
+                                React.createElement('h3', { className: 'font-medium text-gray-800' }, file.name),
+                                React.createElement('p', { className: 'text-sm text-gray-600' }, file.description)
+                              ),
+                              React.createElement('div', { className: 'flex items-center' },
+                                uploadedFiles[file.key] 
+                                  ? React.createElement(CheckCircle, { className: 'h-5 w-5 text-green-500' })
+                                  : React.createElement(Upload, { className: 'h-5 w-5 text-gray-400' })
+                              )
+                            ),
+                            React.createElement('input', {
+                              type: 'file',
+                              multiple: true,
+                              accept: '.xlsx,.xls,.csv',
+                              onChange: (e) => handleFileUpload(file.key, e.target.files),
+                              className: 'w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100'
+                            })
+                          )
+                        )
+                      )
+                    )
+                  ),
+                  
+                  // כפתור חישוב
+                  React.createElement('div', { className: 'mt-8 text-center' },
+                    React.createElement('button', {
+                      onClick: simulateCalculation,
+                      disabled: isProcessing || !formData.payerName || !formData.customerName || !formData.checkAmount,
+                      className: 'bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center mx-auto'
+                    },
+                      isProcessing 
+                        ? [
+                            React.createElement('div', { key: 'spinner', className: 'animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2' }),
+                            'מחשב דירוג...'
+                          ]
+                        : [
+                            React.createElement(Calculator, { key: 'icon', className: 'h-5 w-5 mr-2' }),
+                            'חשב דירוג אשראי'
+                          ]
+                    )
+                  )
+                )
+              )
+            );
+          }
 
-              {/* עמודה אמצעית - פרמטרי דירוג */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-4">פרמטרי דירוג</h3>
-                
-                <div className="space-y-3">
-                  {results.parameters.map((param, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-white rounded border">
-                      <div className="flex-1">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-700">{param.name}</span>
-                          <span className="text-sm text-gray-500">({(param.weight * 100).toFixed(1)}%)</span>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">{param.reason}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-gray-800">{param.rawValue}</div>
-                        <div className="text-xs text-gray-500">{param.normalizedValue.toFixed(3)}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          if (currentView === 'results' && results) {
+            return React.createElement('div', { className: 'min-h-screen bg-gray-50 p-4', dir: 'rtl' },
+              React.createElement('div', { className: 'max-w-7xl mx-auto' },
+                React.createElement('div', { className: 'bg-white rounded-lg shadow-lg p-6' },
+                  
+                  // כותרת ודירוג
+                  React.createElement('div', { className: 'flex justify-between items-center mb-6 p-4 bg-gray-100 rounded-lg' },
+                    React.createElement('div', { className: 'flex items-center space-x-4' },
+                      React.createElement('div', { className: `px-6 py-3 rounded-lg font-bold text-2xl ${getRatingColor(results.rating)}` },
+                        results.finalScore.toFixed(1)
+                      ),
+                      React.createElement('div', { className: `px-4 py-2 rounded-lg font-bold text-xl ${getRatingColor(results.rating)}` },
+                        results.rating
+                      ),
+                      React.createElement('div', { className: 'text-lg font-semibold text-gray-700' },
+                        `ציון עסקה: ${results.finalScore.toFixed(1)}`
+                      )
+                    ),
+                    React.createElement('div', { className: 'text-right' },
+                      React.createElement('div', { className: 'text-sm text-gray-600' }, `תאריך: ${results.date}`),
+                      React.createElement('div', { className: 'text-lg font-semibold' }, 'חיתום אשראי')
+                    )
+                  ),
 
-              {/* עמודה ימנית - היסטוריה */}
-              <div className="space-y-4">
-                
-                {/* היסטוריית מושך */}
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-blue-800 mb-2">בדיקת היסטוריה - מושך</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>ח.פ./ע.מ.:</span>
-                      <span className="font-medium">{results.payerHistory.id}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>כמות עסקאות:</span>
-                      <span className="font-medium">{results.payerHistory.transactionCount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>סכום עסקאות:</span>
-                      <span className="font-medium">₪ {results.payerHistory.totalAmount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>עסקה ממוצעת:</span>
-                      <span className="font-medium">₪ {results.payerHistory.averageTransaction.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>חזרות שיקים:</span>
-                      <span className="font-medium">{results.payerHistory.returnedChecks}</span>
-                    </div>
-                  </div>
-                </div>
+                  // המלצה סופית
+                  React.createElement('div', { className: 'mt-8 text-center' },
+                    React.createElement('div', { className: 'inline-flex items-center px-8 py-4 rounded-lg text-xl font-bold bg-red-100 text-red-800' },
+                      React.createElement(XCircle, { className: 'h-6 w-6 mr-3' }),
+                      React.createElement('span', null, `המלצה: ${results.recommendation}`)
+                    )
+                  ),
 
-                {/* היסטוריית לקוח */}
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-green-800 mb-2">בדיקת היסטוריה - לקוח</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>ח.פ./ע.מ.:</span>
-                      <span className="font-medium">{results.customerHistory.id}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>כמות שיקים שנוכו:</span>
-                      <span className="font-medium">{results.customerHistory.transactionCount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>סכום עסקאות:</span>
-                      <span className="font-medium">₪ {results.customerHistory.totalAmount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>עסקה ממוצעת:</span>
-                      <span className="font-medium">₪ {results.customerHistory.averageTransaction.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>חזרות שיקים:</span>
-                      <span className="font-medium">{results.customerHistory.returnedChecks}</span>
-                    </div>
-                  </div>
-                </div>
+                  // כפתורים
+                  React.createElement('div', { className: 'mt-8 flex justify-center space-x-4' },
+                    React.createElement('button', {
+                      onClick: () => setCurrentView('input'),
+                      className: 'bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700'
+                    }, 'חזור לטופס'),
+                    React.createElement('button', {
+                      onClick: () => window.print(),
+                      className: 'bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700'
+                    }, 'הדפס דוח')
+                  )
+                )
+              )
+            );
+          }
 
-                // נתוני D&B ונתונים נוספים
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-purple-800 mb-2">נתוני D&B ומעקב</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>סקור D&B המושך:</span>
-                      <span className={`font-medium ${results.dbScore > 30 ? 'text-yellow-600' : 'text-red-600'}`}>
-                        {results.dbScore} {results.dbScore <= 20 ? '❌ BAD' : results.dbScore <= 30 ? '☢ NO' : '✅ OK'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>סקור D&B ענף:</span>
-                      <span className="font-medium">{results.sectorScore}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>שנות ותק:</span>
-                      <span className="font-medium">{results.companyAge} שנים</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>מספר עובדים:</span>
-                      <span className="font-medium">{results.employeeCount || 'לא ידוע'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>מחזור בא׳ ש״ח:</span>
-                      <span className="font-medium">{results.annualTurnover || 'לא ידוע'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>מיקום:</span>
-                      <span className="font-medium">{results.location}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>מדד סוציואקונומי:</span>
-                      <span className="font-medium">{results.socioEconomicIndex}/10</span>
-                    </div>
-                  </div>
-                </div>
+          return null;
+        };
 
-                {/* סטטוס ומעקב */}
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-orange-800 mb-2">סטטוס ומעקב</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>התרעה אחרונה:</span>
-                      <span className="font-medium">{results.lastAlert}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>כמות התרעות:</span>
-                      <span className="font-medium">{results.alertCount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>שימוש במזומן חודש שעבר:</span>
-                      <span className="font-medium">₪ {results.cashUsageLastMonth.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>אחוז עסקאות במזומן:</span>
-                      <span className="font-medium">{results.cashPercentage}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>אובליגו מושך קיים:</span>
-                      <span className="font-medium">₪ {results.existingObligo.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>היה הסדר עם המושך:</span>
-                      <span className="font-medium">{results.hadArrangement}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>ברשימת דחויים:</span>
-                      <span className="font-medium">{results.inRejectedList}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>מקום זהה (מושך-לקוח):</span>
-                      <span className="font-medium">{results.sameCityAsCustomer}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* המלצה סופית */}
-            <div className="mt-8 text-center">
-              <div className={`inline-flex items-center px-8 py-4 rounded-lg text-xl font-bold ${
-                results.recommendation === 'מומלץ' 
-                  ? 'bg-green-100 text-green-800' 
-                  : results.recommendation === 'בבדיקה נוספת'
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {results.recommendation === 'מומלץ' ? (
-                  <CheckCircle className="h-6 w-6 mr-3" />
-                ) : results.recommendation === 'בבדיקה נוספת' ? (
-                  <AlertTriangle className="h-6 w-6 mr-3" />
-                ) : (
-                  <XCircle className="h-6 w-6 mr-3" />
-                )}
-                <span>המלצה: {results.recommendation}</span>
-              </div>
-            </div>
-
-            {/* כפתורים */}
-            <div className="mt-8 flex justify-center space-x-4">
-              <button
-                onClick={() => setCurrentView('input')}
-                className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
-              >
-                חזור לטופס
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-              >
-                הדפס דוח
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-};
-
-export default CreditUnderwritingSystem;
+        ReactDOM.render(React.createElement(CreditUnderwritingSystem), document.getElementById('root'));
+    </script>
+</body>
+</html>
