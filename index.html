@@ -311,6 +311,40 @@
                         </div>
                     </div>
 
+                    <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border: 2px solid #28a745;">
+                        <h4 style="margin-bottom: 15px; color: #2c3e50;">📁 קבצים מקומיים (לא יועלו לאינטרנט)</h4>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">📊 קובץ עסקאות:</label>
+                            <input type="file" id="localTransactionsFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 5px;">
+                            <small style="color: #666;">כלהנתונים6.11.22.xlsx או קובץ דומה</small>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">🏢 קובץ חיתום אשראי:</label>
+                            <input type="file" id="localScoresFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 5px;">
+                            <small style="color: #666;">חיתום אשראי.xlsx או קובץ דומה</small>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">💰 קובץ שיקים חוזרים (אופציונלי):</label>
+                            <input type="file" id="localReturnedFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 5px;">
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">⚠️ קובץ התרעות (אופציונלי):</label>
+                            <input type="file" id="localWarningsFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 5px;">
+                        </div>
+                        
+                        <button onclick="loadLocalFiles()" style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                            🔄 טען קבצים מקומיים
+                        </button>
+                        
+                        <div style="margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 5px; font-size: 12px;">
+                            <strong>🔒 פרטיות מובטחת:</strong> הקבצים נקראים רק במחשב שלך ולא נשלחים או נשמרים בשום מקום
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="customerName">שם לקוח</label>
                         <input type="text" id="customerName" placeholder="הזן שם לקוח">
