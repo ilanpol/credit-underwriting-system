@@ -446,6 +446,7 @@
             });
         }
 
+        // גרסה נוספת עם event listeners במקום onclick
         function showSuggestions(event, type) {
             const input = event.target;
             const query = input.value.toLowerCase();
@@ -465,25 +466,54 @@
                 return;
             }
             
-            suggestionsContainer.innerHTML = filtered.map(item => `
-                <div class="autocomplete-suggestion" onclick="selectSuggestion('${type}', '${item.name}', '${item.id}')">
+            // יצירת HTML עם data attributes
+            suggestionsContainer.innerHTML = filtered.map((item, index) => `
+                <div class="autocomplete-suggestion" data-type="${type}" data-name="${item.name}" data-id="${item.id}">
                     <div class="suggestion-name">${item.name}</div>
                     <div class="suggestion-id">${item.id}</div>
                     <div class="suggestion-details">${item.transactions || 0} עסקאות | ₪${(item.totalAmount || 0).toLocaleString()}</div>
                 </div>
             `).join('');
             
+            // הוספת event listeners לכל הצעה
+            suggestionsContainer.querySelectorAll('.autocomplete-suggestion').forEach(suggestion => {
+                suggestion.addEventListener('click', function() {
+                    const type = this.getAttribute('data-type');
+                    const name = this.getAttribute('data-name');
+                    const id = this.getAttribute('data-id');
+                    
+                    if (type === 'payers') {
+                        document.getElementById('payerName').value = name;
+                        document.getElementById('payerID').value = id;
+                    } else {
+                        document.getElementById('customerName').value = name;
+                        document.getElementById('customerID').value = id;
+                    }
+                    
+                    hideSuggestions();
+                });
+            });
+            
             suggestionsContainer.style.display = 'block';
         }
 
-        function selectSuggestion(type, name, id) {
+        function selectSuggestion(type, index) {
+            const suggestionsId = type === 'payers' ? 'payerSuggestions' : 'customerSuggestions';
+            const suggestionsContainer = document.getElementById(suggestionsId);
+            const selectedItem = suggestionsContainer.filteredData[index];
+            
+            if (!selectedItem) return;
+            
             if (type === 'payers') {
-                document.getElementById('payerName').value = name;
-                document.getElementById('payerID').value = id;
+                document.getElementById('payerName').value = selectedItem.name;
+                document.getElementById('payerID').value = selectedItem.id;
+                console.log('נבחר מושך:', selectedItem.name, selectedItem.id);
             } else {
-                document.getElementById('customerName').value = name;
-                document.getElementById('customerID').value = id;
+                document.getElementById('customerName').value = selectedItem.name;
+                document.getElementById('customerID').value = selectedItem.id;
+                console.log('נבחר לקוח:', selectedItem.name, selectedItem.id);
             }
+            
             hideSuggestions();
         }
 
