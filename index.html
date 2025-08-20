@@ -289,29 +289,26 @@
                     <h2 style="margin-bottom: 20px; color: #2c3e50; font-size: 18px;">פרטי העסקה</h2>
                     
                     <div class="data-status">
-                        <h3>סטטוס קבצי נתונים - GitHub Repository</h3>
+                        <h3>סטטוס קבצי נתונים</h3>
                         <div class="status-item">
                             <span>transactions.xlsx</span>
-                            <span id="transactionsStatus" class="status-missing">לא נטען</span>
+                            <span id="transactionsStatus" class="status-missing">נתוני דוגמה</span>
                         </div>
                         <div class="status-item">
                             <span>credit_scores.xlsx</span>
-                            <span id="dbStatus" class="status-missing">לא נטען</span>
+                            <span id="dbStatus" class="status-missing">נתוני דוגמה</span>
                         </div>
                         <div class="status-item">
                             <span>returned_checks.xlsx</span>
-                            <span id="returnedStatus" class="status-missing">לא נטען</span>
+                            <span id="returnedStatus" class="status-missing">נתוני דוגמה</span>
                         </div>
                         <div class="status-item">
                             <span>warnings.xlsx</span>
-                            <span id="warningsStatus" class="status-missing">לא נטען</span>
+                            <span id="warningsStatus" class="status-missing">נתוני דוגמה</span>
                         </div>
-                        <button onclick="configureLocalPaths()" style="width: 100%; margin-top: 10px; padding: 8px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            ⚙️ הגדר נתיבי קבצים
-                        </button>
-                        <button onclick="loadDataFiles()" style="width: 100%; margin-top: 5px; padding: 8px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            🔄 טען קבצים מ-GitHub
-                        </button>
+                        <div style="margin-top: 10px; padding: 8px; background: #e7f3ff; border-radius: 5px; font-size: 12px; text-align: center;">
+                            💡 להשתמש בקבצים שלך, בחר אותם באזור "קבצים מקומיים" למטה
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -420,7 +417,7 @@
             'analyst': 'analyst789'
         };
 
-        // התחברות
+        // הסרת הפונקציה שגורמת לשגיאה ועדכון להתחברות
         function login(event) {
             event.preventDefault();
             const username = document.getElementById('username').value;
@@ -433,10 +430,14 @@
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'block';
                 
-                // טעינת נתיבים שמורים ונתונים
-                loadSavedLocalPaths();
+                // טעינת נתוני דוגמה ישירות
                 loadDataFiles();
                 loadHistoryFromStorage();
+                
+                // הוספת מערכת קריאת קבצים מקומיים אחרי טעינת הדף
+                setTimeout(() => {
+                    setupLocalFileReading();
+                }, 500);
             } else {
                 errorDiv.textContent = 'שם משתמש או סיסמה שגויים';
                 errorDiv.style.display = 'block';
