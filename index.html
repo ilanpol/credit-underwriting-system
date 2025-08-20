@@ -289,28 +289,28 @@
                     <h2 style="margin-bottom: 20px; color: #2c3e50; font-size: 18px;">פרטי העסקה</h2>
                     
                     <div class="data-status">
-                        <h3>סטטוס קבצי נתונים - OneDrive</h3>
+                        <h3>סטטוס קבצי נתונים - תיקייה מקומית</h3>
                         <div class="status-item">
-                            <span>גיליון עסקאות</span>
+                            <span>כלהנתונים6.11.22.xlsx</span>
                             <span id="transactionsStatus" class="status-missing">לא נטען</span>
                         </div>
                         <div class="status-item">
-                            <span>נתוני D&B</span>
+                            <span>חיתום אשראי.xlsx</span>
                             <span id="dbStatus" class="status-missing">לא נטען</span>
                         </div>
                         <div class="status-item">
-                            <span>שיקים חוזרים</span>
+                            <span>שיקים חוזרים.xlsx</span>
                             <span id="returnedStatus" class="status-missing">לא נטען</span>
                         </div>
                         <div class="status-item">
-                            <span>התרעות</span>
+                            <span>התרעות.xlsx</span>
                             <span id="warningsStatus" class="status-missing">לא נטען</span>
                         </div>
-                        <button onclick="configureOneDriveLinks()" style="width: 100%; margin-top: 10px; padding: 8px; background: #0078d4; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            ⚙️ הגדר קישורי OneDrive
+                        <button onclick="configureLocalPaths()" style="width: 100%; margin-top: 10px; padding: 8px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            ⚙️ הגדר נתיבי קבצים
                         </button>
                         <button onclick="loadDataFiles()" style="width: 100%; margin-top: 5px; padding: 8px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            🔄 רענן נתונים
+                            🔄 טען קבצים מקומיים
                         </button>
                     </div>
 
@@ -433,15 +433,9 @@
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'block';
                 
-                // בדיקה אם יש הגדרות OneDrive שמורות
-                if (loadSavedOneDriveConfig()) {
-                    loadDataFiles();
-                } else {
-                    // אם אין הגדרות, הצג הודעה
-                    setTimeout(() => {
-                        alert('ברוך הבא! אנא הגדר תחילה את קישורי OneDrive על ידי לחיצה על "הגדר קישורי OneDrive"');
-                    }, 1000);
-                }
+                // טעינת נתיבים שמורים ונתונים
+                loadSavedLocalPaths();
+                loadDataFiles();
                 loadHistoryFromStorage();
             } else {
                 errorDiv.textContent = 'שם משתמש או סיסמה שגויים';
@@ -845,11 +839,11 @@
             return shareLink;
         }
 
-        // טעינת הגדרות OneDrive שמורות
-        function loadSavedOneDriveConfig() {
-            const savedLinks = JSON.parse(localStorage.getItem('oneDriveLinks') || '{}');
-            if (Object.keys(savedLinks).length > 0) {
-                Object.assign(oneDriveConfig, savedLinks);
+        // טעינת נתיבים שמורים
+        function loadSavedLocalPaths() {
+            const savedPaths = JSON.parse(localStorage.getItem('localDataPaths') || '{}');
+            if (Object.keys(savedPaths).length > 0) {
+                Object.assign(localDataConfig, savedPaths);
                 return true;
             }
             return false;
