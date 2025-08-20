@@ -289,28 +289,28 @@
                     <h2 style="margin-bottom: 20px; color: #2c3e50; font-size: 18px;">פרטי העסקה</h2>
                     
                     <div class="data-status">
-                        <h3>סטטוס קבצי נתונים - תיקייה מקומית</h3>
+                        <h3>סטטוס קבצי נתונים - GitHub Repository</h3>
                         <div class="status-item">
-                            <span>כלהנתונים6.11.22.xlsx</span>
+                            <span>transactions.xlsx</span>
                             <span id="transactionsStatus" class="status-missing">לא נטען</span>
                         </div>
                         <div class="status-item">
-                            <span>חיתום אשראי.xlsx</span>
+                            <span>credit_scores.xlsx</span>
                             <span id="dbStatus" class="status-missing">לא נטען</span>
                         </div>
                         <div class="status-item">
-                            <span>שיקים חוזרים.xlsx</span>
+                            <span>returned_checks.xlsx</span>
                             <span id="returnedStatus" class="status-missing">לא נטען</span>
                         </div>
                         <div class="status-item">
-                            <span>התרעות.xlsx</span>
+                            <span>warnings.xlsx</span>
                             <span id="warningsStatus" class="status-missing">לא נטען</span>
                         </div>
                         <button onclick="configureLocalPaths()" style="width: 100%; margin-top: 10px; padding: 8px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">
                             ⚙️ הגדר נתיבי קבצים
                         </button>
                         <button onclick="loadDataFiles()" style="width: 100%; margin-top: 5px; padding: 8px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            🔄 טען קבצים מקומיים
+                            🔄 טען קבצים מ-GitHub
                         </button>
                     </div>
 
@@ -1055,6 +1055,27 @@
 
         // טעינת נתוני דוגמה
         function loadExampleData() {
+            // טעינת נתוני דוגמה מפורטים יותר
+            const sampleData = createSampleData();
+            
+            // עיבוד הנתונים
+            const transactionObjects = convertToObjects(sampleData.transactions);
+            const scoreObjects = convertToObjects(sampleData.scores);
+            const returnedObjects = convertToObjects(sampleData.returned);
+            const warningObjects = convertToObjects(sampleData.warnings);
+            
+            processTransactionsData(transactionObjects);
+            processDBData(scoreObjects);
+            processReturnedChecksData(returnedObjects);
+            processWarningsData(warningObjects);
+            
+            // עדכון סטטוס הקבצים
+            updateDataStatus('transactions', `✓ דוגמה (${transactionObjects.length} רשומות)`);
+            updateDataStatus('db', `✓ דוגמה (${scoreObjects.length} רשומות)`);
+            updateDataStatus('returned', `✓ דוגמה (${returnedObjects.length} רשומות)`);
+            updateDataStatus('warnings', `✓ דוגמה (${warningObjects.length} רשומות)`);
+
+            // מילוי שדות הדוגמה
             document.getElementById('customerName').value = 'דוד ישראלי';
             document.getElementById('customerID').value = '514031970';
             document.getElementById('payerName').value = 'חברת הבנייה הגדולה בע"מ';
@@ -1064,33 +1085,7 @@
             document.getElementById('creditDays').value = '45';
             document.getElementById('commission').value = '2.5';
 
-            // נתוני דוגמה
-            transactionsData = [
-                { payerID: '513456789', payerName: 'חברת הבנייה הגדולה בע"מ', transactions: 12, totalAmount: 850000, averageAmount: 70833, creditDays: 38 },
-                { payerID: '305346900', payerName: 'איברהים ראבי', transactions: 3, totalAmount: 180000, averageAmount: 60000, creditDays: 42 }
-            ];
-
-            dbScoreData = [
-                { companyID: '513456789', dbScore: 72, sectorScore: 65, age: 15, employees: 85, turnover: 45 },
-                { companyID: '305346900', dbScore: 45, sectorScore: 55, age: 8, employees: 12, turnover: 5.2 }
-            ];
-
-            returnedChecksData = [
-                { payerID: '513456789', returnedCount: 1 },
-                { payerID: '305346900', returnedCount: 0 }
-            ];
-
-            warningsData = [
-                { companyID: '513456789', warningsCount: 2 },
-                { companyID: '305346900', warningsCount: 0 }
-            ];
-
-            updateDataStatus('transactions', '✓ נתוני דוגמה (2 רשומות)');
-            updateDataStatus('db', '✓ נתוני דוגמה (2 רשומות)');
-            updateDataStatus('returned', '✓ נתוני דוגמה (2 רשומות)');
-            updateDataStatus('warnings', '✓ נתוני דוגמה (2 רשומות)');
-
-            alert('נתוני דוגמה נטענו בהצלחה!');
+            alert('נתוני דוגמה נטענו בהצלחה! המערכת מוכנה לבדיקות אשראי.');
         }
 
         // חישוב דירוג האשראי
