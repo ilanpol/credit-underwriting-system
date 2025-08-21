@@ -657,6 +657,445 @@
             
             // חיפוש בשמות שמכילים score
             if (!scoresSheet) {
+                console.log('לא נמצא גיליון דירוגי אשראי (scoreM_N)');
+                return;
+            }
+            
+            console.log(`עיבוד גיליון דירוגים: ${scoresSheetName}`);
+            
+            // חיפוש שורת כותרות
+            let headersRowIndex = 0;
+            for (let i = 0; i < Math.min(3, scoresSheet.length); i++) {
+                const row = scoresSheet[i];
+                if (row.some(cell => 
+                    cell && (cell.toString().includes('ח.פ') || 
+                            cell.toString().includes('זהות') ||
+                            cell.toString().includes('דירוג') ||
+                            cell.toString().includes('ציון'))
+                )) {
+                    headersRowIndex = i;
+                    break;
+                }
+            }
+            
+            const scoresHeaders = scoresSheet[headersRowIndex];
+            const scoresRows = scoresSheet.slice(headersRowIndex + 1);
+            
+            console.log('כותרות גיליון דירוגים:', scoresHeaders);
+            
+            // מיפוי עמודות דירוגים
+            const findScoreColumnIndex = (possibleNames) => {
+                for (let name of possibleNames) {
+                    const index = scoresHeaders.findIndex(header => 
+                        header && header.toString().toLowerCase().includes(name.toLowerCase())
+                    );
+                    if (index !== -1) return index;
+                }
+                return -1;
+            };
+            
+            const payerIDIndex = findScoreColumnIndex(['ח.פ', 'מספר זהות', 'זהות', 'id']);
+            const scoreIndex = findScoreColumnIndex(['דירוג', 'ציון', 'score', 'rating']);
+            const categoryIndex = findScoreColumnIndex(['קטגוריה', 'סיווג', 'category']);
+            
+            console.log('אינדקסי דירוגים:', { payerID: payerIDIndex, score: scoreIndex, category: categoryIndex });
+            
+            if (payerIDIndex === -1) {
+                console.log('לא נמצאה עמודת מספר זהות בגיליון דירוגים');
+                return;
+            }
+            
+            let scoresProcessed = 0;
+            
+            scoresRows.forEach((row, index) => {
+                if (!row || row.length === 0) return;
+                
+                const payerID = row[payerIDIndex] ? row[payerIDIndex].toString().trim() : '';
+                const score = scoreIndex !== -1 ? parseFloat(row[scoreIndex]) : null;
+                const category = categoryIndex !== -1 ? row[categoryIndex] : null;
+                
+                if (payerID && payersMap.has(payerID)) {
+                    const payer = payersMap.get(payerID);
+                    payer.creditScore = {
+                        score: score,
+                        category: category
+                    };
+                    scoresProcessed++;
+                    console.log(`עודכן דירוג עבור ${payerID}: ${score}`);
+                }
+            });
+            
+            console.log(`עובדו ${scoresProcessed} דירוגי אשראי`);
+        }
+
+        // חישוב פרמטרים
+        function calculateAllParameters(payerData, checkAmount) {
+            const now = new Date();
+            const firstDate = new Date(payerData.firstTransaction);
+            const historyMonths = Math.max(1, (now - firstDate) / (1000 * 60 * 60 * 24 * 30));
+            
+            const avgAmount = payerData.totalAmount / payerData.transactions.length;
+            const avgCreditDays = payerData.totalCreditDays / payerData.transactions.length;
+            const avgCommissionRate = (payerData.totalCommission / payerData.totalAmount) * 100;
+            
+            const returnedChecks = countReturnedChecks(payerData.id);
+            const cancellations = payerData.cancelledTransactions;
+            
+            let externalScore = 50;
+            if (payerData.creditScore && payerData.creditScore.score) {
+                externalScore = payerData.creditScore.score;
+            }
+            
+            return {
+                historyLength: { 
+                    raw: historyMonths, 
+                    normalized: Math.min(100, historyMonths * 2) 
+                },
+                transactionCount: { 
+                    raw: payerData.transactions.length, 
+                    normalized: Math.min(100, payerData.transactions.length * 2) 
+                },
+                averageAmount: { 
+                    raw: avgAmount, 
+                    normalized: Math.min(100, (avgAmount / 100000) * 50) 
+                },
+                totalAmount: { 
+                    raw: payerData.totalAmount, 
+                    normalized: Math.min(100, (payerData.totalAmount / 1000000) * 30) 
+                },
+                avgCreditDays: { 
+                    raw: avgCreditDays, 
+                    normalized: Math.max(0, 100 - (avgCreditDays - 30) * 2) 
+                },
+                avgCommissionRate: { 
+                    raw: avgCommissionRate, 
+                    normalized: Math.max(0, 100 - avgCommissionRate * 10) 
+                },
+                returnedChecks: { 
+                    raw: returnedChecks, 
+                    normalized: Math.max(0, 100 - returnedChecks * 20) 
+                },
+                cancellations: { 
+                    raw: cancellations, 
+                    normalized: Math.max(0, 100 - cancellations * 15) 
+                },
+                checkAmountRatio: { 
+                    raw: checkAmount / avgAmount, 
+                    normalized: Math.min(100, Math.max(0, 100 - Math.abs(1 - (checkAmount / avgAmount)) * 50)) 
+                },
+                externalScore: {
+                    raw: externalScore,
+                    normalized: externalScore
+                }
+            };
+        }
+
+        function countReturnedChecks(payerID) {
+            // בדיקה בסיסית - אם אין נתוני שיקים חוזרים
+            return 0;
+        }
+
+        function calculateTotalScore(parameters) {
+            let totalScore = 0;
+            
+            Object.keys(ratingParameters).forEach(param => {
+                if (parameters[param]) {
+                    const paramData = parameters[param];
+                    const weight = ratingParameters[param].weight;
+                    totalScore += (paramData.normalized * weight);
+                }
+            });
+            
+            return Math.round(totalScore);
+        }
+
+        function getLetterRating(score) {
+            if (score >= 90) return 'AAA';
+            if (score >= 80) return 'AA';
+            if (score >= 70) return 'A';
+            if (score >= 60) return 'BBB';
+            if (score >= 50) return 'BB';
+            if (score >= 40) return 'B';
+            if (score >= 30) return 'CCC';
+            return 'D';
+        }
+
+        // חישוב דירוג אשראי
+        function calculateCreditRating() {
+            const payerID = document.getElementById('payerID').value.trim();
+            const checkAmount = parseFloat(document.getElementById('checkAmount').value) || 0;
+            
+            if (!payerID || !checkAmount) {
+                alert('אנא מלא את כל השדות הנדרשים');
+                return;
+            }
+            
+            const payerData = payersMap.get(payerID);
+            if (!payerData) {
+                alert('לא נמצאו נתונים עבור המושך הזה. אנא וודא שהקובץ נטען ושהמספר זהות נכון.');
+                return;
+            }
+            
+            const parameters = calculateAllParameters(payerData, checkAmount);
+            const totalScore = calculateTotalScore(parameters);
+            const letterRating = getLetterRating(totalScore);
+            
+            displayResults(parameters, totalScore, letterRating, payerData);
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        // תצוגת תוצאות
+        function displayResults(parameters, totalScore, letterRating, payerData) {
+            const ratingDisplay = document.getElementById('ratingDisplay');
+            const avgAmount = Math.round(payerData.totalAmount / payerData.transactions.length);
+            const returnedChecks = countReturnedChecks(payerData.id);
+            
+            const externalScoreText = payerData.creditScore && payerData.creditScore.score 
+                ? `${payerData.creditScore.score}${payerData.creditScore.category ? ` (${payerData.creditScore.category})` : ''}`
+                : 'לא זמין';
+            
+            ratingDisplay.innerHTML = `
+                <div class="rating-card">
+                    <div class="rating-score rating-${letterRating}">${letterRating}</div>
+                    <div>דירוג סופי</div>
+                </div>
+                <div class="rating-card">
+                    <div class="rating-score" style="color: #3498db;">${totalScore}</div>
+                    <div>ציון מספרי</div>
+                </div>
+                <div class="rating-card">
+                    <div class="rating-score" style="color: #9b59b6;">${payerData.transactions.length}</div>
+                    <div>עסקאות קודמות</div>
+                </div>
+                <div class="rating-card">
+                    <div class="rating-score" style="color: ${payerData.creditScore?.score > 60 ? '#27ae60' : '#e74c3c'};">${externalScoreText}</div>
+                    <div>דירוג scoreM_N</div>
+                </div>
+            `;
+
+            const parametersDisplay = document.getElementById('parametersDisplay');
+            let parametersHTML = '';
+            
+            Object.keys(ratingParameters).forEach(param => {
+                const paramData = parameters[param];
+                const weight = ratingParameters[param].weight;
+                const name = ratingParameters[param].name;
+                const weighted = Math.round(paramData.normalized * weight);
+                
+                let rawDisplay;
+                if (param === 'checkAmountRatio') {
+                    rawDisplay = paramData.raw.toFixed(2);
+                } else if (param === 'avgCommissionRate') {
+                    rawDisplay = paramData.raw.toFixed(2) + '%';
+                } else if (param === 'historyLength') {
+                    rawDisplay = paramData.raw.toFixed(1) + ' חודשים';
+                } else if (param === 'externalScore') {
+                    rawDisplay = payerData.creditScore && payerData.creditScore.category 
+                        ? `${paramData.raw} (${payerData.creditScore.category})`
+                        : paramData.raw.toString();
+                } else {
+                    rawDisplay = typeof paramData.raw === 'number' ? paramData.raw.toFixed(0) : paramData.raw;
+                }
+                
+                parametersHTML += `
+                    <div class="parameter-row">
+                        <div class="parameter-name">${name}</div>
+                        <div>${Math.round(weight * 100)}%</div>
+                        <div>${rawDisplay}</div>
+                        <div>${Math.round(paramData.normalized)}</div>
+                        <div>${weighted}</div>
+                    </div>
+                `;
+            });
+            
+            parametersDisplay.innerHTML = parametersHTML;
+
+            const recommendation = document.getElementById('recommendation');
+            let recClass, recText;
+            
+            if (totalScore >= 80) {
+                recClass = 'excellent';
+                recText = `✅ מומלץ לאישור - לקוח איכותי עם סיכון נמוך
+                (${payerData.transactions.length} עסקאות, ${returnedChecks} חזרות)`;
+            } else if (totalScore >= 65) {
+                recClass = 'good';
+                recText = `👍 ניתן לאישור בתנאים רגילים - סיכון בינוני נמוך
+                עסקה ממוצעת: ${avgAmount.toLocaleString()} ₪`;
+            } else if (totalScore >= 50) {
+                recClass = 'average';
+                recText = `⚠️ דרוש בדיקה נוספת או תנאים מיוחדים - סיכון בינוני
+                ${payerData.cancelledTransactions > 0 ? `יש ${payerData.cancelledTransactions} ביטולים` : 'אין ביטולים'}`;
+            } else if (totalScore >= 35) {
+                recClass = 'poor';
+                recText = `❌ לא מומלץ או דרושות ערובות נוספות - סיכון גבוה
+                ${returnedChecks} שיקים חוזרים, ${payerData.cancelledTransactions} ביטולים`;
+            } else {
+                recClass = 'danger';
+                recText = `🚫 אין לאשר - סיכון גבוה מאוד
+                נתונים בעייתיים: ${returnedChecks} חזרות, ${payerData.cancelledTransactions} ביטולים`;
+            }
+            
+            recommendation.className = `recommendation ${recClass}`;
+            recommendation.innerHTML = recText;
+        }
+
+        // עדכון סטטוס נתונים
+        function updateDataStatus() {
+            const transactionsCount = payersMap.size;
+            let scoresCount = 0;
+            
+            for (let [id, payer] of payersMap) {
+                if (payer.creditScore && payer.creditScore.score) {
+                    scoresCount++;
+                }
+            }
+            
+            document.getElementById('transactionsStatus').innerHTML = 
+                `<span class="status-loaded">✓ ${transactionsCount} משכים</span>`;
+            document.getElementById('returnedStatus').innerHTML = 
+                `<span class="status-loaded">✓ 0 רשומות</span>`;
+            document.getElementById('warningsStatus').innerHTML = 
+                `<span class="status-loaded">✓ ${scoresCount} דירוגים חיצוניים</span>`;
+                
+            document.getElementById('calculateBtn').disabled = false;
+            
+            showDataPreview();
+        }
+
+        function showDataPreview() {
+            const previewDiv = document.getElementById('dataPreview');
+            let html = '<h5>תצוגה מקדימה של הנתונים:</h5>';
+            
+            if (payersMap.size === 0) {
+                html += '<p style="color: red;">לא נמצאו נתונים תקינים. אנא בדוק את מבנה הקובץ.</p>';
+            } else {
+                html += '<table>';
+                html += '<tr><th>ח.פ. מושך</th><th>שם מושך</th><th>עסקאות</th><th>סך סכום</th><th>דירוג חיצוני</th></tr>';
+                
+                let count = 0;
+                for (let [id, payer] of payersMap) {
+                    if (count >= 5) break;
+                    const externalScore = payer.creditScore && payer.creditScore.score 
+                        ? payer.creditScore.score 
+                        : 'לא זמין';
+                    html += `<tr>
+                        <td>${id}</td>
+                        <td>${payer.name}</td>
+                        <td>${payer.transactions.length}</td>
+                        <td>${payer.totalAmount.toLocaleString()} ₪</td>
+                        <td>${externalScore}</td>
+                    </tr>`;
+                    count++;
+                }
+                
+                html += '</table>';
+                if (payersMap.size > 5) {
+                    html += `<p style="margin-top: 10px; font-style: italic;">ועוד ${payersMap.size - 5} משכים...</p>`;
+                }
+            }
+            
+            previewDiv.innerHTML = html;
+            previewDiv.style.display = 'block';
+        }
+
+        // השלמה אוטומטית
+        function setupAutocomplete() {
+            const payerNameInput = document.getElementById('payerName');
+            const suggestionsDiv = document.getElementById('payerNameSuggestions');
+            
+            payerNameInput.addEventListener('input', function() {
+                const value = this.value.toLowerCase();
+                if (value.length < 2) {
+                    suggestionsDiv.style.display = 'none';
+                    return;
+                }
+                
+                const suggestions = [];
+                for (let [id, payer] of payersMap) {
+                    if (payer.name.toLowerCase().includes(value)) {
+                        suggestions.push({ id: id, name: payer.name });
+                    }
+                    if (suggestions.length >= 10) break;
+                }
+                
+                if (suggestions.length > 0) {
+                    suggestionsDiv.innerHTML = suggestions.map(s => 
+                        `<div class="autocomplete-suggestion" onclick="selectPayer('${s.id}', '${s.name}')">${s.name}</div>`
+                    ).join('');
+                    suggestionsDiv.style.display = 'block';
+                } else {
+                    suggestionsDiv.style.display = 'none';
+                }
+            });
+            
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.form-group')) {
+                    suggestionsDiv.style.display = 'none';
+                }
+            });
+        }
+
+        function selectPayer(id, name) {
+            document.getElementById('payerName').value = name;
+            document.getElementById('payerID').value = id;
+            document.getElementById('payerNameSuggestions').style.display = 'none';
+            
+            const payerData = payersMap.get(id);
+            if (payerData && payerData.transactions.length > 0) {
+                const avgCreditDays = Math.round(payerData.totalCreditDays / payerData.transactions.length);
+                document.getElementById('creditDays').value = avgCreditDays;
+            }
+        }
+
+        // איפוס טופס
+        function resetForm() {
+            document.getElementById('payerName').value = '';
+            document.getElementById('payerID').value = '';
+            document.getElementById('checkAmount').value = '';
+            document.getElementById('creditDays').value = '30';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('payerNameSuggestions').style.display = 'none';
+        }
+
+        // נתוני דוגמה
+        function loadSampleData() {
+            const sampleData = {
+                גיליון1: [
+                    ['סוג עיסקה', 'שם לקוח', 'מ.זהות', 'תחום עיסוק לקוח', 'מספר שיק', 'מזהה שיק', 'ב-ס-ח', 'שם מושך', 'מספר זהות מושך', 'טלפון 1 מושך', 'טלפון 2 מושך', 'כתובת מושך', 'ת.פירעון', 'ת.פרעון בפועל', 'שם מוטב', 'סטטוס', 'עמלה', 'סכום', 'יתרה', 'יעד', 'איש מכירות', 'קטגוריה', 'תחום עיסוק מושך', 'מומלץ לגבייה', 'אחוז עמלה', 'תאריך הפקדה/מסירה'],
+                    ['חיתום', 'ב מ פרינס אחזקה ותשתיות בע"מ', '3333333', 'בנייה', '5021542', '4856', '10-983-15150042', 'עפיף ביאדסה ובניו - חברה לבנין, פיתוח והשקעות בע"מ', '512242595', '046384482', '', 'באקה אלגרביה', '25/12/2017', '25/12/2017', 'ע מוראד לעבודות קרצוף', 'נפרע', '2200', '72300', '0', 'פנינסולה אשראי מסחרי בע"מ', 'בנייה', '1.75', '', '', '', '17/10/2017'],
+                    ['חיתום', 'חברת בנייה חדשה בע"מ', '4444444', 'בנייה', '5021543', '4857', '11-555-123456', 'קבלנות דן בע"מ', '305346900', '052-9876543', '', 'ירושלים', '15/11/2017', '', 'ספק חומרים', 'ביטול', '1500', '50000', '50000', 'פנינסולה אשראי מסחרי בע"מ', 'בנייה', '3.0', '', '', '', '20/10/2017'],
+                    ['חיתום', 'מפעלי מתכת ישראל בע"מ', '5555555', 'תעשייה', '5021544', '4858', '10-777-654321', 'שרה לוי יזמות בע"מ', '123456788', '050-1122334', '', 'פתח תקווה', '10/01/2018', '10/01/2018', 'ספק מתכת', 'נפרע', '1800', '60000', '0', 'פנינסולה אשראי מסחרי בע"מ', 'תעשייה', '3.0', '', '', '', '15/12/2017']
+                ],
+                scoreM_N: [
+                    ['ח.פ', 'שם חברה', 'דירוג', 'קטגוריה'],
+                    ['512242595', 'עפיף ביאדסה ובניו', '75', 'A'],
+                    ['305346900', 'קבלנות דן בע"מ', '45', 'C'],
+                    ['123456788', 'שרה לוי יזמות בע"מ', '68', 'B']
+                ]
+            };
+            
+            excelData = sampleData;
+            processExcelData();
+            updateDataStatus();
+            setupAutocomplete();
+            
+            alert('נתוני דוגמה נטענו בהצלחה! כעת תוכל לבחור מושך ולחשב דירוג.');
+        }
+
+        // מאזין לשינויים בח.פ. מושך
+        document.getElementById('payerID').addEventListener('input', function() {
+            const payerID = this.value.trim();
+            const payerData = payersMap.get(payerID);
+            
+            if (payerData) {
+                document.getElementById('payerName').value = payerData.name;
+                const avgCreditDays = Math.round(payerData.totalCreditDays / payerData.transactions.length);
+                document.getElementById('creditDays').value = avgCreditDays;
+            }
+        });
+    </script>
+</body>
+</html>
                 for (let sheetName in excelData) {
                     if (sheetName.toLowerCase().includes('score') && excelData[sheetName].length > 1) {
                         scoresSheet = excelData[sheetName];
