@@ -4,263 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מערכת חיתום אשראי</title>
+    
+    <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            min-height: 100vh; 
-            direction: rtl; 
-        }
-        .login-screen {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-        .login-card {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        .login-card h1 { color: #2c3e50; margin-bottom: 30px; }
-        .login-form .form-group { margin-bottom: 20px; text-align: right; }
-        .login-form label { display: block; margin-bottom: 5px; font-weight: 600; color: #34495e; }
-        .login-form input { 
-            width: 100%; 
-            padding: 12px; 
-            border: 2px solid #e1e8ed; 
-            border-radius: 8px; 
-            font-size: 14px; 
-        }
-        .login-btn { 
-            background: linear-gradient(135deg, #3498db, #2980b9); 
-            color: white; 
-            padding: 12px 24px; 
-            border: none; 
-            border-radius: 25px; 
-            font-size: 16px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            width: 100%; 
-        }
-        .error-message { color: #e74c3c; margin-top: 10px; font-size: 14px; }
-        .main-app { display: none; }
-        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
-        .header { 
-            background: rgba(255, 255, 255, 0.95); 
-            padding: 20px 30px; 
-            border-radius: 20px; 
-            margin-bottom: 30px; 
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .header-content h1 { color: #2c3e50; font-size: 2.2em; margin-bottom: 5px; }
-        .header-content p { color: #7f8c8d; font-size: 1.1em; }
-        .user-info { text-align: left; }
-        .logout-btn { 
-            background: #e74c3c; 
-            color: white; 
-            padding: 8px 16px; 
-            border: none; 
-            border-radius: 15px; 
-            cursor: pointer; 
-        }
-        .main-content { 
-            display: grid; 
-            grid-template-columns: 1fr 2fr; 
-            gap: 30px; 
-            margin-bottom: 30px; 
-        }
-        .input-section, .results-section { 
-            background: rgba(255, 255, 255, 0.95); 
-            padding: 30px; 
-            border-radius: 20px; 
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); 
-        }
-        .results-section { display: none; }
-        .form-group { margin-bottom: 20px; position: relative; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        label { 
-            display: block; 
-            margin-bottom: 5px; 
-            font-weight: 600; 
-            color: #34495e; 
-            font-size: 14px; 
-        }
-        input { 
-            width: 100%; 
-            padding: 10px 12px; 
-            border: 2px solid #e1e8ed; 
-            border-radius: 8px; 
-            font-size: 14px; 
-        }
-        .btn { 
-            background: linear-gradient(135deg, #3498db, #2980b9); 
-            color: white; 
-            padding: 12px 24px; 
-            border: none; 
-            border-radius: 25px; 
-            font-size: 16px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            width: 100%; 
-            margin-top: 15px; 
-        }
-        .btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-        }
-        .data-status { 
-            background: #f8f9fa; 
-            border-radius: 10px; 
-            padding: 15px; 
-            margin-bottom: 20px; 
-        }
-        .status-item { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 8px 0; 
-            border-bottom: 1px solid #ecf0f1; 
-        }
-        .status-loaded { color: #27ae60; font-weight: 600; }
-        .status-error { color: #e74c3c; font-weight: 600; }
-        .excel-upload-section {
-            margin-bottom: 20px; 
-            padding: 15px; 
-            background: #e8f5e8; 
-            border-radius: 10px; 
-            border: 2px solid #28a745;
-        }
-        .autocomplete-suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-            max-height: 200px;
-            overflow-y: auto;
-            display: none;
-        }
-        .autocomplete-suggestion {
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-        }
-        .autocomplete-suggestion:hover {
-            background: #f0f0f0;
-        }
-        .rating-display { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 20px; 
-            margin-bottom: 30px; 
-        }
-        .rating-card { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 15px; 
-            text-align: center; 
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); 
-        }
-        .rating-score { 
-            font-size: 3em; 
-            font-weight: bold; 
-            margin-bottom: 10px; 
-        }
-        .rating-AAA { color: #27ae60; }
-        .rating-AA { color: #2ecc71; }
-        .rating-A { color: #f39c12; }
-        .rating-BBB { color: #f1c40f; }
-        .rating-BB { color: #e67e22; }
-        .rating-B { color: #e74c3c; }
-        .rating-CCC { color: #c0392b; }
-        .rating-D { color: #8b0000; }
-        .parameters-section { 
-            background: white; 
-            border-radius: 15px; 
-            padding: 20px; 
-            margin-bottom: 20px; 
-        }
-        .parameter-header { 
-            display: grid; 
-            grid-template-columns: 3fr 1fr 1fr 1fr 1fr; 
-            gap: 10px; 
-            padding: 12px; 
-            background: #f8f9fa; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            margin-bottom: 10px; 
-            font-size: 14px;
-        }
-        .parameter-row { 
-            display: grid; 
-            grid-template-columns: 3fr 1fr 1fr 1fr 1fr; 
-            gap: 10px; 
-            padding: 10px 12px; 
-            border-bottom: 1px solid #ecf0f1; 
-            align-items: center; 
-            font-size: 13px;
-        }
-        .parameter-name { font-weight: 600; color: #2c3e50; }
-        .recommendation { 
-            text-align: center; 
-            margin: 20px 0; 
-            font-size: 1.2em; 
-            font-weight: 600; 
-            padding: 25px;
-            border-radius: 15px;
-        }
-        .recommendation.excellent { background: linear-gradient(135deg, #27ae60, #229954); color: white; }
-        .recommendation.good { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; }
-        .recommendation.average { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
-        .recommendation.poor { background: linear-gradient(135deg, #e67e22, #d35400); color: white; }
-        .recommendation.danger { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
-        .data-preview {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .data-preview h5 {
-            margin-bottom: 10px;
-            color: #2c3e50;
-        }
-        .data-preview table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-        .data-preview th, .data-preview td {
-            border: 1px solid #ddd;
-            padding: 5px;
-            text-align: right;
-        }
-        .data-preview th {
-            background: #e9ecef;
-            font-weight: bold;
-        }
-    </style>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+    <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
         <div class="login-card">
             <h1>🏦 מערכת חיתום אשראי</h1>
-            <form class="login-form" onsubmit="return login(event)">
+            <form class="login-form" onsubmit="return loginUser(event)">
                 <div class="form-group">
                     <label for="username">שם משתמש</label>
                     <input type="text" id="username" required>
@@ -275,8 +32,10 @@
         </div>
     </div>
 
+    <!-- Main Application -->
     <div id="mainApp" class="main-app">
         <div class="container">
+            <!-- Header -->
             <div class="header">
                 <div class="header-content">
                     <h1>🏦 מערכת חיתום אשראי מתקדמת</h1>
@@ -284,14 +43,16 @@
                 </div>
                 <div class="user-info">
                     <span id="currentUser"></span><br>
-                    <button onclick="logout()" class="logout-btn">התנתק</button>
+                    <button onclick="logoutUser()" class="logout-btn">התנתק</button>
                 </div>
             </div>
 
             <div class="main-content">
+                <!-- Input Section -->
                 <div class="input-section">
                     <h2 style="margin-bottom: 20px; color: #2c3e50;">נתוני העסקה</h2>
                     
+                    <!-- Data Status -->
                     <div class="data-status">
                         <h3>סטטוס נתונים</h3>
                         <div class="status-item">
@@ -308,23 +69,44 @@
                         </div>
                     </div>
 
+                    <!-- File Upload Section -->
                     <div class="excel-upload-section">
-                        <h4 style="margin-bottom: 15px; color: #2c3e50;">📁 טעינת קובץ חיתום אשראי</h4>
+                        <h4 style="margin-bottom: 15px; color: #2c3e50;">📁 טעינת קבצי נתונים</h4>
                         
-                        <div style="margin-bottom: 15px;">
-                            <label>📊 קובץ Excel עם כל הגיליונות:</label>
-                            <input type="file" id="excelFile" accept=".xlsx,.xls" style="width: 100%; padding: 8px; margin-top: 5px;">
+                        <div style="margin-bottom: 10px;">
+                            <label>📊 קובץ עסקאות ראשי (גיליון1):</label>
+                            <input type="file" id="mainExcelFile" accept=".xlsx,.xls" style="width: 100%; padding: 8px; margin-top: 5px;">
                         </div>
                         
-                        <button onclick="loadExcelFile()" style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            🔄 טען קובץ Excel
+                        <div style="margin-bottom: 10px;">
+                            <label>🏆 קובץ דירוגי אשראי (scoreM_N):</label>
+                            <input type="file" id="scoresFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 8px; margin-top: 5px;">
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <label>📈 קובץ שיקים חוזרים:</label>
+                            <input type="file" id="returnedFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 8px; margin-top: 5px;">
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label>⚠️ קובץ אכ"מ/ביטולים:</label>
+                            <input type="file" id="warningsFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 8px; margin-top: 5px;">
+                        </div>
+                        
+                        <button onclick="loadAllDataFiles()" style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            🔄 טען כל הקבצים
                         </button>
                         
                         <div style="margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 5px; font-size: 12px;">
-                            <strong>🔒 פרטיות מובטחת:</strong> הקובץ נקרא רק במחשב שלך ולא נשלח לשרת
+                            <strong>💡 עצה:</strong> תוכל לטעון קובץ יחיד עם כל הגיליונות או קבצים נפרדים
+                        </div>
+                        
+                        <div style="margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 5px; font-size: 12px;">
+                            <strong>🔒 פרטיות מובטחת:</strong> הקבצים נקראים רק במחשב שלך ולא נשלחים לשרת
                         </div>
                     </div>
 
+                    <!-- Transaction Details Form -->
                     <div class="form-group">
                         <label for="payerName">שם מושך</label>
                         <input type="text" id="payerName" placeholder="הזן או בחר שם מושך" autocomplete="off">
@@ -347,17 +129,20 @@
                         </div>
                     </div>
 
-                    <button class="btn" onclick="calculateCreditRating()" id="calculateBtn" disabled>
+                    <!-- Action Buttons -->
+                    <button class="btn" onclick="performCreditRatingCalculation()" id="calculateBtn" disabled>
                         🧮 חשב דירוג אשראי
                     </button>
 
-                    <button class="btn" style="background: #95a5a6;" onclick="loadSampleData()">
+                    <button class="btn" style="background: #95a5a6;" onclick="loadSampleDataForDemo()">
                         📋 טען נתוני דוגמה לבדיקה
                     </button>
 
+                    <!-- Data Preview -->
                     <div id="dataPreview" class="data-preview" style="display: none;"></div>
                 </div>
 
+                <!-- Results Section -->
                 <div class="results-section" id="resultsSection">
                     <div class="rating-display" id="ratingDisplay"></div>
                     
@@ -376,7 +161,7 @@
                     <div id="recommendation" class="recommendation"></div>
 
                     <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn" style="width: auto; background: #95a5a6;" onclick="resetForm()">
+                        <button class="btn" style="width: auto; background: #95a5a6;" onclick="resetTransactionForm()">
                             🔄 עסקה חדשה
                         </button>
                     </div>
@@ -385,725 +170,22 @@
         </div>
     </div>
 
+    <!-- JavaScript Files -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/fileLoader.js"></script>
+    <script src="js/dataProcessor.js"></script>
+    <script src="js/ratingCalculator.js"></script>
+    <script src="js/ui.js"></script>
+    
+    <!-- Initialize App -->
     <script>
-        // משתנים גלובליים
-        let currentUser = null;
-        let excelData = {};
-        let payersMap = new Map();
-
-        // נתוני משתמשים
-        const users = {
-            'admin': 'admin123',
-            'manager': 'manager456',
-            'analyst': 'analyst789'
-        };
-
-        // פרמטרי דירוג - מוגדרים בתחילת הקוד
-        const ratingParameters = {
-            historyLength: { weight: 0.12, name: 'אורך היסטוריה' },
-            transactionCount: { weight: 0.10, name: 'כמות עסקאות' },
-            averageAmount: { weight: 0.08, name: 'עסקה ממוצעת' },
-            totalAmount: { weight: 0.06, name: 'סך עסקאות' },
-            avgCreditDays: { weight: 0.08, name: 'ימי אשראי ממוצעים' },
-            avgCommissionRate: { weight: 0.06, name: 'שיעור עמלה ממוצע' },
-            returnedChecks: { weight: 0.15, name: 'שיקים חוזרים' },
-            cancellations: { weight: 0.10, name: 'אכ"מ/ביטולים' },
-            checkAmountRatio: { weight: 0.08, name: 'יחס סכום עסקה' },
-            externalScore: { weight: 0.17, name: 'דירוג חיצוני (scoreM_N)' }
-        };
-
-        // פונקציות התחברות
-        function login(event) {
-            event.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const errorDiv = document.getElementById('loginError');
-
-            if (users[username] && users[username] === password) {
-                currentUser = username;
-                document.getElementById('currentUser').textContent = `משתמש: ${username}`;
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
-            } else {
-                errorDiv.textContent = 'שם משתמש או סיסמה שגויים';
-                errorDiv.style.display = 'block';
-            }
-        }
-
-        function logout() {
-            currentUser = null;
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('mainApp').style.display = 'none';
-            resetForm();
-        }
-
-        // טעינת קובץ Excel
-        async function loadExcelFile() {
-            const fileInput = document.getElementById('excelFile');
-            const file = fileInput.files[0];
-            
-            if (!file) {
-                alert('אנא בחר קובץ Excel');
-                return;
-            }
-
-            try {
-                console.log('קורא קובץ:', file.name);
-                const arrayBuffer = await file.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                
-                console.log('גיליונות שנמצאו:', workbook.SheetNames);
-                
-                excelData = {};
-                
-                workbook.SheetNames.forEach(sheetName => {
-                    console.log(`טוען גיליון: ${sheetName}`);
-                    const worksheet = workbook.Sheets[sheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
-                        header: 1,
-                        defval: ''
-                    });
-                    excelData[sheetName] = jsonData;
-                    console.log(`גיליון ${sheetName}: ${jsonData.length} שורות`);
-                });
-
-                processExcelData();
-                updateDataStatus();
-                setupAutocomplete();
-                
-                if (payersMap.size > 0) {
-                    alert(`הקובץ נטען בהצלחה! נמצאו ${payersMap.size} משכים.`);
-                } else {
-                    alert('הקובץ נטען אך לא נמצאו נתונים תקינים. אנא בדוק את תצוגת הנתונים המקדימה.');
-                }
-                
-            } catch (error) {
-                console.error('שגיאה בטעינת הקובץ:', error);
-                alert('שגיאה בטעינת הקובץ: ' + error.message);
-            }
-        }
-
-        // עיבוד נתוני Excel
-        function processExcelData() {
-            console.log('עיבוד נתוני Excel...', excelData);
-            
-            Object.keys(excelData).forEach(sheetName => {
-                console.log(`גיליון: ${sheetName}, שורות: ${excelData[sheetName].length}`);
-            });
-            
-            processTransactionsData();
-            processCreditScoresData();
-        }
-
-        function processTransactionsData() {
-            let mainSheet = null;
-            let sheetName = '';
-            
-            // חיפוש הגיליון הראשי
-            const possibleNames = ['גיליון1', 'Sheet1', 'גיליון 1'];
-            for (let name of possibleNames) {
-                if (excelData[name] && excelData[name].length > 1) {
-                    mainSheet = excelData[name];
-                    sheetName = name;
-                    break;
-                }
-            }
-            
-            // אם לא נמצא, חפש גיליון עם נתוני עסקאות
-            if (!mainSheet) {
-                for (let name in excelData) {
-                    if (excelData[name].length > 1 && !name.toLowerCase().includes('score')) {
-                        mainSheet = excelData[name];
-                        sheetName = name;
-                        console.log(`נמצא גיליון עם נתוני עסקאות: ${name}`);
-                        break;
-                    }
-                }
-            }
-            
-            if (!mainSheet) {
-                console.error('לא נמצא גיליון עם נתוני עסקאות');
-                return;
-            }
-            
-            // חיפוש שורת כותרות
-            let headersRowIndex = 0;
-            for (let i = 0; i < Math.min(5, mainSheet.length); i++) {
-                const row = mainSheet[i];
-                if (row.some(cell => 
-                    cell && (cell.toString().includes('שם מושך') || 
-                            cell.toString().includes('מספר זהות מושך') ||
-                            cell.toString().includes('סכום'))
-                )) {
-                    headersRowIndex = i;
-                    console.log(`נמצאה שורת כותרות בשורה ${i + 1} בגיליון ${sheetName}`);
-                    break;
-                }
-            }
-            
-            const headers = mainSheet[headersRowIndex];
-            const rows = mainSheet.slice(headersRowIndex + 1);
-            
-            console.log('כותרות הגיליון:', headers);
-            
-            payersMap.clear();
-            
-            // מיפוי עמודות
-            const getColumnIndex = (columnName) => {
-                return headers.findIndex(header => 
-                    header && header.toString().trim() === columnName
-                );
-            };
-            
-            const payerNameIndex = getColumnIndex('שם מושך');
-            const payerIDIndex = getColumnIndex('מספר זהות מושך');
-            const amountIndex = getColumnIndex('סכום');
-            const commissionIndex = getColumnIndex('עמלה');
-            const statusIndex = getColumnIndex('סטטוס');
-            const dateIndex = getColumnIndex('תאריך הפקדה/מסירה');
-            
-            console.log('אינדקסי עמודות:', {
-                payerName: payerNameIndex,
-                payerID: payerIDIndex,
-                amount: amountIndex,
-                commission: commissionIndex,
-                status: statusIndex,
-                date: dateIndex
-            });
-            
-            if (payerNameIndex === -1 || payerIDIndex === -1 || amountIndex === -1) {
-                console.error('לא נמצאו עמודות חיוניות בנתוני עסקאות');
-                return;
-            }
-            
-            let processedRows = 0;
-            
-            rows.forEach((row, index) => {
-                if (!row || row.length === 0) return;
-                
-                const payerName = row[payerNameIndex] ? row[payerNameIndex].toString().trim() : '';
-                const payerID = row[payerIDIndex] ? row[payerIDIndex].toString().trim() : '';
-                const amount = parseFloat(row[amountIndex]) || 0;
-                const commission = parseFloat(row[commissionIndex]) || 0;
-                const status = row[statusIndex] ? row[statusIndex].toString().trim() : '';
-                const transactionDate = row[dateIndex] ? row[dateIndex].toString() : '';
-                
-                if (payerID && payerName && amount > 0) {
-                    if (!payersMap.has(payerID)) {
-                        payersMap.set(payerID, {
-                            name: payerName,
-                            id: payerID,
-                            transactions: [],
-                            totalAmount: 0,
-                            totalCommission: 0,
-                            totalCreditDays: 0,
-                            firstTransaction: null,
-                            lastTransaction: null,
-                            cancelledTransactions: 0,
-                            creditScore: null
-                        });
-                    }
-                    
-                    const payer = payersMap.get(payerID);
-                    const creditDays = 30; // ברירת מחדל
-                    
-                    payer.transactions.push({
-                        amount: amount,
-                        creditDays: creditDays,
-                        commission: commission,
-                        date: transactionDate,
-                        status: status
-                    });
-                    
-                    payer.totalAmount += amount;
-                    payer.totalCommission += commission;
-                    payer.totalCreditDays += creditDays;
-                    
-                    // ספירת ביטולים
-                    const statusLower = status.toLowerCase();
-                    if (statusLower.includes('ביטול') || statusLower.includes('אכ"מ') || 
-                        statusLower.includes('מוגבל') || statusLower.includes('בוטל')) {
-                        payer.cancelledTransactions++;
-                    }
-                    
-                    if (!payer.firstTransaction || transactionDate < payer.firstTransaction) {
-                        payer.firstTransaction = transactionDate;
-                    }
-                    if (!payer.lastTransaction || transactionDate > payer.lastTransaction) {
-                        payer.lastTransaction = transactionDate;
-                    }
-                    
-                    processedRows++;
-                }
-            });
-            
-            console.log(`עובדו ${processedRows} שורות עסקאות מתוך ${rows.length}`);
-            console.log(`נמצאו ${payersMap.size} משכים ייחודיים`);
-        }
-
-        function processCreditScoresData() {
-            let scoresSheet = null;
-            let scoresSheetName = '';
-            
-            // חיפוש גיליון דירוגים
-            const possibleNames = ['scoreM_N', 'Score_M_N', 'scores', 'דירוגים'];
-            for (let name of possibleNames) {
-                if (excelData[name] && excelData[name].length > 1) {
-                    scoresSheet = excelData[name];
-                    scoresSheetName = name;
-                    break;
-                }
-            }
-            
-            // חיפוש בשמות שמכילים score
-            if (!scoresSheet) {
-                console.log('לא נמצא גיליון דירוגי אשראי (scoreM_N)');
-                return;
-            }
-            
-            console.log(`עיבוד גיליון דירוגים: ${scoresSheetName}`);
-            
-            // חיפוש שורת כותרות
-            let headersRowIndex = 0;
-            for (let i = 0; i < Math.min(3, scoresSheet.length); i++) {
-                const row = scoresSheet[i];
-                if (row.some(cell => 
-                    cell && (cell.toString().includes('ח.פ') || 
-                            cell.toString().includes('זהות') ||
-                            cell.toString().includes('דירוג') ||
-                            cell.toString().includes('ציון'))
-                )) {
-                    headersRowIndex = i;
-                    break;
-                }
-            }
-            
-            const scoresHeaders = scoresSheet[headersRowIndex];
-            const scoresRows = scoresSheet.slice(headersRowIndex + 1);
-            
-            console.log('כותרות גיליון דירוגים:', scoresHeaders);
-            
-            // מיפוי עמודות דירוגים
-            const findScoreColumnIndex = (possibleNames) => {
-                for (let name of possibleNames) {
-                    const index = scoresHeaders.findIndex(header => 
-                        header && header.toString().toLowerCase().includes(name.toLowerCase())
-                    );
-                    if (index !== -1) return index;
-                }
-                return -1;
-            };
-            
-            const payerIDIndex = findScoreColumnIndex(['ח.פ', 'מספר זהות', 'זהות', 'id']);
-            const scoreIndex = findScoreColumnIndex(['דירוג', 'ציון', 'score', 'rating']);
-            const categoryIndex = findScoreColumnIndex(['קטגוריה', 'סיווג', 'category']);
-            
-            console.log('אינדקסי דירוגים:', { payerID: payerIDIndex, score: scoreIndex, category: categoryIndex });
-            
-            if (payerIDIndex === -1) {
-                console.log('לא נמצאה עמודת מספר זהות בגיליון דירוגים');
-                return;
-            }
-            
-            let scoresProcessed = 0;
-            
-            scoresRows.forEach((row, index) => {
-                if (!row || row.length === 0) return;
-                
-                const payerID = row[payerIDIndex] ? row[payerIDIndex].toString().trim() : '';
-                const score = scoreIndex !== -1 ? parseFloat(row[scoreIndex]) : null;
-                const category = categoryIndex !== -1 ? row[categoryIndex] : null;
-                
-                if (payerID && payersMap.has(payerID)) {
-                    const payer = payersMap.get(payerID);
-                    payer.creditScore = {
-                        score: score,
-                        category: category
-                    };
-                    scoresProcessed++;
-                    console.log(`עודכן דירוג עבור ${payerID}: ${score}`);
-                }
-            });
-            
-            console.log(`עובדו ${scoresProcessed} דירוגי אשראי`);
-        }
-
-        // חישוב פרמטרים
-        function calculateAllParameters(payerData, checkAmount) {
-            const now = new Date();
-            const firstDate = new Date(payerData.firstTransaction);
-            const historyMonths = Math.max(1, (now - firstDate) / (1000 * 60 * 60 * 24 * 30));
-            
-            const avgAmount = payerData.totalAmount / payerData.transactions.length;
-            const avgCreditDays = payerData.totalCreditDays / payerData.transactions.length;
-            const avgCommissionRate = (payerData.totalCommission / payerData.totalAmount) * 100;
-            
-            const returnedChecks = countReturnedChecks(payerData.id);
-            const cancellations = payerData.cancelledTransactions;
-            
-            let externalScore = 50;
-            if (payerData.creditScore && payerData.creditScore.score) {
-                externalScore = payerData.creditScore.score;
-            }
-            
-            return {
-                historyLength: { 
-                    raw: historyMonths, 
-                    normalized: Math.min(100, historyMonths * 2) 
-                },
-                transactionCount: { 
-                    raw: payerData.transactions.length, 
-                    normalized: Math.min(100, payerData.transactions.length * 2) 
-                },
-                averageAmount: { 
-                    raw: avgAmount, 
-                    normalized: Math.min(100, (avgAmount / 100000) * 50) 
-                },
-                totalAmount: { 
-                    raw: payerData.totalAmount, 
-                    normalized: Math.min(100, (payerData.totalAmount / 1000000) * 30) 
-                },
-                avgCreditDays: { 
-                    raw: avgCreditDays, 
-                    normalized: Math.max(0, 100 - (avgCreditDays - 30) * 2) 
-                },
-                avgCommissionRate: { 
-                    raw: avgCommissionRate, 
-                    normalized: Math.max(0, 100 - avgCommissionRate * 10) 
-                },
-                returnedChecks: { 
-                    raw: returnedChecks, 
-                    normalized: Math.max(0, 100 - returnedChecks * 20) 
-                },
-                cancellations: { 
-                    raw: cancellations, 
-                    normalized: Math.max(0, 100 - cancellations * 15) 
-                },
-                checkAmountRatio: { 
-                    raw: checkAmount / avgAmount, 
-                    normalized: Math.min(100, Math.max(0, 100 - Math.abs(1 - (checkAmount / avgAmount)) * 50)) 
-                },
-                externalScore: {
-                    raw: externalScore,
-                    normalized: externalScore
-                }
-            };
-        }
-
-        function countReturnedChecks(payerID) {
-            // בדיקה בסיסית - אם אין נתוני שיקים חוזרים
-            return 0;
-        }
-
-        function calculateTotalScore(parameters) {
-            let totalScore = 0;
-            
-            Object.keys(ratingParameters).forEach(param => {
-                if (parameters[param]) {
-                    const paramData = parameters[param];
-                    const weight = ratingParameters[param].weight;
-                    totalScore += (paramData.normalized * weight);
-                }
-            });
-            
-            return Math.round(totalScore);
-        }
-
-        function getLetterRating(score) {
-            if (score >= 90) return 'AAA';
-            if (score >= 80) return 'AA';
-            if (score >= 70) return 'A';
-            if (score >= 60) return 'BBB';
-            if (score >= 50) return 'BB';
-            if (score >= 40) return 'B';
-            if (score >= 30) return 'CCC';
-            return 'D';
-        }
-
-        // חישוב דירוג אשראי
-        function calculateCreditRating() {
-            const payerID = document.getElementById('payerID').value.trim();
-            const checkAmount = parseFloat(document.getElementById('checkAmount').value) || 0;
-            
-            if (!payerID || !checkAmount) {
-                alert('אנא מלא את כל השדות הנדרשים');
-                return;
-            }
-            
-            const payerData = payersMap.get(payerID);
-            if (!payerData) {
-                alert('לא נמצאו נתונים עבור המושך הזה. אנא וודא שהקובץ נטען ושהמספר זהות נכון.');
-                return;
-            }
-            
-            const parameters = calculateAllParameters(payerData, checkAmount);
-            const totalScore = calculateTotalScore(parameters);
-            const letterRating = getLetterRating(totalScore);
-            
-            displayResults(parameters, totalScore, letterRating, payerData);
-            document.getElementById('resultsSection').style.display = 'block';
-        }
-
-        // תצוגת תוצאות
-        function displayResults(parameters, totalScore, letterRating, payerData) {
-            const ratingDisplay = document.getElementById('ratingDisplay');
-            const avgAmount = Math.round(payerData.totalAmount / payerData.transactions.length);
-            const returnedChecks = countReturnedChecks(payerData.id);
-            
-            const externalScoreText = payerData.creditScore && payerData.creditScore.score 
-                ? `${payerData.creditScore.score}${payerData.creditScore.category ? ` (${payerData.creditScore.category})` : ''}`
-                : 'לא זמין';
-            
-            ratingDisplay.innerHTML = `
-                <div class="rating-card">
-                    <div class="rating-score rating-${letterRating}">${letterRating}</div>
-                    <div>דירוג סופי</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score" style="color: #3498db;">${totalScore}</div>
-                    <div>ציון מספרי</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score" style="color: #9b59b6;">${payerData.transactions.length}</div>
-                    <div>עסקאות קודמות</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score" style="color: ${payerData.creditScore?.score > 60 ? '#27ae60' : '#e74c3c'};">${externalScoreText}</div>
-                    <div>דירוג scoreM_N</div>
-                </div>
-            `;
-
-            const parametersDisplay = document.getElementById('parametersDisplay');
-            let parametersHTML = '';
-            
-            Object.keys(ratingParameters).forEach(param => {
-                const paramData = parameters[param];
-                const weight = ratingParameters[param].weight;
-                const name = ratingParameters[param].name;
-                const weighted = Math.round(paramData.normalized * weight);
-                
-                let rawDisplay;
-                if (param === 'checkAmountRatio') {
-                    rawDisplay = paramData.raw.toFixed(2);
-                } else if (param === 'avgCommissionRate') {
-                    rawDisplay = paramData.raw.toFixed(2) + '%';
-                } else if (param === 'historyLength') {
-                    rawDisplay = paramData.raw.toFixed(1) + ' חודשים';
-                } else if (param === 'externalScore') {
-                    rawDisplay = payerData.creditScore && payerData.creditScore.category 
-                        ? `${paramData.raw} (${payerData.creditScore.category})`
-                        : paramData.raw.toString();
-                } else {
-                    rawDisplay = typeof paramData.raw === 'number' ? paramData.raw.toFixed(0) : paramData.raw;
-                }
-                
-                parametersHTML += `
-                    <div class="parameter-row">
-                        <div class="parameter-name">${name}</div>
-                        <div>${Math.round(weight * 100)}%</div>
-                        <div>${rawDisplay}</div>
-                        <div>${Math.round(paramData.normalized)}</div>
-                        <div>${weighted}</div>
-                    </div>
-                `;
-            });
-            
-            parametersDisplay.innerHTML = parametersHTML;
-
-            const recommendation = document.getElementById('recommendation');
-            let recClass, recText;
-            
-            if (totalScore >= 80) {
-                recClass = 'excellent';
-                recText = `✅ מומלץ לאישור - לקוח איכותי עם סיכון נמוך
-                (${payerData.transactions.length} עסקאות, ${returnedChecks} חזרות)`;
-            } else if (totalScore >= 65) {
-                recClass = 'good';
-                recText = `👍 ניתן לאישור בתנאים רגילים - סיכון בינוני נמוך
-                עסקה ממוצעת: ${avgAmount.toLocaleString()} ₪`;
-            } else if (totalScore >= 50) {
-                recClass = 'average';
-                recText = `⚠️ דרוש בדיקה נוספת או תנאים מיוחדים - סיכון בינוני
-                ${payerData.cancelledTransactions > 0 ? `יש ${payerData.cancelledTransactions} ביטולים` : 'אין ביטולים'}`;
-            } else if (totalScore >= 35) {
-                recClass = 'poor';
-                recText = `❌ לא מומלץ או דרושות ערובות נוספות - סיכון גבוה
-                ${returnedChecks} שיקים חוזרים, ${payerData.cancelledTransactions} ביטולים`;
-            } else {
-                recClass = 'danger';
-                recText = `🚫 אין לאשר - סיכון גבוה מאוד
-                נתונים בעייתיים: ${returnedChecks} חזרות, ${payerData.cancelledTransactions} ביטולים`;
-            }
-            
-            recommendation.className = `recommendation ${recClass}`;
-            recommendation.innerHTML = recText;
-        }
-
-        // עדכון סטטוס נתונים
-        function updateDataStatus() {
-            const transactionsCount = payersMap.size;
-            let scoresCount = 0;
-            
-            for (let [id, payer] of payersMap) {
-                if (payer.creditScore && payer.creditScore.score) {
-                    scoresCount++;
-                }
-            }
-            
-            document.getElementById('transactionsStatus').innerHTML = 
-                `<span class="status-loaded">✓ ${transactionsCount} משכים</span>`;
-            document.getElementById('returnedStatus').innerHTML = 
-                `<span class="status-loaded">✓ 0 רשומות</span>`;
-            document.getElementById('warningsStatus').innerHTML = 
-                `<span class="status-loaded">✓ ${scoresCount} דירוגים חיצוניים</span>`;
-                
-            document.getElementById('calculateBtn').disabled = false;
-            
-            showDataPreview();
-        }
-
-        function showDataPreview() {
-            const previewDiv = document.getElementById('dataPreview');
-            let html = '<h5>תצוגה מקדימה של הנתונים:</h5>';
-            
-            if (payersMap.size === 0) {
-                html += '<p style="color: red;">לא נמצאו נתונים תקינים. אנא בדוק את מבנה הקובץ.</p>';
-            } else {
-                html += '<table>';
-                html += '<tr><th>ח.פ. מושך</th><th>שם מושך</th><th>עסקאות</th><th>סך סכום</th><th>דירוג חיצוני</th></tr>';
-                
-                let count = 0;
-                for (let [id, payer] of payersMap) {
-                    if (count >= 5) break;
-                    const externalScore = payer.creditScore && payer.creditScore.score 
-                        ? payer.creditScore.score 
-                        : 'לא זמין';
-                    html += `<tr>
-                        <td>${id}</td>
-                        <td>${payer.name}</td>
-                        <td>${payer.transactions.length}</td>
-                        <td>${payer.totalAmount.toLocaleString()} ₪</td>
-                        <td>${externalScore}</td>
-                    </tr>`;
-                    count++;
-                }
-                
-                html += '</table>';
-                if (payersMap.size > 5) {
-                    html += `<p style="margin-top: 10px; font-style: italic;">ועוד ${payersMap.size - 5} משכים...</p>`;
-                }
-            }
-            
-            previewDiv.innerHTML = html;
-            previewDiv.style.display = 'block';
-        }
-
-        // השלמה אוטומטית
-        function setupAutocomplete() {
-            const payerNameInput = document.getElementById('payerName');
-            const suggestionsDiv = document.getElementById('payerNameSuggestions');
-            
-            payerNameInput.addEventListener('input', function() {
-                const value = this.value.toLowerCase();
-                if (value.length < 2) {
-                    suggestionsDiv.style.display = 'none';
-                    return;
-                }
-                
-                const suggestions = [];
-                for (let [id, payer] of payersMap) {
-                    if (payer.name.toLowerCase().includes(value)) {
-                        suggestions.push({ id: id, name: payer.name });
-                    }
-                    if (suggestions.length >= 10) break;
-                }
-                
-                if (suggestions.length > 0) {
-                    suggestionsDiv.innerHTML = suggestions.map(s => 
-                        `<div class="autocomplete-suggestion" onclick="selectPayer('${s.id}', '${s.name}')">${s.name}</div>`
-                    ).join('');
-                    suggestionsDiv.style.display = 'block';
-                } else {
-                    suggestionsDiv.style.display = 'none';
-                }
-            });
-            
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.form-group')) {
-                    suggestionsDiv.style.display = 'none';
-                }
-            });
-        }
-
-        function selectPayer(id, name) {
-            document.getElementById('payerName').value = name;
-            document.getElementById('payerID').value = id;
-            document.getElementById('payerNameSuggestions').style.display = 'none';
-            
-            const payerData = payersMap.get(id);
-            if (payerData && payerData.transactions.length > 0) {
-                const avgCreditDays = Math.round(payerData.totalCreditDays / payerData.transactions.length);
-                document.getElementById('creditDays').value = avgCreditDays;
-            }
-        }
-
-        // איפוס טופס
-        function resetForm() {
-            document.getElementById('payerName').value = '';
-            document.getElementById('payerID').value = '';
-            document.getElementById('checkAmount').value = '';
-            document.getElementById('creditDays').value = '30';
-            document.getElementById('resultsSection').style.display = 'none';
-            document.getElementById('payerNameSuggestions').style.display = 'none';
-        }
-
-        // נתוני דוגמה
-        function loadSampleData() {
-            const sampleData = {
-                גיליון1: [
-                    ['סוג עיסקה', 'שם לקוח', 'מ.זהות', 'תחום עיסוק לקוח', 'מספר שיק', 'מזהה שיק', 'ב-ס-ח', 'שם מושך', 'מספר זהות מושך', 'טלפון 1 מושך', 'טלפון 2 מושך', 'כתובת מושך', 'ת.פירעון', 'ת.פרעון בפועל', 'שם מוטב', 'סטטוס', 'עמלה', 'סכום', 'יתרה', 'יעד', 'איש מכירות', 'קטגוריה', 'תחום עיסוק מושך', 'מומלץ לגבייה', 'אחוז עמלה', 'תאריך הפקדה/מסירה'],
-                    ['חיתום', 'ב מ פרינס אחזקה ותשתיות בע"מ', '3333333', 'בנייה', '5021542', '4856', '10-983-15150042', 'עפיף ביאדסה ובניו - חברה לבנין, פיתוח והשקעות בע"מ', '512242595', '046384482', '', 'באקה אלגרביה', '25/12/2017', '25/12/2017', 'ע מוראד לעבודות קרצוף', 'נפרע', '2200', '72300', '0', 'פנינסולה אשראי מסחרי בע"מ', 'בנייה', '1.75', '', '', '', '17/10/2017'],
-                    ['חיתום', 'חברת בנייה חדשה בע"מ', '4444444', 'בנייה', '5021543', '4857', '11-555-123456', 'קבלנות דן בע"מ', '305346900', '052-9876543', '', 'ירושלים', '15/11/2017', '', 'ספק חומרים', 'ביטול', '1500', '50000', '50000', 'פנינסולה אשראי מסחרי בע"מ', 'בנייה', '3.0', '', '', '', '20/10/2017'],
-                    ['חיתום', 'מפעלי מתכת ישראל בע"מ', '5555555', 'תעשייה', '5021544', '4858', '10-777-654321', 'שרה לוי יזמות בע"מ', '123456788', '050-1122334', '', 'פתח תקווה', '10/01/2018', '10/01/2018', 'ספק מתכת', 'נפרע', '1800', '60000', '0', 'פנינסולה אשראי מסחרי בע"מ', 'תעשייה', '3.0', '', '', '', '15/12/2017']
-                ],
-                scoreM_N: [
-                    ['ח.פ', 'שם חברה', 'דירוג', 'קטגוריה'],
-                    ['512242595', 'עפיף ביאדסה ובניו', '75', 'A'],
-                    ['305346900', 'קבלנות דן בע"מ', '45', 'C'],
-                    ['123456788', 'שרה לוי יזמות בע"מ', '68', 'B']
-                ]
-            };
-            
-            excelData = sampleData;
-            processExcelData();
-            updateDataStatus();
-            setupAutocomplete();
-            
-            alert('נתוני דוגמה נטענו בהצלחה! כעת תוכל לבחור מושך ולחשב דירוג.');
-        }
-
-        // מאזין לשינויים בח.פ. מושך
-        document.getElementById('payerID').addEventListener('input', function() {
-            const payerID = this.value.trim();
-            const payerData = payersMap.get(payerID);
-            
-            if (payerData) {
-                document.getElementById('payerName').value = payerData.name;
-                const avgCreditDays = Math.round(payerData.totalCreditDays / payerData.transactions.length);
-                document.getElementById('creditDays').value = avgCreditDays;
-            }
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 מערכת חיתום אשראי נטענה בהצלחה');
+            initializeApplication();
         });
     </script>
 </body>
 </html>
-                for (let sheetName in excelData) {
-                    if (sheetName.toLowerCase().includes('score') && excelData[sheetName].length > 1) {
-                        scoresSheet = excelData[sheetName];
-                        scoresSheetName = sheetName;
-                        console.log(`נמצא גיליון דירוגים: ${sheetName}`);
-                        break;
-                    }
-                }
-            }
-            
-            if (!scoresSheet) {
