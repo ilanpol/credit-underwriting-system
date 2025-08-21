@@ -1,0 +1,70 @@
+/**
+ * קובץ הגדרות מערכת חיתום אשראי
+ * כולל משתנים גלובליים, הגדרות מערכת ופרמטרי דירוג
+ */
+
+// 🔐 משתני מערכת גלובליים
+window.CreditSystem = {
+    // מצב הגדרות מערכת
+    currentUser: null,
+    isInitialized: false,
+    
+    // נתוני מערכת
+    excelData: {},
+    payersMap: new Map(),
+    
+    // הגדרות ממשק
+    ui: {
+        autocompleteSuggestions: 10,
+        previewRowsLimit: 5
+    }
+};
+
+// 👥 נתוני משתמשים מורשים
+const SYSTEM_USERS = {
+    'admin': 'admin123',
+    'manager': 'manager456', 
+    'analyst': 'analyst789',
+    'demo': 'demo123'
+};
+
+// ⚖️ פרמטרי דירוג אשראי עם משקולות
+const RATING_PARAMETERS = {
+    historyLength: { 
+        weight: 0.12, 
+        name: 'אורך היסטוריה',
+        description: 'מספר חודשים של היסטוריית עסקאות עם המושך'
+    },
+    transactionCount: { 
+        weight: 0.10, 
+        name: 'כמות עסקאות',
+        description: 'מספר העסקאות הכולל עם המושך'
+    },
+    averageAmount: { 
+        weight: 0.08, 
+        name: 'עסקה ממוצעת',
+        description: 'סכום העסקה הממוצע'
+    },
+    totalAmount: { 
+        weight: 0.06, 
+        name: 'סך עסקאות',
+        description: 'סכום כולל של כל העסקאות'
+    },
+    avgCreditDays: { 
+        weight: 0.08, 
+        name: 'ימי אשראי ממוצעים',
+        description: 'מספר ימי האשראי הממוצע'
+    },
+    avgCommissionRate: { 
+        weight: 0.06, 
+        name: 'שיעור עמלה ממוצע',
+        description: 'אחוז העמלה הממוצע'
+    },
+    returnedChecks: { 
+        weight: 0.15, 
+        name: 'שיקים חוזרים',
+        description: 'מספר השיקים שחזרו מחוסר כיסוי'
+    },
+    cancellations: { 
+        weight: 0.10, 
+        name: 'אכ"מ/
