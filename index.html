@@ -303,7 +303,7 @@
                             <span id="returnedStatus" class="status-error">❌ לא נטען</span>
                         </div>
                         <div class="status-item">
-                            <span>⚠️ אכ"מ/ביטולים</span>
+                            <span>⚠️ דירוגים חיצוניים</span>
                             <span id="warningsStatus" class="status-error">❌ לא נטען</span>
                         </div>
                     </div>
@@ -386,34 +386,33 @@
     </div>
 
     <script>
+        // משתנים גלובליים
         let currentUser = null;
-        let excelData = {
-            גיליון1: [],
-            שיקים_חוזרים: [],
-            final_csv_updated: [],
-            אלפון_לקוחות: []
-        };
+        let excelData = {};
         let payersMap = new Map();
 
+        // נתוני משתמשים
         const users = {
             'admin': 'admin123',
             'manager': 'manager456',
             'analyst': 'analyst789'
         };
 
-        // פרמטרי הדירוג עם משקולות מתוך האקסל שלך
+        // פרמטרי דירוג - מוגדרים בתחילת הקוד
         const ratingParameters = {
-            historyLength: { weight: 0.15, name: 'אורך היסטוריה' },
-            transactionCount: { weight: 0.12, name: 'כמות עסקאות' },
-            averageAmount: { weight: 0.10, name: 'עסקה ממוצעת' },
-            totalAmount: { weight: 0.08, name: 'סך עסקאות' },
-            avgCreditDays: { weight: 0.10, name: 'ימי אשראי ממוצעים' },
-            avgCommissionRate: { weight: 0.08, name: 'שיעור עמלה ממוצע' },
+            historyLength: { weight: 0.12, name: 'אורך היסטוריה' },
+            transactionCount: { weight: 0.10, name: 'כמות עסקאות' },
+            averageAmount: { weight: 0.08, name: 'עסקה ממוצעת' },
+            totalAmount: { weight: 0.06, name: 'סך עסקאות' },
+            avgCreditDays: { weight: 0.08, name: 'ימי אשראי ממוצעים' },
+            avgCommissionRate: { weight: 0.06, name: 'שיעור עמלה ממוצע' },
             returnedChecks: { weight: 0.15, name: 'שיקים חוזרים' },
-            cancellations: { weight: 0.12, name: 'אכ"מ/ביטולים' },
-            checkAmountRatio: { weight: 0.10, name: 'יחס סכום עסקה' }
+            cancellations: { weight: 0.10, name: 'אכ"מ/ביטולים' },
+            checkAmountRatio: { weight: 0.08, name: 'יחס סכום עסקה' },
+            externalScore: { weight: 0.17, name: 'דירוג חיצוני (scoreM_N)' }
         };
 
+        // פונקציות התחברות
         function login(event) {
             event.preventDefault();
             const username = document.getElementById('username').value;
@@ -438,6 +437,7 @@
             resetForm();
         }
 
+        // טעינת קובץ Excel
         async function loadExcelFile() {
             const fileInput = document.getElementById('excelFile');
             const file = fileInput.files[0];
@@ -448,21 +448,34 @@
             }
 
             try {
+                console.log('קורא קובץ:', file.name);
                 const arrayBuffer = await file.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 
-                // טעינת כל הגיליונות
+                console.log('גיליונות שנמצאו:', workbook.SheetNames);
+                
+                excelData = {};
+                
                 workbook.SheetNames.forEach(sheetName => {
+                    console.log(`טוען גיליון: ${sheetName}`);
                     const worksheet = workbook.Sheets[sheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+                        header: 1,
+                        defval: ''
+                    });
                     excelData[sheetName] = jsonData;
+                    console.log(`גיליון ${sheetName}: ${jsonData.length} שורות`);
                 });
 
                 processExcelData();
                 updateDataStatus();
                 setupAutocomplete();
                 
-                alert('הקובץ נטען בהצלחה! כעת תוכל לבחור מושך ולחשב דירוג.');
+                if (payersMap.size > 0) {
+                    alert(`הקובץ נטען בהצלחה! נמצאו ${payersMap.size} משכים.`);
+                } else {
+                    alert('הקובץ נטען אך לא נמצאו נתונים תקינים. אנא בדוק את תצוגת הנתונים המקדימה.');
+                }
                 
             } catch (error) {
                 console.error('שגיאה בטעינת הקובץ:', error);
@@ -470,416 +483,188 @@
             }
         }
 
+        // עיבוד נתוני Excel
         function processExcelData() {
-            // עיבוד נתוני גיליון1 (עסקאות)
-            if (excelData.גיליון1 && excelData.גיליון1.length > 1) {
-                const headers = excelData.גיליון1[0];
-                const rows = excelData.גיליון1.slice(1);
+            console.log('עיבוד נתוני Excel...', excelData);
+            
+            Object.keys(excelData).forEach(sheetName => {
+                console.log(`גיליון: ${sheetName}, שורות: ${excelData[sheetName].length}`);
+            });
+            
+            processTransactionsData();
+            processCreditScoresData();
+        }
+
+        function processTransactionsData() {
+            let mainSheet = null;
+            let sheetName = '';
+            
+            // חיפוש הגיליון הראשי
+            const possibleNames = ['גיליון1', 'Sheet1', 'גיליון 1'];
+            for (let name of possibleNames) {
+                if (excelData[name] && excelData[name].length > 1) {
+                    mainSheet = excelData[name];
+                    sheetName = name;
+                    break;
+                }
+            }
+            
+            // אם לא נמצא, חפש גיליון עם נתוני עסקאות
+            if (!mainSheet) {
+                for (let name in excelData) {
+                    if (excelData[name].length > 1 && !name.toLowerCase().includes('score')) {
+                        mainSheet = excelData[name];
+                        sheetName = name;
+                        console.log(`נמצא גיליון עם נתוני עסקאות: ${name}`);
+                        break;
+                    }
+                }
+            }
+            
+            if (!mainSheet) {
+                console.error('לא נמצא גיליון עם נתוני עסקאות');
+                return;
+            }
+            
+            // חיפוש שורת כותרות
+            let headersRowIndex = 0;
+            for (let i = 0; i < Math.min(5, mainSheet.length); i++) {
+                const row = mainSheet[i];
+                if (row.some(cell => 
+                    cell && (cell.toString().includes('שם מושך') || 
+                            cell.toString().includes('מספר זהות מושך') ||
+                            cell.toString().includes('סכום'))
+                )) {
+                    headersRowIndex = i;
+                    console.log(`נמצאה שורת כותרות בשורה ${i + 1} בגיליון ${sheetName}`);
+                    break;
+                }
+            }
+            
+            const headers = mainSheet[headersRowIndex];
+            const rows = mainSheet.slice(headersRowIndex + 1);
+            
+            console.log('כותרות הגיליון:', headers);
+            
+            payersMap.clear();
+            
+            // מיפוי עמודות
+            const getColumnIndex = (columnName) => {
+                return headers.findIndex(header => 
+                    header && header.toString().trim() === columnName
+                );
+            };
+            
+            const payerNameIndex = getColumnIndex('שם מושך');
+            const payerIDIndex = getColumnIndex('מספר זהות מושך');
+            const amountIndex = getColumnIndex('סכום');
+            const commissionIndex = getColumnIndex('עמלה');
+            const statusIndex = getColumnIndex('סטטוס');
+            const dateIndex = getColumnIndex('תאריך הפקדה/מסירה');
+            
+            console.log('אינדקסי עמודות:', {
+                payerName: payerNameIndex,
+                payerID: payerIDIndex,
+                amount: amountIndex,
+                commission: commissionIndex,
+                status: statusIndex,
+                date: dateIndex
+            });
+            
+            if (payerNameIndex === -1 || payerIDIndex === -1 || amountIndex === -1) {
+                console.error('לא נמצאו עמודות חיוניות בנתוני עסקאות');
+                return;
+            }
+            
+            let processedRows = 0;
+            
+            rows.forEach((row, index) => {
+                if (!row || row.length === 0) return;
                 
-                payersMap.clear();
+                const payerName = row[payerNameIndex] ? row[payerNameIndex].toString().trim() : '';
+                const payerID = row[payerIDIndex] ? row[payerIDIndex].toString().trim() : '';
+                const amount = parseFloat(row[amountIndex]) || 0;
+                const commission = parseFloat(row[commissionIndex]) || 0;
+                const status = row[statusIndex] ? row[statusIndex].toString().trim() : '';
+                const transactionDate = row[dateIndex] ? row[dateIndex].toString() : '';
                 
-                rows.forEach(row => {
-                    const payerName = row[headers.indexOf('שם מושך')] || '';
-                    const payerID = row[headers.indexOf('מספר זהות מושך')] || '';
-                    const amount = parseFloat(row[headers.indexOf('סכום')] || 0);
-                    const creditDays = parseInt(row[headers.indexOf('ימי אשראי')] || 30);
-                    const commission = parseFloat(row[headers.indexOf('עמלה')] || 0);
-                    const transactionDate = row[headers.indexOf('תאריך עסקה')] || '';
-                    const status = row[headers.indexOf('סטטוס')] || '';
-                    
-                    if (payerID && payerName) {
-                        if (!payersMap.has(payerID)) {
-                            payersMap.set(payerID, {
-                                name: payerName,
-                                id: payerID,
-                                transactions: [],
-                                totalAmount: 0,
-                                totalCommission: 0,
-                                totalCreditDays: 0,
-                                firstTransaction: null,
-                                lastTransaction: null,
-                                cancelledTransactions: 0
-                            });
-                        }
-                        
-                        const payer = payersMap.get(payerID);
-                        payer.transactions.push({
-                            amount: amount,
-                            creditDays: creditDays,
-                            commission: commission,
-                            date: transactionDate,
-                            status: status
+                if (payerID && payerName && amount > 0) {
+                    if (!payersMap.has(payerID)) {
+                        payersMap.set(payerID, {
+                            name: payerName,
+                            id: payerID,
+                            transactions: [],
+                            totalAmount: 0,
+                            totalCommission: 0,
+                            totalCreditDays: 0,
+                            firstTransaction: null,
+                            lastTransaction: null,
+                            cancelledTransactions: 0,
+                            creditScore: null
                         });
-                        
-                        payer.totalAmount += amount;
-                        payer.totalCommission += commission;
-                        payer.totalCreditDays += creditDays;
-                        
-                        // ספירת ביטולים ואכ"מ
-                        if (status === 'ביטול' || status === 'אכ"מ' || status === 'מוגבל') {
-                            payer.cancelledTransactions++;
-                        }
-                        
-                        if (!payer.firstTransaction || transactionDate < payer.firstTransaction) {
-                            payer.firstTransaction = transactionDate;
-                        }
-                        if (!payer.lastTransaction || transactionDate > payer.lastTransaction) {
-                            payer.lastTransaction = transactionDate;
-                        }
                     }
-                });
-            }
-        }
-
-        function updateDataStatus() {
-            const transactionsCount = payersMap.size;
-            const returnedCount = excelData.שיקים_חוזרים ? excelData.שיקים_חוזרים.length - 1 : 0;
-            
-            document.getElementById('transactionsStatus').innerHTML = 
-                `<span class="status-loaded">✓ ${transactionsCount} משכים</span>`;
-            document.getElementById('returnedStatus').innerHTML = 
-                `<span class="status-loaded">✓ ${returnedCount} רשומות</span>`;
-            document.getElementById('warningsStatus').innerHTML = 
-                `<span class="status-loaded">✓ נטען</span>`;
-                
-            document.getElementById('calculateBtn').disabled = false;
-            
-            showDataPreview();
-        }
-
-        function showDataPreview() {
-            const previewDiv = document.getElementById('dataPreview');
-            let html = '<h5>תצוגה מקדימה של הנתונים:</h5>';
-            
-            html += '<table>';
-            html += '<tr><th>ח.פ. מושך</th><th>שם מושך</th><th>עסקאות</th><th>סך סכום</th><th>שיקים חוזרים</th></tr>';
-            
-            let count = 0;
-            for (let [id, payer] of payersMap) {
-                if (count >= 5) break;
-                const returnedCount = countReturnedChecks(id);
-                html += `<tr>
-                    <td>${id}</td>
-                    <td>${payer.name}</td>
-                    <td>${payer.transactions.length}</td>
-                    <td>${payer.totalAmount.toLocaleString()} ₪</td>
-                    <td>${returnedCount}</td>
-                </tr>`;
-                count++;
-            }
-            
-            html += '</table>';
-            if (payersMap.size > 5) {
-                html += `<p style="margin-top: 10px; font-style: italic;">ועוד ${payersMap.size - 5} משכים...</p>`;
-            }
-            
-            previewDiv.innerHTML = html;
-            previewDiv.style.display = 'block';
-        }
-
-        function setupAutocomplete() {
-            const payerNameInput = document.getElementById('payerName');
-            const suggestionsDiv = document.getElementById('payerNameSuggestions');
-            
-            payerNameInput.addEventListener('input', function() {
-                const value = this.value.toLowerCase();
-                if (value.length < 2) {
-                    suggestionsDiv.style.display = 'none';
-                    return;
-                }
-                
-                const suggestions = [];
-                for (let [id, payer] of payersMap) {
-                    if (payer.name.toLowerCase().includes(value)) {
-                        suggestions.push({ id: id, name: payer.name });
+                    
+                    const payer = payersMap.get(payerID);
+                    const creditDays = 30; // ברירת מחדל
+                    
+                    payer.transactions.push({
+                        amount: amount,
+                        creditDays: creditDays,
+                        commission: commission,
+                        date: transactionDate,
+                        status: status
+                    });
+                    
+                    payer.totalAmount += amount;
+                    payer.totalCommission += commission;
+                    payer.totalCreditDays += creditDays;
+                    
+                    // ספירת ביטולים
+                    const statusLower = status.toLowerCase();
+                    if (statusLower.includes('ביטול') || statusLower.includes('אכ"מ') || 
+                        statusLower.includes('מוגבל') || statusLower.includes('בוטל')) {
+                        payer.cancelledTransactions++;
                     }
-                    if (suggestions.length >= 10) break;
-                }
-                
-                if (suggestions.length > 0) {
-                    suggestionsDiv.innerHTML = suggestions.map(s => 
-                        `<div class="autocomplete-suggestion" onclick="selectPayer('${s.id}', '${s.name}')">${s.name}</div>`
-                    ).join('');
-                    suggestionsDiv.style.display = 'block';
-                } else {
-                    suggestionsDiv.style.display = 'none';
-                }
-            });
-            
-            // הסתרת הצעות בלחיצה מחוץ לאלמנט
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.form-group')) {
-                    suggestionsDiv.style.display = 'none';
+                    
+                    if (!payer.firstTransaction || transactionDate < payer.firstTransaction) {
+                        payer.firstTransaction = transactionDate;
+                    }
+                    if (!payer.lastTransaction || transactionDate > payer.lastTransaction) {
+                        payer.lastTransaction = transactionDate;
+                    }
+                    
+                    processedRows++;
                 }
             });
+            
+            console.log(`עובדו ${processedRows} שורות עסקאות מתוך ${rows.length}`);
+            console.log(`נמצאו ${payersMap.size} משכים ייחודיים`);
         }
 
-        function selectPayer(id, name) {
-            document.getElementById('payerName').value = name;
-            document.getElementById('payerID').value = id;
-            document.getElementById('payerNameSuggestions').style.display = 'none';
+        function processCreditScoresData() {
+            let scoresSheet = null;
+            let scoresSheetName = '';
             
-            // הזנת ימי אשראי ממוצעים
-            const payerData = payersMap.get(id);
-            if (payerData && payerData.transactions.length > 0) {
-                const avgCreditDays = Math.round(payerData.totalCreditDays / payerData.transactions.length);
-                document.getElementById('creditDays').value = avgCreditDays;
-            }
-        }
-
-        function calculateCreditRating() {
-            const payerID = document.getElementById('payerID').value.trim();
-            const checkAmount = parseFloat(document.getElementById('checkAmount').value) || 0;
-            
-            if (!payerID || !checkAmount) {
-                alert('אנא מלא את כל השדות הנדרשים');
-                return;
-            }
-            
-            const payerData = payersMap.get(payerID);
-            if (!payerData) {
-                alert('לא נמצאו נתונים עבור המושך הזה. אנא וודא שהקובץ נטען ושהמספר זהות נכון.');
-                return;
-            }
-            
-            // חישוב פרמטרים
-            const parameters = calculateAllParameters(payerData, checkAmount);
-            const totalScore = calculateTotalScore(parameters);
-            const letterRating = getLetterRating(totalScore);
-            
-            displayResults(parameters, totalScore, letterRating, payerData);
-            document.getElementById('resultsSection').style.display = 'block';
-        }
-
-        function calculateAllParameters(payerData, checkAmount) {
-            const now = new Date();
-            const firstDate = new Date(payerData.firstTransaction);
-            const historyMonths = Math.max(1, (now - firstDate) / (1000 * 60 * 60 * 24 * 30));
-            
-            const avgAmount = payerData.totalAmount / payerData.transactions.length;
-            const avgCreditDays = payerData.totalCreditDays / payerData.transactions.length;
-            const avgCommissionRate = (payerData.totalCommission / payerData.totalAmount) * 100;
-            
-            // חישוב שיקים חוזרים וביטולים
-            const returnedChecks = countReturnedChecks(payerData.id);
-            const cancellations = payerData.cancelledTransactions;
-            
-            return {
-                historyLength: { 
-                    raw: historyMonths, 
-                    normalized: Math.min(100, historyMonths * 2) 
-                },
-                transactionCount: { 
-                    raw: payerData.transactions.length, 
-                    normalized: Math.min(100, payerData.transactions.length * 2) 
-                },
-                averageAmount: { 
-                    raw: avgAmount, 
-                    normalized: Math.min(100, (avgAmount / 100000) * 50) 
-                },
-                totalAmount: { 
-                    raw: payerData.totalAmount, 
-                    normalized: Math.min(100, (payerData.totalAmount / 1000000) * 30) 
-                },
-                avgCreditDays: { 
-                    raw: avgCreditDays, 
-                    normalized: Math.max(0, 100 - (avgCreditDays - 30) * 2) 
-                },
-                avgCommissionRate: { 
-                    raw: avgCommissionRate, 
-                    normalized: Math.max(0, 100 - avgCommissionRate * 10) 
-                },
-                returnedChecks: { 
-                    raw: returnedChecks, 
-                    normalized: Math.max(0, 100 - returnedChecks * 20) 
-                },
-                cancellations: { 
-                    raw: cancellations, 
-                    normalized: Math.max(0, 100 - cancellations * 15) 
-                },
-                checkAmountRatio: { 
-                    raw: checkAmount / avgAmount, 
-                    normalized: Math.min(100, Math.max(0, 100 - Math.abs(1 - (checkAmount / avgAmount)) * 50)) 
+            // חיפוש גיליון דירוגים
+            const possibleNames = ['scoreM_N', 'Score_M_N', 'scores', 'דירוגים'];
+            for (let name of possibleNames) {
+                if (excelData[name] && excelData[name].length > 1) {
+                    scoresSheet = excelData[name];
+                    scoresSheetName = name;
+                    break;
                 }
-            };
-        }
-
-        function countReturnedChecks(payerID) {
-            if (!excelData.שיקים_חוזרים || excelData.שיקים_חוזרים.length < 2) return 0;
+            }
             
-            const headers = excelData.שיקים_חוזרים[0];
-            const rows = excelData.שיקים_חוזרים.slice(1);
-            
-            const payerIDIndex = headers.indexOf('מספר מזהה מושך') !== -1 
-                ? headers.indexOf('מספר מזהה מושך') 
-                : headers.indexOf('מספר זהות');
-            
-            if (payerIDIndex === -1) return 0;
-            
-            return rows.filter(row => row[payerIDIndex] && row[payerIDIndex].toString() === payerID.toString()).length;
-        }
-
-        function calculateTotalScore(parameters) {
-            let totalScore = 0;
-            
-            Object.keys(ratingParameters).forEach(param => {
-                const paramData = parameters[param];
-                const weight = ratingParameters[param].weight;
-                totalScore += (paramData.normalized * weight);
-            });
-            
-            return Math.round(totalScore);
-        }
-
-        function getLetterRating(score) {
-            if (score >= 90) return 'AAA';
-            if (score >= 80) return 'AA';
-            if (score >= 70) return 'A';
-            if (score >= 60) return 'BBB';
-            if (score >= 50) return 'BB';
-            if (score >= 40) return 'B';
-            if (score >= 30) return 'CCC';
-            return 'D';
-        }
-
-        function displayResults(parameters, totalScore, letterRating, payerData) {
-            // תצוגת דירוג ראשי
-            const ratingDisplay = document.getElementById('ratingDisplay');
-            const avgAmount = Math.round(payerData.totalAmount / payerData.transactions.length);
-            const returnedChecks = countReturnedChecks(payerData.id);
-            
-            ratingDisplay.innerHTML = `
-                <div class="rating-card">
-                    <div class="rating-score rating-${letterRating}">${letterRating}</div>
-                    <div>דירוג אותיות</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score" style="color: #3498db;">${totalScore}</div>
-                    <div>ציון מספרי</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score" style="color: #9b59b6;">${payerData.transactions.length}</div>
-                    <div>עסקאות קודמות</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score" style="color: ${returnedChecks > 0 ? '#e74c3c' : '#27ae60'};">${returnedChecks}</div>
-                    <div>שיקים חוזרים</div>
-                </div>
-            `;
-
-            // תצוגת פרמטרים מפורטת
-            const parametersDisplay = document.getElementById('parametersDisplay');
-            let parametersHTML = '';
-            
-            Object.keys(ratingParameters).forEach(param => {
-                const paramData = parameters[param];
-                const weight = ratingParameters[param].weight;
-                const name = ratingParameters[param].name;
-                const weighted = Math.round(paramData.normalized * weight);
-                
-                let rawDisplay;
-                if (param === 'checkAmountRatio') {
-                    rawDisplay = paramData.raw.toFixed(2);
-                } else if (param === 'avgCommissionRate') {
-                    rawDisplay = paramData.raw.toFixed(2) + '%';
-                } else if (param === 'historyLength') {
-                    rawDisplay = paramData.raw.toFixed(1) + ' חודשים';
-                } else {
-                    rawDisplay = typeof paramData.raw === 'number' ? paramData.raw.toFixed(0) : paramData.raw;
+            // חיפוש בשמות שמכילים score
+            if (!scoresSheet) {
+                for (let sheetName in excelData) {
+                    if (sheetName.toLowerCase().includes('score') && excelData[sheetName].length > 1) {
+                        scoresSheet = excelData[sheetName];
+                        scoresSheetName = sheetName;
+                        console.log(`נמצא גיליון דירוגים: ${sheetName}`);
+                        break;
+                    }
                 }
-                
-                parametersHTML += `
-                    <div class="parameter-row">
-                        <div class="parameter-name">${name}</div>
-                        <div>${Math.round(weight * 100)}%</div>
-                        <div>${rawDisplay}</div>
-                        <div>${Math.round(paramData.normalized)}</div>
-                        <div>${weighted}</div>
-                    </div>
-                `;
-            });
-            
-            parametersDisplay.innerHTML = parametersHTML;
-
-            // המלצה מפורטת
-            const recommendation = document.getElementById('recommendation');
-            let recClass, recText;
-            
-            if (totalScore >= 80) {
-                recClass = 'excellent';
-                recText = `✅ מומלץ לאישור - לקוח איכותי עם סיכון נמוך
-                (${payerData.transactions.length} עסקאות, ${returnedChecks} חזרות)`;
-            } else if (totalScore >= 65) {
-                recClass = 'good';
-                recText = `👍 ניתן לאישור בתנאים רגילים - סיכון בינוני נמוך
-                עסקה ממוצעת: ${avgAmount.toLocaleString()} ₪`;
-            } else if (totalScore >= 50) {
-                recClass = 'average';
-                recText = `⚠️ דרוש בדיקה נוספת או תנאים מיוחדים - סיכון בינוני
-                ${payerData.cancelledTransactions > 0 ? `יש ${payerData.cancelledTransactions} ביטולים` : 'אין ביטולים'}`;
-            } else if (totalScore >= 35) {
-                recClass = 'poor';
-                recText = `❌ לא מומלץ או דרושות ערובות נוספות - סיכון גבוה
-                ${returnedChecks} שיקים חוזרים, ${payerData.cancelledTransactions} ביטולים`;
-            } else {
-                recClass = 'danger';
-                recText = `🚫 אין לאשר - סיכון גבוה מאוד
-                נתונים בעייתיים: ${returnedChecks} חזרות, ${payerData.cancelledTransactions} ביטולים`;
             }
             
-            recommendation.className = `recommendation ${recClass}`;
-            recommendation.innerHTML = recText;
-        }
-
-        function resetForm() {
-            document.getElementById('payerName').value = '';
-            document.getElementById('payerID').value = '';
-            document.getElementById('checkAmount').value = '';
-            document.getElementById('creditDays').value = '30';
-            document.getElementById('resultsSection').style.display = 'none';
-            document.getElementById('payerNameSuggestions').style.display = 'none';
-        }
-
-        // אירועים נוספים
-        document.getElementById('payerID').addEventListener('input', function() {
-            const payerID = this.value.trim();
-            const payerData = payersMap.get(payerID);
-            
-            if (payerData) {
-                document.getElementById('payerName').value = payerData.name;
-                // הצעת ימי אשראי ממוצעים
-                const avgCreditDays = Math.round(payerData.totalCreditDays / payerData.transactions.length);
-                document.getElementById('creditDays').value = avgCreditDays;
-            }
-        });
-
-        // טעינת נתוני דוגמה לבדיקה
-        function loadSampleData() {
-            // יצירת נתוני דוגמה מבוססים על המבנה של האקסל שלך
-            const sampleData = {
-                גיליון1: [
-                    ['עסקה', 'תאריך עסקה', 'סוג עיסקה', 'שם לקוח', 'מ.זהות', 'תחום עיסוק לקוח', 'מספר שיק', 'מזהה שיק', 'ב-ס-ח', 'שם מושך', 'מספר זהות מושך', 'טלפון 1 מושך', 'טלפון 2 מושך', 'כתובת מושך', 'ת.פירעון', 'ת.פרעון בפועל', 'שם מוטב', 'סטטוס', 'עמלה', 'סכום', 'יתרה', 'יעד', 'איש מכירות', 'קטגוריה', 'תחום עיסוק מושך', 'ימי אשראי'],
-                    [1, '2024-01-15', 'חיתום', 'ב מ פרינס אחזקה ותשתיות בע"מ', '3333333', 'בנייה', '123456', 'SH001', '12-633-123456', 'אגרגטים ואבן ניהול מחצבות בע"מ', '23411507', '054-1234567', '03-1234567', 'תל אביב', '2024-02-20', '2024-02-20', 'חברת קבלן', 'שולם', 850, 85000, 0, 'אישור', 'משה כהן', 'A', 'חקלאות', 35],
-                    [2, '2024-02-20', 'חיתום', 'ב מ פרינס אחזקה ותשתיות בע"מ', '3333333', 'בנייה', '123457', 'SH002', '12-633-123457', 'אגרגטים ואבן ניהול מחצבות בע"מ', '23411507', '054-1234567', '03-1234567', 'תל אביב', '2024-03-25', '2024-03-25', 'חברת קבלן', 'שולם', 1200, 120000, 0, 'אישור', 'משה כהן', 'A', 'חקלאות', 42],
-                    [3, '2024-03-10', 'חיתום', 'ב מ פרינס אחזקה ותשתיות בע"מ', '3333333', 'בנייה', '123458', 'SH003', '12-633-123458', 'אגרגטים ואבן ניהול מחצבות בע"מ', '23411507', '054-1234567', '03-1234567', 'תל אביב', '2024-04-15', '2024-04-15', 'חברת קבלן', 'שולם', 950, 95000, 0, 'אישור', 'משה כהן', 'A', 'חקלאות', 30],
-                    [4, '2024-01-20', 'חיתום', 'חברת אביב בנייה', '4444444', 'בנייה', '123459', 'SH004', '11-555-123459', 'קבלנות דן בע"מ', '30534690', '052-9876543', '02-9876543', 'ירושלים', '2024-02-25', '', 'חברת ספק', 'ביטול', 450, 45000, 45000, 'דחייה', 'רחל לוי', 'B', 'בנייה', 28],
-                    [5, '2024-02-15', 'חיתום', 'חברת אביב בנייה', '4444444', 'בנייה', '123460', 'SH005', '11-555-123460', 'קבלנות דן בע"מ', '30534690', '052-9876543', '02-9876543', 'ירושלים', '2024-03-20', '2024-03-20', 'חברת ספק', 'שולם', 520, 52000, 0, 'אישור', 'רחל לוי', 'B', 'בנייה', 35],
-                    [6, '2024-01-25', 'חיתום', 'מפעלי מתכת ישראל', '5555555', 'תעשייה', '123461', 'SH006', '10-777-123461', 'שרה לוי יזמות', '12345678', '050-1122334', '09-1122334', 'פתח תקווה', '2024-02-28', '2024-02-28', 'ספק חומרים', 'שולם', 600, 60000, 0, 'אישור', 'דוד אברהם', 'A', 'שירותים', 30]
-                ],
-                שיקים_חוזרים: [
-                    ['מספר מזהה מושך', 'שם לקוח', 'סכום', 'סיבת החזרה', 'כמות חזרות'],
-                    ['30534690', 'חברת אביב בנייה', 25000, 'אין כיסוי', 1],
-                    ['11122233', 'חברת בנייה חדשה', 15000, 'חשבון סגור', 1]
-                ]
-            };
-            
-            excelData = sampleData;
-            processExcelData();
-            updateDataStatus();
-            setupAutocomplete();
-            
-            alert('נתוני דוגמה נטענו בהצלחה! כעת תוכל לבחור מושך ולחשב דירוג.');
-        }
-    </script>
-</body>
-</html>
+            if (!scoresSheet) {
