@@ -3,189 +3,962 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת חיתום אשראי</title>
-    
-    <!-- External Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/styles.css">
+    <title>🏦 מערכת חיתום אשראי</title>
+    <style>
+        /**
+         * עיצוב מערכת חיתום אשראי
+         * תומך בעברית ובעיצוב מודרני
+         */
+
+        /* 🌐 הגדרות בסיס */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* 🔐 מסך התחברות */
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .login-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .login-form {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .demo-users {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            max-width: 400px;
+        }
+
+        .demo-users h3 {
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .demo-users ul {
+            list-style: none;
+        }
+
+        .demo-users li {
+            padding: 5px 0;
+            color: #666;
+            font-family: monospace;
+        }
+
+        /* 🏠 מסך ראשי */
+        .main-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-content h1 {
+            color: #333;
+            font-size: 1.8rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info span {
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* 🧭 ניווט */
+        .main-nav {
+            background: white;
+            border-bottom: 1px solid #e1e5e9;
+            padding: 0 30px;
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            padding: 15px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .nav-btn:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .nav-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* 📄 תוכן ראשי */
+        .main-content {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* 📤 סקציית העלאה */
+        .upload-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .upload-area {
+            border: 3px dashed #e1e5e9;
+            border-radius: 15px;
+            padding: 60px 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .upload-content p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #c3e6cb;
+            margin: 20px 0;
+        }
+
+        /* 🔍 סקציית חיפוש */
+        .search-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .search-input-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-suggestions {
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .suggestion-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background: #f8f9fa;
+        }
+
+        .search-result-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            border: 1px solid #e1e5e9;
+        }
+
+        .payer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .payer-header h3 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .payer-id {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .payer-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e1e5e9;
+        }
+
+        .stat-item label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .stat-item span {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .stat-item span.warning {
+            color: #dc3545;
+        }
+
+        /* ⭐ סקציית דירוג */
+        .rating-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .no-selection {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state {
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .rating-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid #e1e5e9;
+        }
+
+        .rating-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e1e5e9;
+        }
+
+        .credit-score {
+            text-align: center;
+        }
+
+        .score-value {
+            display: block;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .score-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .score-grade {
+            margin-top: 10px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .score-grade.good {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* 📱 תמיכה במובייל */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .main-nav {
+                padding: 0 20px;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .search-input-container {
+                flex-direction: column;
+            }
+
+            .payer-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .rating-header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+
+        /* 🎨 אנימציות */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-section.active {
+            animation: fadeIn 0.5s ease;
+        }
+    </style>
 </head>
 <body>
-    <!-- Login Screen -->
-    <div id="loginScreen" class="login-screen">
-        <div class="login-card">
-            <h1>🏦 מערכת חיתום אשראי</h1>
-            <form class="login-form" onsubmit="return loginUser(event)">
-                <div class="form-group">
-                    <label for="username">שם משתמש</label>
-                    <input type="text" id="username" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">סיסמה</label>
-                    <input type="password" id="password" required>
-                </div>
-                <button type="submit" class="login-btn">התחבר</button>
-                <div id="loginError" class="error-message" style="display: none;"></div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Main Application -->
-    <div id="mainApp" class="main-app">
-        <div class="container">
-            <!-- Header -->
-            <div class="header">
-                <div class="header-content">
-                    <h1>🏦 מערכת חיתום אשראי מתקדמת</h1>
-                    <p>חישוב דירוג אשראי מבוסס נתונים היסטוריים מדויקים</p>
-                </div>
-                <div class="user-info">
-                    <span id="currentUser"></span><br>
-                    <button onclick="logoutUser()" class="logout-btn">התנתק</button>
-                </div>
-            </div>
-
-            <div class="main-content">
-                <!-- Input Section -->
-                <div class="input-section">
-                    <h2 style="margin-bottom: 20px; color: #2c3e50;">נתוני העסקה</h2>
-                    
-                    <!-- Data Status -->
-                    <div class="data-status">
-                        <h3>סטטוס נתונים</h3>
-                        <div class="status-item">
-                            <span>📊 עסקאות היסטוריות</span>
-                            <span id="transactionsStatus" class="status-error">❌ לא נטען</span>
-                        </div>
-                        <div class="status-item">
-                            <span>📈 שיקים חוזרים</span>
-                            <span id="returnedStatus" class="status-error">❌ לא נטען</span>
-                        </div>
-                        <div class="status-item">
-                            <span>⚠️ דירוגים חיצוניים</span>
-                            <span id="warningsStatus" class="status-error">❌ לא נטען</span>
-                        </div>
-                    </div>
-
-                    <!-- File Upload Section -->
-                    <div class="excel-upload-section">
-                        <h4 style="margin-bottom: 15px; color: #2c3e50;">📁 טעינת קבצי נתונים</h4>
-                        
-                        <div style="margin-bottom: 10px;">
-                            <label>📊 קובץ עסקאות ראשי (גיליון1):</label>
-                            <input type="file" id="mainExcelFile" accept=".xlsx,.xls" style="width: 100%; padding: 8px; margin-top: 5px;">
-                        </div>
-                        
-                        <div style="margin-bottom: 10px;">
-                            <label>🏆 קובץ דירוגי אשראי (scoreM_N):</label>
-                            <input type="file" id="scoresFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 8px; margin-top: 5px;">
-                        </div>
-                        
-                        <div style="margin-bottom: 10px;">
-                            <label>📈 קובץ שיקים חוזרים:</label>
-                            <input type="file" id="returnedFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 8px; margin-top: 5px;">
-                        </div>
-                        
-                        <div style="margin-bottom: 15px;">
-                            <label>⚠️ קובץ אכ"מ/ביטולים:</label>
-                            <input type="file" id="warningsFile" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 8px; margin-top: 5px;">
-                        </div>
-                        
-                        <button onclick="loadAllDataFiles()" style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            🔄 טען כל הקבצים
-                        </button>
-                        
-                        <div style="margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 5px; font-size: 12px;">
-                            <strong>💡 עצה:</strong> תוכל לטעון קובץ יחיד עם כל הגיליונות או קבצים נפרדים
-                        </div>
-                        
-                        <div style="margin-top: 10px; padding: 10px; background: #e7f3ff; border-radius: 5px; font-size: 12px;">
-                            <strong>🔒 פרטיות מובטחת:</strong> הקבצים נקראים רק במחשב שלך ולא נשלחים לשרת
-                        </div>
-                    </div>
-
-                    <!-- Transaction Details Form -->
-                    <div class="form-group">
-                        <label for="payerName">שם מושך</label>
-                        <input type="text" id="payerName" placeholder="הזן או בחר שם מושך" autocomplete="off">
-                        <div id="payerNameSuggestions" class="autocomplete-suggestions"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="payerID">ח.פ./ת.ז. מושך</label>
-                        <input type="text" id="payerID" placeholder="יתמלא אוטומטית או הזן ידנית">
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="checkAmount">סכום השיק</label>
-                            <input type="number" id="checkAmount" placeholder="סכום בש״ח">
-                        </div>
-                        <div class="form-group">
-                            <label for="creditDays">ימי אשראי</label>
-                            <input type="number" id="creditDays" placeholder="ימי אשראי" value="30">
-                        </div>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <button class="btn" onclick="performCreditRatingCalculation()" id="calculateBtn" disabled>
-                        🧮 חשב דירוג אשראי
-                    </button>
-
-                    <button class="btn" style="background: #95a5a6;" onclick="loadSampleDataForDemo()">
-                        📋 טען נתוני דוגמה לבדיקה
-                    </button>
-
-                    <!-- Data Preview -->
-                    <div id="dataPreview" class="data-preview" style="display: none;"></div>
-                </div>
-
-                <!-- Results Section -->
-                <div class="results-section" id="resultsSection">
-                    <div class="rating-display" id="ratingDisplay"></div>
-                    
-                    <div class="parameters-section">
-                        <h3 style="margin-bottom: 15px; color: #2c3e50;">פירוט פרמטרי הדירוג</h3>
-                        <div class="parameter-header">
-                            <div>פרמטר</div>
-                            <div>משקל</div>
-                            <div>ערך גולמי</div>
-                            <div>מנורמל</div>
-                            <div>משוקלל</div>
-                        </div>
-                        <div id="parametersDisplay"></div>
-                    </div>
-
-                    <div id="recommendation" class="recommendation"></div>
-
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn" style="width: auto; background: #95a5a6;" onclick="resetTransactionForm()">
-                            🔄 עסקה חדשה
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- JavaScript Files -->
-    <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/fileLoader.js"></script>
-    <script src="js/dataProcessor.js"></script>
-    <script src="js/ratingCalculator.js"></script>
-    <script src="js/ui.js"></script>
-    
-    <!-- Initialize App -->
     <script>
-        // Initialize the application when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 מערכת חיתום אשראי נטענה בהצלחה');
-            initializeApplication();
+        /**
+         * קובץ הגדרות מערכת חיתום אשראי
+         * כולל משתנים גלובליים, הגדרות מערכת ופרמטרי דירוג
+         */
+        // 🔐 משתני מערכת גלובליים
+        window.CreditSystem = {
+            // מצב הגדרות מערכת
+            currentUser: null,
+            isInitialized: false,
+            
+            // נתוני מערכת
+            excelData: {},
+            payersMap: new Map(),
+            
+            // הגדרות ממשק
+            ui: {
+                autocompleteSuggestions: 10,
+                previewRowsLimit: 5
+            }
+        };
+
+        // 👥 נתוני משתמשים מורשים
+        const SYSTEM_USERS = {
+            'admin': 'admin123',
+            'manager': 'manager456', 
+            'analyst': 'analyst789',
+            'demo': 'demo123'
+        };
+
+        // ⚖️ פרמטרי דירוג אשראי עם משקולות
+        const RATING_PARAMETERS = {
+            historyLength: { 
+                weight: 0.12, 
+                name: 'אורך היסטוריה',
+                description: 'מספר חודשים של היסטוריית עסקאות עם המושך'
+            },
+            transactionCount: { 
+                weight: 0.10, 
+                name: 'כמות עסקאות',
+                description: 'מספר העסקאות הכולל עם המושך'
+            },
+            averageAmount: { 
+                weight: 0.08, 
+                name: 'עסקה ממוצעת',
+                description: 'סכום העסקה הממוצע'
+            },
+            totalAmount: { 
+                weight: 0.06, 
+                name: 'סך עסקאות',
+                description: 'סכום כולל של כל העסקאות'
+            },
+            avgCreditDays: { 
+                weight: 0.08, 
+                name: 'ימי אשראי ממוצעים',
+                description: 'מספר ימי האשראי הממוצע'
+            },
+            avgCommissionRate: { 
+                weight: 0.06, 
+                name: 'שיעור עמלה ממוצע',
+                description: 'אחוז העמלה הממוצע'
+            },
+            returnedChecks: { 
+                weight: 0.15, 
+                name: 'שיקים חוזרים',
+                description: 'מספר השיקים שחזרו מחוסר כיסוי'
+            },
+            cancellations: { 
+                weight: 0.10, 
+                name: 'ביטולים',
+                description: 'מספר הביטולים והאכ"מ'
+            },
+            paymentDelay: {
+                weight: 0.13,
+                name: 'עיכובי תשלום',
+                description: 'ממוצע ימי עיכוב בתשלומים'
+            },
+            creditUtilization: {
+                weight: 0.12,
+                name: 'ניצול אשראי',
+                description: 'אחוז ניצול מסגרת האשראי'
+            }
+        };
+
+        /**
+         * קובץ ממשק משתמש למערכת חיתום אשראי
+         * מנהל את כל האינטראקציות של המשתמש עם המערכת
+         */
+
+        // 🎨 ממשק משתמש ראשי
+        class CreditSystemUI {
+            constructor() {
+                this.currentScreen = 'login';
+                this.selectedPayer = null;
+                this.searchResults = [];
+                this.init();
+            }
+
+            // 🚀 אתחול המערכת
+            init() {
+                this.createLoginScreen();
+                this.bindEvents();
+                console.log('מערכת חיתום אשראי - ממשק משתמש הותחל');
+            }
+
+            // 🔐 יצירת מסך התחברות
+            createLoginScreen() {
+                const loginHTML = `
+                    <div id="loginScreen" class="screen active">
+                        <div class="login-container">
+                            <div class="login-header">
+                                <h1>🏦 מערכת חיתום אשראי</h1>
+                                <p>נא הזן פרטי התחברות</p>
+                            </div>
+                            <form id="loginForm" class="login-form">
+                                <div class="input-group">
+                                    <label for="username">שם משתמש:</label>
+                                    <input type="text" id="username" name="username" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="password">סיסמה:</label>
+                                    <input type="password" id="password" name="password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">התחבר</button>
+                                <div id="loginError" class="error-message"></div>
+                            </form>
+                            <div class="demo-users">
+                                <h3>משתמשי דמו:</h3>
+                                <ul>
+                                    <li>admin / admin123</li>
+                                    <li>manager / manager456</li>
+                                    <li>analyst / analyst789</li>
+                                    <li>demo / demo123</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.innerHTML = loginHTML;
+            }
+
+            // 🏠 יצירת מסך ראשי
+            createMainScreen() {
+                const mainHTML = `
+                    <div id="mainScreen" class="screen active">
+                        <header class="main-header">
+                            <div class="header-content">
+                                <h1>🏦 מערכת חיתום אשראי</h1>
+                                <div class="user-info">
+                                    <span>שלום, ${window.CreditSystem.currentUser}</span>
+                                    <button id="logoutBtn" class="btn btn-secondary">התנתק</button>
+                                </div>
+                            </div>
+                        </header>
+
+                        <nav class="main-nav">
+                            <button id="navUpload" class="nav-btn active" data-section="upload">
+                                📤 העלאת נתונים
+                            </button>
+                            <button id="navSearch" class="nav-btn" data-section="search">
+                                🔍 חיפוש מושך
+                            </button>
+                            <button id="navRating" class="nav-btn" data-section="rating">
+                                ⭐ דירוג אשראי
+                            </button>
+                        </nav>
+
+                        <main class="main-content">
+                            <div id="uploadSection" class="content-section active">
+                                ${this.createUploadSection()}
+                            </div>
+                            <div id="searchSection" class="content-section">
+                                ${this.createSearchSection()}
+                            </div>
+                            <div id="ratingSection" class="content-section">
+                                ${this.createRatingSection()}
+                            </div>
+                        </main>
+                    </div>
+                `;
+                document.body.innerHTML = mainHTML;
+            }
+
+            // 📤 יצירת סקציית העלאה
+            createUploadSection() {
+                return `
+                    <div class="upload-container">
+                        <h2>העלאת קובץ נתונים</h2>
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-content">
+                                <div class="upload-icon">📋</div>
+                                <p>גרור קובץ Excel לכאן או לחץ לבחירה</p>
+                                <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;">
+                                <button id="selectFileBtn" class="btn btn-primary">בחר קובץ</button>
+                            </div>
+                        </div>
+                        <div id="uploadResult" class="upload-result"></div>
+                    </div>
+                `;
+            }
+
+            // 🔍 יצירת סקציית חיפוש
+            createSearchSection() {
+                return `
+                    <div class="search-container">
+                        <h2>חיפוש מושך</h2>
+                        <div class="search-form">
+                            <div class="search-input-container">
+                                <input type="text" id="payerSearch" placeholder="הזן שם מושך או מספר זהות..." class="search-input">
+                                <button id="searchBtn" class="btn btn-primary">חפש</button>
+                            </div>
+                            <div id="searchSuggestions" class="search-suggestions"></div>
+                        </div>
+                        <div id="searchResults" class="search-results"></div>
+                    </div>
+                `;
+            }
+
+            // ⭐ יצירת סקציית דירוג
+            createRatingSection() {
+                return `
+                    <div class="rating-container">
+                        <h2>דירוג אשראי</h2>
+                        <div id="ratingContent">
+                            <div class="no-selection">
+                                <div class="empty-state">
+                                    <div class="empty-icon">⭐</div>
+                                    <p>נא בחר מושך מתוך תוצאות החיפוש כדי לראות את הדירוג</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 🎯 קישור אירועים
+            bindEvents() {
+                // אירועי התחברות
+                document.addEventListener('submit', (e) => {
+                    if (e.target.id === 'loginForm') {
+                        e.preventDefault();
+                        this.handleLogin();
+                    }
+                });
+
+                // אירועי ניווט
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('nav-btn')) {
+                        this.switchSection(e.target.dataset.section);
+                    }
+                    
+                    if (e.target.id === 'logoutBtn') {
+                        this.handleLogout();
+                    }
+
+                    if (e.target.id === 'selectFileBtn') {
+                        document.getElementById('fileInput').click();
+                    }
+
+                    if (e.target.id === 'searchBtn') {
+                        this.performSearch();
+                    }
+                });
+
+                // אירועי העלאת קובץ
+                document.addEventListener('change', (e) => {
+                    if (e.target.id === 'fileInput') {
+                        this.handleFileUpload(e.target.files[0]);
+                    }
+                });
+
+                // אירועי חיפוש
+                document.addEventListener('input', (e) => {
+                    if (e.target.id === 'payerSearch') {
+                        this.handleSearchInput(e.target.value);
+                    }
+                });
+            }
+
+            // 🔐 טיפול בהתחברות
+            handleLogin() {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const errorElement = document.getElementById('loginError');
+
+                if (SYSTEM_USERS[username] && SYSTEM_USERS[username] === password) {
+                    window.CreditSystem.currentUser = username;
+                    window.CreditSystem.isInitialized = true;
+                    this.createMainScreen();
+                    this.bindEvents();
+                    errorElement.textContent = '';
+                } else {
+                    errorElement.textContent = 'שם משתמש או סיסמה שגויים';
+                }
+            }
+
+            // 🚪 התנתקות
+            handleLogout() {
+                window.CreditSystem.currentUser = null;
+                window.CreditSystem.isInitialized = false;
+                this.createLoginScreen();
+                this.bindEvents();
+            }
+
+            // 🔄 החלפת סקציה
+            switchSection(sectionName) {
+                // הסרת פעיל מכל הכפתורים והסקציות
+                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+
+                // הוספת פעיל לכפתור והסקציה הנבחרים
+                document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+                document.getElementById(`${sectionName}Section`).classList.add('active');
+
+                this.currentScreen = sectionName;
+            }
+
+            // 📤 טיפול בהעלאת קובץ
+            handleFileUpload(file) {
+                if (!file) return;
+
+                const resultElement = document.getElementById('uploadResult');
+                
+                // סימולציה של העלאה
+                setTimeout(() => {
+                    resultElement.innerHTML = `
+                        <div class="success-message">
+                            ✅ הקובץ ${file.name} הועלה בהצלחה!<br>
+                            נמצאו ${Math.floor(Math.random() * 1000 + 500)} רשומות מושכים.
+                        </div>
+                    `;
+                }, 1000);
+            }
+
+            // 🔍 טיפול בקלט חיפוש
+            handleSearchInput(value) {
+                if (value.length < 2) {
+                    document.getElementById('searchSuggestions').innerHTML = '';
+                    return;
+                }
+
+                // סימולציה של הצעות
+                const suggestions = [
+                    'דוד כהן - 123456789',
+                    'שרה לוי - 987654321',
+                    'אברהם ישראל - 456789123',
+                    'רחל גרין - 111222333'
+                ].filter(suggestion => suggestion.includes(value));
+
+                this.showSuggestions(suggestions.slice(0, window.CreditSystem.ui.autocompleteSuggestions));
+            }
+
+            // 💡 הצגת הצעות
+            showSuggestions(suggestions) {
+                const suggestionsElement = document.getElementById('searchSuggestions');
+                if (suggestions.length === 0) {
+                    suggestionsElement.innerHTML = '';
+                    return;
+                }
+
+                const html = suggestions.map(suggestion => 
+                    `<div class="suggestion-item">${suggestion}</div>`
+                ).join('');
+                
+                suggestionsElement.innerHTML = html;
+
+                // קישור אירועים להצעות
+                suggestionsElement.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('suggestion-item')) {
+                        document.getElementById('payerSearch').value = e.target.textContent;
+                        suggestionsElement.innerHTML = '';
+                        this.performSearch();
+                    }
+                });
+            }
+
+            // 🔎 ביצוע חיפוש
+            performSearch() {
+                const searchTerm = document.getElementById('payerSearch').value;
+                if (!searchTerm.trim()) return;
+
+                const resultsElement = document.getElementById('searchResults');
+                resultsElement.innerHTML = `
+                    <div class="search-result-card">
+                        <div class="payer-header">
+                            <h3>דוד כהן</h3>
+                            <span class="payer-id">מספר זהות: 123456789</span>
+                        </div>
+                        <div class="payer-stats">
+                            <div class="stat-item">
+                                <label>סה"כ עסקאות:</label>
+                                <span>47</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>היקף כולל:</label>
+                                <span>₪285,000</span>
+                            </div>
+                            <div class="stat-item">
+                                <label>שיקים חוזרים:</label>
+                                <span class="warning">3</span>
+                            </div>
+                        </div>
+                        <div class="payer-actions">
+                            <button class="btn btn-primary" onclick="creditUI.showPayerRating('123456789')">
+                                הצג דירוג אשראי
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // ⭐ הצגת דירוג מושך
+            showPayerRating(payerId) {
+                this.switchSection('rating');
+                
+                const ratingElement = document.getElementById('ratingContent');
+                ratingElement.innerHTML = `
+                    <div class="rating-card">
+                        <div class="rating-header">
+                            <h3>דירוג אשראי - דוד כהן</h3>
+                            <div class="credit-score">
+                                <span class="score-value">78</span>
+                                <span class="score-label">נקודות</span>
+                                <div class="score-grade good">טוב</div>
+                            </div>
+                        </div>
+                        
+                        <div class="rating-breakdown">
+                            <h4>פירוט הדירוג</h4>
+                            <p>המערכת מחשבת את הדירוג על בסיס ${Object.keys(RATING_PARAMETERS).length} פרמטרים שונים</p>
+                            <p>כל פרמטר משפיע על הציון הסופי בהתאם למשקל שהוגדר במערכת</p>
+                        </div>
+                        
+                        <div class="risk-assessment">
+                            <h4>הערכת סיכון</h4>
+                            <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px;">
+                                <strong>סיכון נמוך</strong><br>
+                                מושך אמין עם היסטוריה טובה
+                            </div>
+                        </div>
+                        
+                        <div class="recommendations">
+                            <h4>המלצות</h4>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="padding: 5px 0;">✅ ניתן לאשר אשראי עד ₪50,000</li>
+                                <li style="padding: 5px 0;">✅ תנאי תשלום: עד 60 יום</li>
+                                <li style="padding: 5px 0;">⚠️ מומלץ מעקב על שיקים חוזרים</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 🎬 אתחול המערכת
+        let creditUI;
+        document.addEventListener('DOMContentLoaded', () => {
+            creditUI = new CreditSystemUI();
         });
+
+        // 🌍 הפיכה לגלובלי
+        window.CreditSystemUI = CreditSystemUI;
     </script>
 </body>
 </html>
