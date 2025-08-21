@@ -67,4 +67,218 @@ const RATING_PARAMETERS = {
     },
     cancellations: { 
         weight: 0.10, 
-        name: 'אכ"מ/
+        name: 'אכ"מ/ביטולים',
+        description: 'מספר העסקאות שבוטלו או הוגדרו כאכ"מ'
+    },
+    checkAmountRatio: { 
+        weight: 0.08, 
+        name: 'יחס סכום עסקה',
+        description: 'יחס בין סכום השיק הנוכחי לעסקה הממוצעת'
+    },
+    externalScore: { 
+        weight: 0.17, 
+        name: 'דירוג חיצוני (scoreM_N)',
+        description: 'דירוג מטבלת scoreM_N החיצונית'
+    }
+};
+
+// 🏆 סולמות דירוג
+const LETTER_RATING_SCALE = {
+    AAA: { min: 90, color: '#27ae60', description: 'מעולה - סיכון נמוך מאוד' },
+    AA:  { min: 80, color: '#2ecc71', description: 'טוב מאוד - סיכון נמוך' },
+    A:   { min: 70, color: '#f39c12', description: 'טוב - סיכון בינוני נמוך' },
+    BBB: { min: 60, color: '#f1c40f', description: 'בינוני - סיכון בינוני' },
+    BB:  { min: 50, color: '#e67e22', description: 'מתחת לבינוני - סיכון בינוני גבוה' },
+    B:   { min: 40, color: '#e74c3c', description: 'חלש - סיכון גבוה' },
+    CCC: { min: 30, color: '#c0392b', description: 'חלש מאוד - סיכון גבוה מאוד' },
+    D:   { min: 0,  color: '#8b0000', description: 'ברירת מחדל - סיכון קיצוני' }
+};
+
+// 📊 הגדרות עיבוד נתונים
+const DATA_PROCESSING_CONFIG = {
+    // עמודות נדרשות בגיליון עסקאות
+    requiredColumns: {
+        payerName: 'שם מושך',
+        payerID: 'מספר זהות מושך',
+        amount: 'סכום',
+        commission: 'עמלה',
+        status: 'סטטוס',
+        depositDate: 'תאריך הפקדה/מסירה',
+        dueDate: 'ת.פירעון',
+        actualPayment: 'ת.פרעון בפועל'
+    },
+    
+    // עמודות אופציונליות
+    optionalColumns: {
+        clientName: 'שם לקוח',
+        clientID: 'מ.זהות',
+        checkNumber: 'מספר שיק',
+        category: 'קטגוריה'
+    },
+    
+    // ערכי ברירת מחדל
+    defaults: {
+        creditDays: 30,
+        externalScore: 50,
+        commission: 0
+    },
+    
+    // פורמטי תאריכים נתמכים
+    dateFormats: [
+        /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,  // dd/mm/yyyy
+        /^(\d{1,2})-(\d{1,2})-(\d{4})$/,    // dd-mm-yyyy  
+        /^(\d{4})-(\d{1,2})-(\d{1,2})$/,    // yyyy-mm-dd
+        /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/   // dd.mm.yyyy
+    ],
+    
+    // סטטוסים בעייתיים
+    problematicStatuses: [
+        'ביטול', 'אכ"מ', 'מוגבל', 'בוטל', 
+        'לא שולם', 'חזר', 'נדחה'
+    ]
+};
+
+// 🎨 הגדרות ממשק משתמש
+const UI_CONFIG = {
+    animations: {
+        fadeIn: 300,
+        slideDown: 200
+    },
+    
+    colors: {
+        primary: '#3498db',
+        success: '#27ae60',
+        warning: '#f39c12',
+        danger: '#e74c3c',
+        info: '#17a2b8'
+    },
+    
+    messages: {
+        loading: 'טוען נתונים...',
+        success: 'הפעולה הושלמה בהצלחה',
+        error: 'אירעה שגיאה במערכת',
+        noData: 'לא נמצאו נתונים',
+        invalidCredentials: 'שם משתמש או סיסמה שגויים'
+    }
+};
+
+// 📁 הגדרות קבצים
+const FILE_CONFIG = {
+    supportedTypes: {
+        excel: ['.xlsx', '.xls'],
+        csv: ['.csv'],
+        all: ['.xlsx', '.xls', '.csv']
+    },
+    
+    maxFileSize: 50 * 1024 * 1024, // 50MB
+    
+    sheetNames: {
+        transactions: ['גיליון1', 'Sheet1', 'עסקאות', 'transactions'],
+        scores: ['scoreM_N', 'Score_M_N', 'scores', 'דירוגים'],
+        returned: ['שיקים_חוזרים', 'שיקים חוזרים', 'returned_checks', 'חזרות'],
+        warnings: ['אכ_מ_ביטולים', 'אכמ', 'warnings', 'התרעות']
+    }
+};
+
+// 🧮 נוסחאות חישוב
+const CALCULATION_FORMULAS = {
+    // נורמליזציה של פרמטרים (0-100)
+    normalize: {
+        historyLength: (months) => Math.min(100, months * 2),
+        transactionCount: (count) => Math.min(100, count * 2),
+        averageAmount: (amount) => Math.min(100, (amount / 100000) * 50),
+        totalAmount: (amount) => Math.min(100, (amount / 1000000) * 30),
+        avgCreditDays: (days) => Math.max(0, 100 - (days - 30) * 2),
+        avgCommissionRate: (rate) => Math.max(0, 100 - rate * 10),
+        returnedChecks: (count) => Math.max(0, 100 - count * 20),
+        cancellations: (count) => Math.max(0, 100 - count * 15),
+        checkAmountRatio: (ratio) => Math.min(100, Math.max(0, 100 - Math.abs(1 - ratio) * 50)),
+        externalScore: (score) => score
+    },
+    
+    // חישוב ימי ניכיון
+    discountDays: (depositDate, dueDate) => {
+        const today = new Date();
+        const due = new Date(dueDate);
+        return due > today ? Math.ceil((due - today) / (1000 * 60 * 60 * 24)) : 0;
+    }
+};
+
+// 🌍 הגדרות בינלאומיות
+const LOCALE_CONFIG = {
+    language: 'he',
+    direction: 'rtl',
+    currency: {
+        symbol: '₪',
+        position: 'after',
+        decimal: 2
+    },
+    dateFormat: 'dd/mm/yyyy',
+    numberFormat: {
+        thousands: ',',
+        decimal: '.'
+    }
+};
+
+// 📱 הגדרות responsive
+const RESPONSIVE_CONFIG = {
+    breakpoints: {
+        mobile: 768,
+        tablet: 1024,
+        desktop: 1200
+    }
+};
+
+// 🔧 פונקציות עזר להגדרות
+const ConfigHelpers = {
+    // קבלת משתמש מהתחברות
+    getUser: (username) => SYSTEM_USERS[username] || null,
+    
+    // קבלת פרמטר דירוג
+    getRatingParameter: (paramName) => RATING_PARAMETERS[paramName] || null,
+    
+    // קבלת דירוג אותיות לפי ציון
+    getLetterRating: (score) => {
+        for (const [rating, config] of Object.entries(LETTER_RATING_SCALE)) {
+            if (score >= config.min) {
+                return { letter: rating, ...config };
+            }
+        }
+        return { letter: 'D', ...LETTER_RATING_SCALE.D };
+    },
+    
+    // בדיקה אם סטטוס בעייתי
+    isProblematicStatus: (status) => {
+        const statusLower = status.toLowerCase();
+        return DATA_PROCESSING_CONFIG.problematicStatuses.some(
+            problemStatus => statusLower.includes(problemStatus.toLowerCase())
+        );
+    },
+    
+    // עיצוב מספר עם פסיקים
+    formatNumber: (number) => {
+        return number.toLocaleString('he-IL');
+    },
+    
+    // עיצוב מטבע
+    formatCurrency: (amount) => {
+        return `${ConfigHelpers.formatNumber(amount)} ${LOCALE_CONFIG.currency.symbol}`;
+    }
+};
+
+// 📤 ייצוא הגדרות למשתנים גלובליים
+window.SYSTEM_USERS = SYSTEM_USERS;
+window.RATING_PARAMETERS = RATING_PARAMETERS;
+window.LETTER_RATING_SCALE = LETTER_RATING_SCALE;
+window.DATA_PROCESSING_CONFIG = DATA_PROCESSING_CONFIG;
+window.UI_CONFIG = UI_CONFIG;
+window.FILE_CONFIG = FILE_CONFIG;
+window.CALCULATION_FORMULAS = CALCULATION_FORMULAS;
+window.LOCALE_CONFIG = LOCALE_CONFIG;
+window.RESPONSIVE_CONFIG = RESPONSIVE_CONFIG;
+window.ConfigHelpers = ConfigHelpers;
+
+// 🚀 הודעת אתחול
+console.log('⚙️ קובץ הגדרות מערכת חיתום אשראי נטען בהצלחה');
+console.log(`📊 ${Object.keys(RATING_PARAMETERS).length} פרמטרי דירוג מוגדרים`);
+console.log(`👥 ${Object.keys(SYSTEM_USERS).length} משתמשים מורשים`);
