@@ -1341,19 +1341,29 @@
             const headers = excelData.main[0];
             const rows = excelData.main.slice(1);
             
-            // חיפוש אינטליגנטי של עמודות
-            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך', 'מושך', 'חברה', 'שם חברה']);
-            const payerIdIndex = findBestColumnMatch(headers, ['מספר זהות מושך', 'ח.פ מושך', 'ח.פ.', 'עוסק מורשה', 'ע.מ', 'מספר חברה', 'זהות מושך']);
-            const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח', 'לקוח', 'נהנה', 'שם נהנה']);
-            const clientIdIndex = findBestColumnMatch(headers, ['מספר זהות לקוח', 'זהות לקוח', 'ת.ז לקוח', 'מספר זהות', 'ת.ז.']);
-            const amountIndex = findBestColumnMatch(headers, ['סכום', 'amount', 'סה"כ', 'כסף']);
+            // חיפוש אינטליגנטי של עמודות - בהתבסס על הכותרות המדויקות
+            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך']);
+            const payerIdIndex = findBestColumnMatch(headers, ['מספר זהות מושך']);
+            const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח']);
+            const clientIdIndex = findBestColumnMatch(headers, ['מ.זהות']);
+            const amountIndex = findBestColumnMatch(headers, ['סכום']);
+            const commissionIndex = findBestColumnMatch(headers, ['עמלה']);
+            const transactionDateIndex = findBestColumnMatch(headers, ['תאריך עיסקה', 'תאריך עסקה']);
+            const dueDateIndex = findBestColumnMatch(headers, ['ת.פירעון']);
+            const actualPaymentDateIndex = findBestColumnMatch(headers, ['ת.פרעון בפועל']);
+            const statusIndex = findBestColumnMatch(headers, ['סטטוס']);
+            const checkNumberIndex = findBestColumnMatch(headers, ['מספר שיק']);
+            const commissionRateIndex = findBestColumnMatch(headers, ['אחוז עמלה']);
+            const partialCommissionRateIndex = findBestColumnMatch(headers, ['אחוז עמלה - חלקי']);
+            const returnDateIndex = findBestColumnMatch(headers, ['תאריך השבה']);
+            const transactionTypeIndex = findBestColumnMatch(headers, ['סוג עיסקה']);
             
-            console.log('מיפוי עמודות:', {
-                payer: payerNameIndex,
-                payerId: payerIdIndex,
-                client: clientNameIndex,
-                clientId: clientIdIndex,
-                amount: amountIndex
+            console.log('מיפוי עמודות מהנתונים האמיתיים:', {
+                payerName: `${payerNameIndex >= 0 ? headers[payerNameIndex] : 'לא נמצא'} (${payerNameIndex})`,
+                payerId: `${payerIdIndex >= 0 ? headers[payerIdIndex] : 'לא נמצא'} (${payerIdIndex})`,
+                clientName: `${clientNameIndex >= 0 ? headers[clientNameIndex] : 'לא נמצא'} (${clientNameIndex})`,
+                clientId: `${clientIdIndex >= 0 ? headers[clientIdIndex] : 'לא נמצא'} (${clientIdIndex})`,
+                amount: `${amountIndex >= 0 ? headers[amountIndex] : 'לא נמצא'} (${amountIndex})`
             });
 
             if (payerNameIndex === -1 || amountIndex === -1) {
@@ -1370,14 +1380,37 @@
                 const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
                 const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
                 const amount = parseFloat(row[amountIndex]) || 0;
-
-                // דילוג על שורות ללא ח.פ. מושך או שם
+                const commission = commissionIndex >= 0 ? parseFloat(row[commissionIndex]) || 0 : 0;
+                const status = statusIndex >= 0 ? row[statusIndex]?.toString().trim() : '';
+                const checkNumber = checkNumberIndex >= 0 ? row[checkNumberIndex]?.toString().trim() : '';
+                const commissionRate = commissionRateIndex >= 0 ? parseFloat(row[commissionRateIndex]) || 0 : 0;
+                const returnDate = returnDateIndex >= 0 ? row[returnDateIndex] : null;
+                
+                // דילוג על שורות ללא ח.פ. מושך או שם או סכום
                 if (!payerName || !payerId || amount <= 0) {
-                    console.warn(`שורה ${index + 1}: חסר נתונים חיוניים`, { payerName, payerId, amount });
+                    if (index < 5) { // רק לוג לשורות הראשונות
+                        console.warn(`שורה ${index + 1}: חסר נתונים`, { 
+                            payerName: payerName || 'חסר', 
+                            payerId: payerId || 'חסר', 
+                            amount: amount || 'חסר' 
+                        });
+                    }
                     return;
                 }
 
-                console.log(`שורה ${index + 1}:`, { payerName, payerId, clientName, clientId, amount });
+                // לוג לשורות הראשונות לוודא שהנתונים נקראים נכון
+                if (index < 3) {
+                    console.log(`שורה ${index + 1} - נתונים נקראו:`, { 
+                        payerName, 
+                        payerId, 
+                        clientName, 
+                        clientId, 
+                        amount,
+                        commission,
+                        status,
+                        checkNumber
+                    });
+                }
 
                 // עיבוד נתוני מושך (חברה)
                 if (!payersMap.has(payerId)) {
@@ -1389,29 +1422,51 @@
                             totalAmount: 0,
                             transactionCount: 0,
                             averageAmount: 0,
+                            totalCommission: 0,
+                            averageCommission: 0,
                             returnedChecks: 0,
                             cancellations: 0,
-                            clients: new Set()
+                            clients: new Set(),
+                            firstTransactionDate: null,
+                            lastTransactionDate: null
                         }
                     });
-                    console.log(`יצירת מושך חדש: ${payerName} (${payerId})`);
+                    
+                    if (payersMap.size <= 5) { // לוג רק ל-5 הראשונים
+                        console.log(`יצירת מושך חדש: "${payerName}" (${payerId})`);
+                    }
                 }
 
                 const payer = payersMap.get(payerId);
-                payer.transactions.push({ 
+                
+                // יצירת עסקה מפורטת
+                const transaction = {
                     amount, 
+                    commission,
                     clientName, 
                     clientId, 
+                    status,
+                    checkNumber,
+                    commissionRate,
+                    returnDate,
                     row, 
-                    index 
-                });
+                    index,
+                    isReturned: returnDate ? true : false,
+                    isCancelled: status && (status.includes('ביטול') || status.includes('אכ"מ') || status.includes('לא שולם'))
+                };
+                
+                payer.transactions.push(transaction);
+                
+                // עדכון מטריקות מושך
                 payer.metrics.totalAmount += amount;
+                payer.metrics.totalCommission += commission;
                 payer.metrics.transactionCount++;
                 payer.metrics.averageAmount = payer.metrics.totalAmount / payer.metrics.transactionCount;
+                payer.metrics.averageCommission = payer.metrics.totalCommission / payer.metrics.transactionCount;
                 
-                if (clientName) {
-                    payer.metrics.clients.add(clientName);
-                }
+                if (transaction.isReturned) payer.metrics.returnedChecks++;
+                if (transaction.isCancelled) payer.metrics.cancellations++;
+                if (clientName) payer.metrics.clients.add(clientName);
 
                 // עיבוד נתוני לקוח
                 if (clientName && clientId) {
@@ -1425,24 +1480,46 @@
                                 transactionCount: 0,
                                 averageAmount: 0,
                                 payers: new Set(),
-                                reliability: 100
+                                reliability: 100,
+                                returnedCount: 0,
+                                cancelledCount: 0
                             }
                         });
-                        console.log(`יצירת לקוח חדש: ${clientName} (${clientId})`);
+                        
+                        if (clientsMap.size <= 5) {
+                            console.log(`יצירת לקוח חדש: "${clientName}" (${clientId})`);
+                        }
                     }
 
                     const client = clientsMap.get(clientId);
                     client.transactions.push({ 
                         amount, 
+                        commission,
                         payerName, 
                         payerId, 
+                        status,
+                        isReturned: transaction.isReturned,
+                        isCancelled: transaction.isCancelled,
                         row, 
                         index 
                     });
+                    
                     client.metrics.totalAmount += amount;
                     client.metrics.transactionCount++;
                     client.metrics.averageAmount = client.metrics.totalAmount / client.metrics.transactionCount;
                     client.metrics.payers.add(payerName);
+                    
+                    // הפחתת אמינות על בסיס שיקים חוזרים וביטולים
+                    if (transaction.isReturned) {
+                        client.metrics.returnedCount++;
+                        client.metrics.reliability -= 15;
+                    }
+                    if (transaction.isCancelled) {
+                        client.metrics.cancelledCount++;
+                        client.metrics.reliability -= 10;
+                    }
+                    
+                    client.metrics.reliability = Math.max(0, client.metrics.reliability);
                 }
             });
 
