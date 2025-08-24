@@ -1,4 +1,30 @@
-<!DOCTYPE html>
+function getDnbDisplayText(payer) {
+            // חיפוש נתוני D&B
+            let dnbInfo = null;
+            
+            if (dnbData.has(payer.id)) {
+                dnbInfo = dnbData.get(payer.id);
+            } else if (dnbData.has(`NAME_${payer.name}`)) {
+                dnbInfo = dnbData.get(`NAME_${payer.name}`);
+            } else {
+                // חיפוש חלקי
+                dnbInfo = Array.from(dnbData.values()).find(dnb => {
+                    if (!dnb.companyName) return false;
+                    const payerWords = payer.name.toLowerCase().split(' ').filter(w => w.length > 2);
+                    const dnbWords = dnb.companyName.toLowerCase().split(' ').filter(w => w.length > 2);
+                    const commonWords = payerWords.filter(word => 
+                        dnbWords.some(dnbWord => dnbWord.includes(word) || word.includes(dnbWord))
+                    );
+                    return commonWords.length >= Math.min(2, payerWords.length);
+                });
+            }
+            
+            if (dnbInfo && dnbInfo.dnbScore > 0) {
+                return ` | D&B: ${Math.round(dnbInfo.dnbScore)} | ₪${dnbInfo.revenue?.toLocaleString() || '0'} מחזור`;
+            }
+            
+            return '';
+        }<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -511,11 +537,11 @@
             <div class="demo-accounts">
                 <h4>חשבונות לבדיקה:</h4>
                 <div class="demo-account" onclick="setLogin('admin', 'admin123')">
-                    <span><strong>admin</strong></span>
+                    <span><strong>admin</strong> - מנהל מערכת</span>
                     <span>admin123</span>
                 </div>
                 <div class="demo-account" onclick="setLogin('demo', 'demo123')">
-                    <span><strong>demo</strong></span>
+                    <span><strong>demo</strong> - משתמש דמו</span>
                     <span>demo123</span>
                 </div>
             </div>
@@ -1071,10 +1097,10 @@
             for (let i = 0; i < Math.min(5, excelData.credit.length); i++) {
                 const row = excelData.credit[i];
                 if (row.some(cell => cell && (
-                    cell.toString().includes('שם חברה') || 
-                    cell.toString().includes('אובליגו') ||
-                    cell.toString().includes('מחזור') ||
-                    cell.toString().includes('סקור')
+                    cell.toString().includes('שם מושך') || 
+                    cell.toString().includes('מס\' ח.פ') ||
+                    cell.toString().includes('סקור') ||
+                    cell.toString().includes('אובליגו')
                 ))) {
                     headers = row;
                     headerRowIndex = i;
@@ -1089,23 +1115,28 @@
 
             const rows = excelData.credit.slice(headerRowIndex + 1);
             
-            // מיפוי עמודות D&B בהתבסס על התמונה
-            const companyNameIndex = findBestColumnMatch(headers, ['שם חברה', 'Company Name']);
-            const companyIdIndex = findBestColumnMatch(headers, ['מספר זהות', 'Company ID', 'ח.פ']);
-            const obligationIndex = findBestColumnMatch(headers, ['אובליגו קיים', 'אובליגו']);
-            const revenueIndex = findBestColumnMatch(headers, ['מחזור בא\' ₪', 'מחזור']);
-            const ratingIndex = findBestColumnMatch(headers, ['סקור', 'Rating']);
-            const employeesIndex = findBestColumnMatch(headers, ['מס\' מועסקים', 'עובדים']);
-            const yearsActiveIndex = findBestColumnMatch(headers, ['שנות ותק', 'ותק']);
-            const addressIndex = findBestColumnMatch(headers, ['כתובת', 'Address']);
-            const cityIndex = findBestColumnMatch(headers, ['עיר', 'City']);
+            // מיפוי עמודות D&B בהתבסס על הכותרות המדויקות שלך
+            const companyNameIndex = findBestColumnMatch(headers, ['שם מושך']);
+            const companyIdIndex = findBestColumnMatch(headers, ['מס\' ח.פ']);
+            const sectorRatingIndex = findBestColumnMatch(headers, ['סקור']);
+            const industrySectorIndex = findBestColumnMatch(headers, ['סקור ענף']);
+            const yearsActiveIndex = findBestColumnMatch(headers, ['שנות ותק']);
+            const employeesIndex = findBestColumnMatch(headers, ['מס\' מועסקים']);
+            const addressIndex = findBestColumnMatch(headers, ['כתובת']);
+            const revenueIndex = findBestColumnMatch(headers, ['מחזור בא\' ₪']);
+            const cityIndex = findBestColumnMatch(headers, ['עיר']);
+            const totalTransactionsIndex = findBestColumnMatch(headers, ['סה"כ עסקאות']);
+            const currentObligationIndex = findBestColumnMatch(headers, ['אובליגו קיים']);
 
             console.log('מיפוי עמודות D&B scoreM_N:', {
                 companyName: `${companyNameIndex >= 0 ? headers[companyNameIndex] : 'לא נמצא'} (${companyNameIndex})`,
                 companyId: `${companyIdIndex >= 0 ? headers[companyIdIndex] : 'לא נמצא'} (${companyIdIndex})`,
-                obligation: `${obligationIndex >= 0 ? headers[obligationIndex] : 'לא נמצא'} (${obligationIndex})`,
+                sectorRating: `${sectorRatingIndex >= 0 ? headers[sectorRatingIndex] : 'לא נמצא'} (${sectorRatingIndex})`,
+                industrySector: `${industrySectorIndex >= 0 ? headers[industrySectorIndex] : 'לא נמצא'} (${industrySectorIndex})`,
+                yearsActive: `${yearsActiveIndex >= 0 ? headers[yearsActiveIndex] : 'לא נמצא'} (${yearsActiveIndex})`,
+                employees: `${employeesIndex >= 0 ? headers[employeesIndex] : 'לא נמצא'} (${employeesIndex})`,
                 revenue: `${revenueIndex >= 0 ? headers[revenueIndex] : 'לא נמצא'} (${revenueIndex})`,
-                rating: `${ratingIndex >= 0 ? headers[ratingIndex] : 'לא נמצא'} (${ratingIndex})`
+                obligation: `${currentObligationIndex >= 0 ? headers[currentObligationIndex] : 'לא נמצא'} (${currentObligationIndex})`
             });
 
             dnbData.clear();
@@ -1114,18 +1145,21 @@
             rows.forEach((row, index) => {
                 const companyName = companyNameIndex >= 0 ? row[companyNameIndex]?.toString().trim() : '';
                 const companyId = companyIdIndex >= 0 ? row[companyIdIndex]?.toString().trim() : '';
-                const obligation = obligationIndex >= 0 ? parseFloat(row[obligationIndex]) || 0 : 0;
-                const revenue = revenueIndex >= 0 ? parseFloat(row[revenueIndex]) || 0 : 0;
-                const rating = ratingIndex >= 0 ? parseFloat(row[ratingIndex]) || 0 : 0;
-                const employees = employeesIndex >= 0 ? parseInt(row[employeesIndex]) || 0 : 0;
+                const sectorRating = sectorRatingIndex >= 0 ? parseFloat(row[sectorRatingIndex]) || 0 : 0;
+                const industrySector = industrySectorIndex >= 0 ? parseFloat(row[industrySectorIndex]) || 0 : 0;
                 const yearsActive = yearsActiveIndex >= 0 ? parseFloat(row[yearsActiveIndex]) || 0 : 0;
+                const employees = employeesIndex >= 0 ? parseInt(row[employeesIndex]) || 0 : 0;
                 const address = addressIndex >= 0 ? row[addressIndex]?.toString().trim() : '';
+                const revenue = revenueIndex >= 0 ? parseFloat(row[revenueIndex]) || 0 : 0;
                 const city = cityIndex >= 0 ? row[cityIndex]?.toString().trim() : '';
+                const totalTransactions = totalTransactionsIndex >= 0 ? parseInt(row[totalTransactionsIndex]) || 0 : 0;
+                const currentObligation = currentObligationIndex >= 0 ? parseFloat(row[currentObligationIndex]) || 0 : 0;
 
                 // לוג לשורות הראשונות
                 if (index < 3) {
                     console.log(`D&B חברה ${index + 1}:`, {
-                        companyName, companyId, obligation, revenue, rating, employees, yearsActive
+                        companyName, companyId, sectorRating, industrySector, 
+                        yearsActive, employees, revenue, currentObligation
                     });
                 }
 
@@ -1147,26 +1181,32 @@
                     }
                 }
 
-                if ((finalCompanyId || companyName) && (rating > 0 || revenue > 0)) {
-                    const riskLevel = calculateComprehensiveDnbRisk({
-                        rating,
-                        revenue,
-                        obligation,
+                if ((finalCompanyId || companyName) && 
+                    (sectorRating > 0 || industrySector > 0 || revenue > 0 || yearsActive > 0)) {
+                    
+                    const riskLevel = calculateAdvancedDnbRisk({
+                        sectorRating,
+                        industrySector,
+                        yearsActive,
                         employees,
-                        yearsActive
+                        revenue,
+                        currentObligation,
+                        totalTransactions
                     });
 
                     // שמירה לפי ח.פ. וגם לפי שם (לחיפוש כפול)
                     const dnbRecord = {
                         companyId: finalCompanyId,
                         companyName,
-                        obligation,
-                        revenue,
-                        rating,
-                        employees,
+                        sectorRating,
+                        industrySector, 
                         yearsActive,
+                        employees,
                         address,
+                        revenue,
                         city,
+                        totalTransactions,
+                        currentObligation,
                         riskLevel,
                         dnbScore: riskLevel
                     };
@@ -1181,7 +1221,7 @@
                     processedCompanies++;
 
                     if (processedCompanies <= 5) {
-                        console.log(`נשמר D&B: ${companyName} (${finalCompanyId}) - ציון: ${riskLevel}`);
+                        console.log(`נשמר D&B: ${companyName} (${finalCompanyId}) - ציון סקטור: ${sectorRating}, ענף: ${industrySector}, ותק: ${yearsActive}, עובדים: ${employees}, מחזור: ${revenue}`);
                     }
                 }
             });
@@ -1189,32 +1229,69 @@
             console.log(`✅ עובדו ${processedCompanies} חברות D&B מתוך ${rows.length} שורות`);
         }
 
-        function calculateComprehensiveDnbRisk(dnbInfo) {
+        function calculateAdvancedDnbRisk(dnbInfo) {
             let score = 50; // ציון בסיס
 
-            // דירוג D&B מהטבלה - משקל גבוה
-            if (dnbInfo.rating > 0) {
-                // הנתונים בטבלה נראים כמו ציונים (0-100)
-                score += (dnbInfo.rating - 50) * 0.4; // משקל של 40%
+            // דירוג סקטוריאלי - משקל גבוה (הערך העיקרי)
+            if (dnbInfo.sectorRating > 0) {
+                // הנתונים נראים כמו ציונים 1-100, כאשר ערכים גבוהים יותר = טוב יותר
+                score += (dnbInfo.sectorRating - 50) * 0.3; // משקל 30%
             }
 
-            // מחזור עסקים - אינדיקטור לכוח כלכלי
-            if (dnbInfo.revenue > 0) {
-                if (dnbInfo.revenue >= 10000000) { // 10 מיליון ומעלה
-                    score += 15;
-                } else if (dnbInfo.revenue >= 5000000) { // 5-10 מיליון
-                    score += 12;
-                } else if (dnbInfo.revenue >= 1000000) { // 1-5 מיליון
-                    score += 8;
-                } else if (dnbInfo.revenue >= 500000) { // 500k-1M
-                    score += 5;
+            // דירוג ענף - משקל בינוני
+            if (dnbInfo.industrySector > 0) {
+                score += (dnbInfo.industrySector - 50) * 0.2; // משקל 20%
+            }
+
+            // שנות ותק - יציבות
+            if (dnbInfo.yearsActive > 0) {
+                if (dnbInfo.yearsActive >= 20) {
+                    score += 15; // חברה ותיקה מאוד
+                } else if (dnbInfo.yearsActive >= 10) {
+                    score += 12; // חברה ותיקה
+                } else if (dnbInfo.yearsActive >= 5) {
+                    score += 8; // חברה בינונית
+                } else if (dnbInfo.yearsActive < 2) {
+                    score -= 5; // חברה צעירה
                 }
             }
 
-            // אובליגו קיים - סיכון נוכחי
-            if (dnbInfo.obligation > 0 && dnbInfo.revenue > 0) {
-                const obligationRatio = dnbInfo.obligation / dnbInfo.revenue;
-                if (obligationRatio > 0.8) {
+            // מספר עובדים - גודל וכוח כלכלי
+            if (dnbInfo.employees > 0) {
+                if (dnbInfo.employees >= 200) {
+                    score += 15; // חברה גדולה מאוד
+                } else if (dnbInfo.employees >= 100) {
+                    score += 12; // חברה גדולה
+                } else if (dnbInfo.employees >= 50) {
+                    score += 8; // חברה בינונית-גדולה
+                } else if (dnbInfo.employees >= 20) {
+                    score += 5; // חברה בינונית
+                } else if (dnbInfo.employees >= 5) {
+                    score += 2; // חברה קטנה
+                }
+            }
+
+            // מחזור עסקים
+            if (dnbInfo.revenue > 0) {
+                if (dnbInfo.revenue >= 50000000) { // 50 מיליון ומעלה
+                    score += 15;
+                } else if (dnbInfo.revenue >= 10000000) { // 10-50 מיליון
+                    score += 12;
+                } else if (dnbInfo.revenue >= 5000000) { // 5-10 מיליון
+                    score += 8;
+                } else if (dnbInfo.revenue >= 1000000) { // 1-5 מיליון
+                    score += 5;
+                } else if (dnbInfo.revenue >= 500000) { // 500k-1M
+                    score += 2;
+                }
+            }
+
+            // אובליגו קיים - סיכון נוכחי (רק אם חיובי)
+            if (dnbInfo.currentObligation > 0 && dnbInfo.revenue > 0) {
+                const obligationRatio = dnbInfo.currentObligation / dnbInfo.revenue;
+                if (obligationRatio > 1.0) {
+                    score -= 25; // אובליגו גבוה מהמחזור
+                } else if (obligationRatio > 0.8) {
                     score -= 20; // אובליגו גבוה מאוד
                 } else if (obligationRatio > 0.5) {
                     score -= 15; // אובליגו גבוה
@@ -1225,25 +1302,16 @@
                 }
             }
 
-            // מספר עובדים
-            if (dnbInfo.employees > 0) {
-                if (dnbInfo.employees >= 100) {
+            // סה"כ עסקאות - ניסיון
+            if (dnbInfo.totalTransactions > 0) {
+                if (dnbInfo.totalTransactions >= 100) {
                     score += 10;
-                } else if (dnbInfo.employees >= 50) {
+                } else if (dnbInfo.totalTransactions >= 50) {
                     score += 7;
-                } else if (dnbInfo.employees >= 10) {
+                } else if (dnbInfo.totalTransactions >= 20) {
                     score += 4;
-                }
-            }
-
-            // שנות ותק
-            if (dnbInfo.yearsActive > 0) {
-                if (dnbInfo.yearsActive >= 15) {
-                    score += 12;
-                } else if (dnbInfo.yearsActive >= 10) {
-                    score += 8;
-                } else if (dnbInfo.yearsActive >= 5) {
-                    score += 5;
+                } else if (dnbInfo.totalTransactions >= 10) {
+                    score += 2;
                 }
             }
 
@@ -1850,7 +1918,7 @@
                         div.innerHTML = `
                             <div class="suggestion-name">${payer.name}</div>
                             <div class="suggestion-details">ח.פ: ${payer.id} | ${payer.metrics.transactionCount} עסקאות | ₪${payer.metrics.totalAmount.toLocaleString()}
-                            ${dnbData.has(payer.id) ? ` | D&B: ${Math.round(dnbData.get(payer.id).dnbScore)}` : ''}</div>
+                            ${getDnbDisplayText(payer)}</div>
                         `;
                         div.onclick = () => {
                             payerInput.value = payer.name;
