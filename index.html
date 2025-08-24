@@ -133,6 +133,15 @@
             font-size: 2.5em; 
         }
 
+        .current-date {
+            background: var(--info-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 15px;
+            margin-left: 15px;
+            font-weight: 600;
+        }
+
         .logout-btn { 
             background: var(--danger-color); 
             color: white; 
@@ -162,25 +171,68 @@
             margin-bottom: 20px;
         }
 
-        .excel-upload-section {
-            margin-bottom: 25px; 
-            padding: 25px; 
+        .file-upload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .file-upload-section {
+            padding: 20px; 
             background: linear-gradient(135deg, #e8f5e8, #d4edda); 
             border-radius: var(--border-radius); 
             border: 2px dashed var(--success-color);
             text-align: center;
+            position: relative;
+        }
+
+        .file-upload-section h4 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            font-size: 1.1em;
+        }
+
+        .file-upload-section input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            background: white;
+            font-size: 13px;
+        }
+
+        .file-status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .file-status.loaded {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .file-status.empty {
+            background: var(--danger-color);
+            color: white;
         }
 
         .upload-btn {
             background: linear-gradient(135deg, var(--success-color), #229954);
             color: white;
-            padding: 14px 28px;
+            padding: 10px 20px;
             border: none;
             border-radius: var(--border-radius);
             font-weight: 600;
             cursor: pointer;
             width: 100%;
-            margin-top: 15px;
+            margin-top: 10px;
+            font-size: 14px;
         }
 
         .btn { 
@@ -203,6 +255,13 @@
 
         .btn-secondary {
             background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
         .results-section { 
@@ -293,6 +352,17 @@
             background: #f8f9fa;
         }
 
+        .suggestion-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .suggestion-details {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
         .recommendation { 
             text-align: center; 
             margin: 25px 0; 
@@ -330,15 +400,52 @@
             margin-bottom: 25px;
         }
 
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
         .status-item {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e1e8ed;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         .status-loaded { color: var(--success-color); font-weight: 600; }
         .status-error { color: var(--danger-color); font-weight: 600; }
+
+        .client-history {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .history-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .history-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .history-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
 
         .notification {
             position: fixed;
@@ -359,6 +466,14 @@
         @media (max-width: 768px) {
             .main-content { 
                 grid-template-columns: 1fr; 
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .file-upload-grid {
+                grid-template-columns: 1fr;
             }
             
             .parameter-header,
@@ -415,9 +530,12 @@
                     <h1>🏦 מערכת חיתום אשראי</h1>
                     <p>ניתוח וחישוב דירוג אשראי מבוסס נתונים</p>
                 </div>
-                <div>
-                    <div id="currentUser" style="margin-bottom: 10px;"></div>
-                    <button onclick="logout()" class="logout-btn">התנתק</button>
+                <div style="display: flex; align-items: center;">
+                    <div class="current-date" id="currentDate"></div>
+                    <div style="text-align: left; margin-left: 15px;">
+                        <div id="currentUser" style="margin-bottom: 10px;"></div>
+                        <button onclick="logout()" class="logout-btn">התנתק</button>
+                    </div>
                 </div>
             </div>
 
@@ -429,49 +547,76 @@
                     <!-- סטטוס נתונים -->
                     <div class="data-status">
                         <h3>📊 מצב טעינת נתונים</h3>
-                        <div class="status-item">
-                            <span>📈 עסקאות היסטוריות</span>
-                            <span id="transactionsStatus" class="status-error">❌ לא נטען</span>
-                        </div>
-                        <div class="status-item">
-                            <span>💳 שיקים חוזרים</span>
-                            <span id="returnedStatus" class="status-error">❌ לא נטען</span>
-                        </div>
-                        <div class="status-item">
-                            <span>⚠️ אכ"מ וביטולים</span>
-                            <span id="warningsStatus" class="status-error">❌ לא נטען</span>
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <span>📈 עסקאות ראשי</span>
+                                <span id="transactionsStatus" class="status-error">❌ לא נטען</span>
+                            </div>
+                            <div class="status-item">
+                                <span>💳 שיקים חוזרים</span>
+                                <span id="returnedStatus" class="status-error">❌ לא נטען</span>
+                            </div>
+                            <div class="status-item">
+                                <span>⚠️ ביטולים</span>
+                                <span id="warningsStatus" class="status-error">❌ לא נטען</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- העלאת קובץ -->
-                    <div class="excel-upload-section">
-                        <div class="upload-icon">📁</div>
-                        <h4>טעינת קובץ נתוני אשראי</h4>
-                        <p>העלה קובץ Excel עם הנתונים</p>
-                        
-                        <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="margin: 15px 0;">
-                        <button onclick="loadExcelFile()" class="upload-btn">
-                            🔄 טען קובץ נתונים
-                        </button>
-                        
-                        <div style="margin-top: 15px; font-size: 13px; color: #6c757d;">
-                            <strong>🔒 פרטיות:</strong> כל הנתונים מעובדים במחשב שלך בלבד
+                    <!-- העלאת קבצים -->
+                    <div class="file-upload-grid">
+                        <div class="file-upload-section">
+                            <div class="file-status empty" id="mainFileStatus">ריק</div>
+                            <h4>📊 קובץ עסקאות ראשי</h4>
+                            <input type="file" id="mainFile" accept=".xlsx,.xls,.csv" onchange="loadFile('main')">
+                            <button onclick="document.getElementById('mainFile').click()" class="upload-btn">
+                                🔄 בחר קובץ
+                            </button>
+                        </div>
+
+                        <div class="file-upload-section">
+                            <div class="file-status empty" id="returnedFileStatus">ריק</div>
+                            <h4>💳 קובץ שיקים חוזרים</h4>
+                            <input type="file" id="returnedFile" accept=".xlsx,.xls,.csv" onchange="loadFile('returned')">
+                            <button onclick="document.getElementById('returnedFile').click()" class="upload-btn">
+                                🔄 בחר קובץ
+                            </button>
+                        </div>
+
+                        <div class="file-upload-section">
+                            <div class="file-status empty" id="warningsFileStatus">ריק</div>
+                            <h4>⚠️ קובץ ביטולים/אכ"מ</h4>
+                            <input type="file" id="warningsFile" accept=".xlsx,.xls,.csv" onchange="loadFile('warnings')">
+                            <button onclick="document.getElementById('warningsFile').click()" class="upload-btn">
+                                🔄 בחר קובץ
+                            </button>
                         </div>
                     </div>
 
                     <!-- פרטי עסקה -->
                     <div class="form-group" style="position: relative;">
-                        <label>שם מושך</label>
-                        <input type="text" id="payerName" placeholder="התחל להקליד שם מושך...">
+                        <label>שם מושך (חברה)</label>
+                        <input type="text" id="payerName" placeholder="התחל להקליד שם החברה המושכת...">
                         <div id="payerNameSuggestions" class="autocomplete-suggestions"></div>
                     </div>
 
                     <div class="form-group">
-                        <label>מספר זהות / ח.פ. מושך</label>
-                        <input type="text" id="payerID" placeholder="יתמלא אוטומטית">
+                        <label>ח.פ. / ע.מ. של המושך</label>
+                        <input type="text" id="payerID" placeholder="יתמלא אוטומטית או הזן ידנית">
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group" style="position: relative;">
+                        <label>שם לקוח (נהנה)</label>
+                        <input type="text" id="clientName" placeholder="שם הלקוח שמקבל את הכסף...">
+                        <div id="clientNameSuggestions" class="autocomplete-suggestions"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>מספר זהות לקוח</label>
+                        <input type="text" id="clientID" placeholder="מספר תעודת זהות של הלקוח">
+                    </div>
+
+                    <div class="form-row">
                         <div class="form-group">
                             <label>סכום השיק (₪)</label>
                             <input type="number" id="checkAmount" placeholder="0" min="0">
@@ -487,8 +632,14 @@
                     </button>
 
                     <button class="btn btn-secondary" onclick="loadSampleData()">
-                        📋 טען נתוני דוגמה
+                        📋 טען נתוני דוגמה לבדיקה
                     </button>
+
+                    <!-- היסטוריית לקוח -->
+                    <div id="clientHistory" class="client-history" style="display: none;">
+                        <h3>📋 היסטוריית לקוח</h3>
+                        <div class="history-summary" id="clientHistorySummary"></div>
+                    </div>
                 </div>
 
                 <!-- תוצאות -->
@@ -524,8 +675,13 @@
     <script>
         // משתנים גלובליים
         let currentUser = null;
-        let excelData = { main: [], returned: [], warnings: [] };
+        let excelData = { 
+            main: [], 
+            returned: [], 
+            warnings: [] 
+        };
         let payersMap = new Map();
+        let clientsMap = new Map();
         let isDataLoaded = false;
 
         const users = {
@@ -534,14 +690,14 @@
         };
 
         const ratingParameters = {
-            historyLength: { weight: 0.15, name: 'אורך היסטוריה' },
-            transactionCount: { weight: 0.12, name: 'כמות עסקאות' },
-            averageAmount: { weight: 0.10, name: 'עסקה ממוצעת' },
-            totalAmount: { weight: 0.08, name: 'סך עסקאות' },
-            avgCreditDays: { weight: 0.10, name: 'ימי אשראי ממוצעים' },
+            historyLength: { weight: 0.15, name: 'אורך היסטוריה חברה' },
+            transactionCount: { weight: 0.12, name: 'כמות עסקאות חברה' },
+            averageAmount: { weight: 0.10, name: 'עסקה ממוצעת חברה' },
+            clientHistory: { weight: 0.15, name: 'היסטוריית לקוח' },
+            clientReliability: { weight: 0.12, name: 'אמינות לקוח' },
             returnedChecks: { weight: 0.15, name: 'שיקים חוזרים' },
             cancellations: { weight: 0.12, name: 'ביטולים ואכ"מ' },
-            paymentConsistency: { weight: 0.18, name: 'עקביות תשלומים' }
+            paymentConsistency: { weight: 0.09, name: 'עקביות תשלומים' }
         };
 
         // פונקציות התחברות
@@ -560,6 +716,7 @@
                 document.getElementById('currentUser').textContent = `${users[username].role}: ${username}`;
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'block';
+                updateCurrentDate();
                 showNotification('התחברת בהצלחה!', 'success');
             } else {
                 document.getElementById('loginError').textContent = 'שם משתמש או סיסמה שגויים';
@@ -577,32 +734,58 @@
             }
         }
 
-        // טעינת קובץ Excel
-        async function loadExcelFile() {
-            const fileInput = document.getElementById('excelFile');
-            if (!fileInput.files[0]) {
-                showNotification('אנא בחר קובץ', 'warning');
-                return;
-            }
+        function updateCurrentDate() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('he-IL', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+            document.getElementById('currentDate').textContent = dateStr;
+        }
+
+        // טעינת קבצים
+        async function loadFile(type) {
+            const fileInput = document.getElementById(type + 'File');
+            const statusElement = document.getElementById(type + 'FileStatus');
+            
+            if (!fileInput.files[0]) return;
 
             try {
                 const file = fileInput.files[0];
                 const workbook = await readExcelFile(file);
-                processWorkbook(workbook);
                 
-                if (payersMap.size > 0) {
-                    isDataLoaded = true;
-                    updateDataStatus();
-                    setupAutocomplete();
-                    showNotification(`נטענו ${payersMap.size} מושכים בהצלחה!`, 'success');
-                    document.getElementById('calculateBtn').disabled = false;
-                } else {
-                    showNotification('לא נמצאו נתונים תקינים', 'warning');
+                // עיבוד הקובץ לפי סוג
+                if (type === 'main') {
+                    processMainFile(workbook);
+                } else if (type === 'returned') {
+                    processReturnedFile(workbook);
+                } else if (type === 'warnings') {
+                    processWarningsFile(workbook);
                 }
+
+                statusElement.textContent = '✓ נטען';
+                statusElement.className = 'file-status loaded';
+                
+                checkAllFilesLoaded();
+                showNotification(`קובץ ${getFileTypeName(type)} נטען בהצלחה`, 'success');
+
             } catch (error) {
                 console.error('שגיאה:', error);
-                showNotification('שגיאה בטעינת הקובץ', 'error');
+                statusElement.textContent = '❌ שגיאה';
+                statusElement.className = 'file-status empty';
+                showNotification(`שגיאה בטעינת קובץ ${getFileTypeName(type)}`, 'error');
             }
+        }
+
+        function getFileTypeName(type) {
+            const names = {
+                'main': 'עסקאות ראשי',
+                'returned': 'שיקים חוזרים',
+                'warnings': 'ביטולים'
+            };
+            return names[type] || type;
         }
 
         function readExcelFile(file) {
@@ -622,26 +805,31 @@
             });
         }
 
-        function processWorkbook(workbook) {
-            excelData = { main: [], returned: [], warnings: [] };
-            payersMap.clear();
-
-            workbook.SheetNames.forEach(sheetName => {
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                
-                if (jsonData.length > 1) {
-                    if (sheetName.includes('עסקאות') || sheetName.includes('main') || workbook.SheetNames.indexOf(sheetName) === 0) {
-                        excelData.main = jsonData;
-                    } else if (sheetName.includes('חוזרים')) {
-                        excelData.returned = jsonData;
-                    } else if (sheetName.includes('ביטולים')) {
-                        excelData.warnings = jsonData;
-                    }
-                }
-            });
-
+        function processMainFile(workbook) {
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            excelData.main = jsonData;
             processMainData();
+        }
+
+        function processReturnedFile(workbook) {
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            excelData.returned = jsonData;
+            processReturnedData();
+        }
+
+        function processWarningsFile(workbook) {
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            excelData.warnings = jsonData;
+            processWarningsData();
         }
 
         function processMainData() {
@@ -650,21 +838,38 @@
             const headers = excelData.main[0];
             const rows = excelData.main.slice(1);
             
-            const payerNameIndex = findColumnIndex(headers, ['שם מושך', 'מושך']);
-            const payerIdIndex = findColumnIndex(headers, ['מספר זהות מושך', 'זהות', 'ח.פ']);
-            const amountIndex = findColumnIndex(headers, ['סכום', 'amount']);
+            // חיפוש אינטליגנטי של עמודות
+            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך', 'מושך', 'חברה']);
+            const payerIdIndex = findBestColumnMatch(headers, ['ח.פ', 'ח.פ.', 'עוסק מורשה', 'ע.מ', 'מספר חברה']);
+            const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח', 'לקוח', 'נהנה']);
+            const clientIdIndex = findBestColumnMatch(headers, ['זהות לקוח', 'ת.ז לקוח', 'מספר זהות']);
+            const amountIndex = findBestColumnMatch(headers, ['סכום', 'amount', 'סה"כ']);
             
-            if (payerNameIndex === -1 || payerIdIndex === -1 || amountIndex === -1) {
+            console.log('מיפוי עמודות:', {
+                payer: payerNameIndex,
+                payerId: payerIdIndex,
+                client: clientNameIndex,
+                clientId: clientIdIndex,
+                amount: amountIndex
+            });
+
+            if (payerNameIndex === -1 || amountIndex === -1) {
                 console.warn('לא נמצאו עמודות חיוניות');
                 return;
             }
 
-            rows.forEach(row => {
+            payersMap.clear();
+            clientsMap.clear();
+
+            rows.forEach((row, index) => {
                 const payerName = row[payerNameIndex]?.toString().trim();
-                const payerId = row[payerIdIndex]?.toString().trim();
+                const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : `AUTO_${index}`;
+                const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
+                const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
                 const amount = parseFloat(row[amountIndex]) || 0;
 
-                if (payerId && payerName && amount > 0) {
+                if (payerName && amount > 0) {
+                    // עיבוד נתוני מושך (חברה)
                     if (!payersMap.has(payerId)) {
                         payersMap.set(payerId, {
                             id: payerId,
@@ -675,47 +880,161 @@
                                 transactionCount: 0,
                                 averageAmount: 0,
                                 returnedChecks: 0,
-                                cancellations: 0
+                                cancellations: 0,
+                                clients: new Set()
                             }
                         });
                     }
 
                     const payer = payersMap.get(payerId);
-                    payer.transactions.push({ amount, row });
+                    payer.transactions.push({ 
+                        amount, 
+                        clientName, 
+                        clientId, 
+                        row, 
+                        index 
+                    });
                     payer.metrics.totalAmount += amount;
                     payer.metrics.transactionCount++;
                     payer.metrics.averageAmount = payer.metrics.totalAmount / payer.metrics.transactionCount;
+                    
+                    if (clientName) {
+                        payer.metrics.clients.add(clientName);
+                    }
+
+                    // עיבוד נתוני לקוח
+                    if (clientName && clientId) {
+                        if (!clientsMap.has(clientId)) {
+                            clientsMap.set(clientId, {
+                                id: clientId,
+                                name: clientName,
+                                transactions: [],
+                                metrics: {
+                                    totalAmount: 0,
+                                    transactionCount: 0,
+                                    averageAmount: 0,
+                                    payers: new Set(),
+                                    reliability: 100
+                                }
+                            });
+                        }
+
+                        const client = clientsMap.get(clientId);
+                        client.transactions.push({ 
+                            amount, 
+                            payerName, 
+                            payerId, 
+                            row, 
+                            index 
+                        });
+                        client.metrics.totalAmount += amount;
+                        client.metrics.transactionCount++;
+                        client.metrics.averageAmount = client.metrics.totalAmount / client.metrics.transactionCount;
+                        client.metrics.payers.add(payerName);
+                    }
+                }
+            });
+
+            console.log(`עובדו ${payersMap.size} מושכים ו-${clientsMap.size} לקוחות`);
+        }
+
+        function processReturnedData() {
+            if (excelData.returned.length < 2) return;
+
+            const headers = excelData.returned[0];
+            const rows = excelData.returned.slice(1);
+            
+            const payerIdIndex = findBestColumnMatch(headers, ['ח.פ', 'ע.מ', 'מספר חברה']);
+            const clientIdIndex = findBestColumnMatch(headers, ['זהות', 'ת.ז', 'מספר זהות']);
+
+            rows.forEach(row => {
+                if (payerIdIndex >= 0) {
+                    const payerId = row[payerIdIndex]?.toString().trim();
+                    if (payerId && payersMap.has(payerId)) {
+                        payersMap.get(payerId).metrics.returnedChecks++;
+                    }
+                }
+
+                if (clientIdIndex >= 0) {
+                    const clientId = row[clientIdIndex]?.toString().trim();
+                    if (clientId && clientsMap.has(clientId)) {
+                        clientsMap.get(clientId).metrics.reliability -= 10;
+                    }
                 }
             });
         }
 
-        function findColumnIndex(headers, patterns) {
-            return headers.findIndex(header => 
-                header && patterns.some(pattern => 
-                    header.toString().includes(pattern)
-                )
-            );
+        function processWarningsData() {
+            if (excelData.warnings.length < 2) return;
+
+            const headers = excelData.warnings[0];
+            const rows = excelData.warnings.slice(1);
+            
+            const payerIdIndex = findBestColumnMatch(headers, ['ח.פ', 'ע.מ', 'מספר חברה']);
+            const clientIdIndex = findBestColumnMatch(headers, ['זהות', 'ת.ז', 'מספר זהות']);
+
+            rows.forEach(row => {
+                if (payerIdIndex >= 0) {
+                    const payerId = row[payerIdIndex]?.toString().trim();
+                    if (payerId && payersMap.has(payerId)) {
+                        payersMap.get(payerId).metrics.cancellations++;
+                    }
+                }
+
+                if (clientIdIndex >= 0) {
+                    const clientId = row[clientIdIndex]?.toString().trim();
+                    if (clientId && clientsMap.has(clientId)) {
+                        clientsMap.get(clientId).metrics.reliability -= 15;
+                    }
+                }
+            });
+        }
+
+        function findBestColumnMatch(headers, patterns) {
+            for (let pattern of patterns) {
+                const index = headers.findIndex(header => 
+                    header && header.toString().includes(pattern)
+                );
+                if (index >= 0) return index;
+            }
+            return -1;
+        }
+
+        function checkAllFilesLoaded() {
+            if (payersMap.size > 0) {
+                isDataLoaded = true;
+                updateDataStatus();
+                setupAutocomplete();
+                document.getElementById('calculateBtn').disabled = false;
+            }
         }
 
         function updateDataStatus() {
+            const transactionsCount = payersMap.size;
+            const returnedCount = Array.from(payersMap.values())
+                .reduce((sum, payer) => sum + payer.metrics.returnedChecks, 0);
+            const cancellationsCount = Array.from(payersMap.values())
+                .reduce((sum, payer) => sum + payer.metrics.cancellations, 0);
+            
             document.getElementById('transactionsStatus').innerHTML = 
-                `<span class="status-loaded">✓ ${payersMap.size} מושכים</span>`;
+                `<span class="status-loaded">✓ ${transactionsCount} חברות</span>`;
             document.getElementById('returnedStatus').innerHTML = 
-                '<span class="status-loaded">✓ נטען</span>';
+                `<span class="status-loaded">✓ ${returnedCount} שיקים חוזרים</span>`;
             document.getElementById('warningsStatus').innerHTML = 
-                '<span class="status-loaded">✓ נטען</span>';
+                `<span class="status-loaded">✓ ${cancellationsCount} ביטולים</span>`;
         }
 
         function setupAutocomplete() {
-            const input = document.getElementById('payerName');
-            const suggestions = document.getElementById('payerNameSuggestions');
+            // השלמה אוטומטית לחברות מושכות
+            const payerInput = document.getElementById('payerName');
+            const payerSuggestions = document.getElementById('payerNameSuggestions');
 
-            input.addEventListener('input', function() {
+            payerInput.addEventListener('input', function() {
                 const value = this.value.toLowerCase().trim();
-                suggestions.innerHTML = '';
+                payerSuggestions.innerHTML = '';
                 
                 if (value.length < 2) {
-                    suggestions.style.display = 'none';
+                    payerSuggestions.style.display = 'none';
                     return;
                 }
 
@@ -724,40 +1043,114 @@
                     .slice(0, 10);
 
                 if (matches.length > 0) {
-                    suggestions.style.display = 'block';
+                    payerSuggestions.style.display = 'block';
                     matches.forEach(payer => {
                         const div = document.createElement('div');
                         div.className = 'autocomplete-suggestion';
                         div.innerHTML = `
                             <div class="suggestion-name">${payer.name}</div>
-                            <div class="suggestion-details">${payer.id} - ${payer.metrics.transactionCount} עסקאות</div>
+                            <div class="suggestion-details">ח.פ: ${payer.id} | ${payer.metrics.transactionCount} עסקאות | ₪${payer.metrics.totalAmount.toLocaleString()}</div>
                         `;
                         div.onclick = () => {
-                            input.value = payer.name;
+                            payerInput.value = payer.name;
                             document.getElementById('payerID').value = payer.id;
-                            suggestions.style.display = 'none';
+                            payerSuggestions.style.display = 'none';
                         };
-                        suggestions.appendChild(div);
+                        payerSuggestions.appendChild(div);
                     });
                 } else {
-                    suggestions.style.display = 'none';
+                    payerSuggestions.style.display = 'none';
                 }
             });
 
+            // השלמה אוטומטית ללקוחות
+            const clientInput = document.getElementById('clientName');
+            const clientSuggestions = document.getElementById('clientNameSuggestions');
+
+            clientInput.addEventListener('input', function() {
+                const value = this.value.toLowerCase().trim();
+                clientSuggestions.innerHTML = '';
+                
+                if (value.length < 2) {
+                    clientSuggestions.style.display = 'none';
+                    document.getElementById('clientHistory').style.display = 'none';
+                    return;
+                }
+
+                const matches = Array.from(clientsMap.values())
+                    .filter(client => client.name.toLowerCase().includes(value))
+                    .slice(0, 10);
+
+                if (matches.length > 0) {
+                    clientSuggestions.style.display = 'block';
+                    matches.forEach(client => {
+                        const div = document.createElement('div');
+                        div.className = 'autocomplete-suggestion';
+                        div.innerHTML = `
+                            <div class="suggestion-name">${client.name}</div>
+                            <div class="suggestion-details">ת.ז: ${client.id} | ${client.metrics.transactionCount} עסקאות | אמינות: ${Math.max(0, client.metrics.reliability)}%</div>
+                        `;
+                        div.onclick = () => {
+                            clientInput.value = client.name;
+                            document.getElementById('clientID').value = client.id;
+                            clientSuggestions.style.display = 'none';
+                            showClientHistory(client);
+                        };
+                        clientSuggestions.appendChild(div);
+                    });
+                } else {
+                    clientSuggestions.style.display = 'none';
+                }
+            });
+
+            // הסתרת הצעות בלחיצה חיצונית
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.form-group')) {
-                    suggestions.style.display = 'none';
+                    payerSuggestions.style.display = 'none';
+                    clientSuggestions.style.display = 'none';
                 }
             });
         }
 
+        function showClientHistory(client) {
+            const historyDiv = document.getElementById('clientHistory');
+            const summaryDiv = document.getElementById('clientHistorySummary');
+            
+            const reliability = Math.max(0, client.metrics.reliability);
+            const avgAmount = client.metrics.averageAmount;
+            const totalAmount = client.metrics.totalAmount;
+            const transactionCount = client.metrics.transactionCount;
+            
+            summaryDiv.innerHTML = `
+                <div class="history-card">
+                    <div class="history-value">${transactionCount}</div>
+                    <div>עסקאות קודמות</div>
+                </div>
+                <div class="history-card">
+                    <div class="history-value">₪${totalAmount.toLocaleString()}</div>
+                    <div>סך כולל</div>
+                </div>
+                <div class="history-card">
+                    <div class="history-value">₪${avgAmount.toLocaleString()}</div>
+                    <div>ממוצע לעסקה</div>
+                </div>
+                <div class="history-card">
+                    <div class="history-value" style="color: ${reliability >= 80 ? '#27ae60' : reliability >= 60 ? '#f39c12' : '#e74c3c'}">${reliability}%</div>
+                    <div>דירוג אמינות</div>
+                </div>
+            `;
+            
+            historyDiv.style.display = 'block';
+        }
+
         function calculateCreditRating() {
             const payerId = document.getElementById('payerID').value.trim();
+            const clientId = document.getElementById('clientID').value.trim();
             const checkAmount = parseFloat(document.getElementById('checkAmount').value) || 0;
             const creditDays = parseInt(document.getElementById('creditDays').value) || 30;
 
             if (!payerId || !payersMap.has(payerId)) {
-                showNotification('מושך לא נמצא בנתונים', 'warning');
+                showNotification('חברה מושכת לא נמצאה בנתונים', 'warning');
                 return;
             }
 
@@ -767,23 +1160,25 @@
             }
 
             const payer = payersMap.get(payerId);
-            const rating = calculateRating(payer, checkAmount, creditDays);
+            const client = clientId && clientsMap.has(clientId) ? clientsMap.get(clientId) : null;
             
-            displayResults(rating, payer, checkAmount, creditDays);
+            const rating = calculateRating(payer, client, checkAmount, creditDays);
+            displayResults(rating, payer, client, checkAmount, creditDays);
         }
 
-        function calculateRating(payer, checkAmount, creditDays) {
-            const metrics = payer.metrics;
+        function calculateRating(payer, client, checkAmount, creditDays) {
+            const payerMetrics = payer.metrics;
+            const clientMetrics = client ? client.metrics : null;
             
-            // חישוב פרמטרים
+            // חישוב פרמטרים משולבים
             const parameters = {
-                historyLength: Math.min(100, (metrics.transactionCount / 5) * 20),
-                transactionCount: Math.min(100, (metrics.transactionCount / 10) * 50),
-                averageAmount: Math.min(100, (metrics.averageAmount / 10000) * 30),
-                totalAmount: Math.min(100, (metrics.totalAmount / 50000) * 25),
-                avgCreditDays: Math.max(0, 100 - (creditDays / 90) * 50),
-                returnedChecks: Math.max(0, 100 - (metrics.returnedChecks * 20)),
-                cancellations: Math.max(0, 100 - (metrics.cancellations * 15)),
+                historyLength: Math.min(100, (payerMetrics.transactionCount / 10) * 30),
+                transactionCount: Math.min(100, (payerMetrics.transactionCount / 20) * 40),
+                averageAmount: Math.min(100, (payerMetrics.averageAmount / 20000) * 35),
+                clientHistory: clientMetrics ? Math.min(100, (clientMetrics.transactionCount / 5) * 25) : 0,
+                clientReliability: clientMetrics ? Math.max(0, clientMetrics.reliability) : 50,
+                returnedChecks: Math.max(0, 100 - (payerMetrics.returnedChecks * 25)),
+                cancellations: Math.max(0, 100 - (payerMetrics.cancellations * 20)),
                 paymentConsistency: calculatePaymentConsistency(payer)
             };
 
@@ -809,7 +1204,7 @@
             if (totalScore >= 85) {
                 letterRating = 'AAA';
                 riskLevel = 'סיכון נמוך מאוד';
-                recommendation = 'מומלץ לאישור - לקוח איכותי';
+                recommendation = 'מומלץ בחום לאישור - לקוח איכותי';
             } else if (totalScore >= 75) {
                 letterRating = 'AA';
                 riskLevel = 'סיכון נמוך';
@@ -863,7 +1258,7 @@
             return Math.min(100, consistencyScore);
         }
 
-        function displayResults(rating, payer, checkAmount, creditDays) {
+        function displayResults(rating, payer, client, checkAmount, creditDays) {
             // הצגת כרטיסי דירוג
             const ratingDisplay = document.getElementById('ratingDisplay');
             ratingDisplay.innerHTML = `
@@ -877,7 +1272,11 @@
                 </div>
                 <div class="rating-card">
                     <div class="rating-score">${payer.metrics.transactionCount}</div>
-                    <div class="rating-label">עסקאות קודמות</div>
+                    <div class="rating-label">עסקאות חברה</div>
+                </div>
+                <div class="rating-card">
+                    <div class="rating-score">${client ? client.metrics.transactionCount : 0}</div>
+                    <div class="rating-label">עסקאות לקוח</div>
                 </div>
                 <div class="rating-card">
                     <div class="rating-score">₪${payer.metrics.totalAmount.toLocaleString()}</div>
@@ -920,6 +1319,7 @@
                 <h3>${rating.recommendation}</h3>
                 <p>רמת סיכון: ${rating.riskLevel}</p>
                 <p>עבור עסקה של ₪${checkAmount.toLocaleString()} ל-${creditDays} ימים</p>
+                ${client ? `<p>לקוח: ${client.name} (אמינות: ${Math.max(0, client.metrics.reliability)}%)</p>` : ''}
             `;
 
             // הצגת התוצאות
@@ -928,33 +1328,74 @@
         }
 
         function loadSampleData() {
-            // נתוני דוגמה
+            // נתוני דוגמה מרחיבים
             payersMap.clear();
+            clientsMap.clear();
             
-            const sampleData = [
-                { id: '123456789', name: 'חברת אבג בע"מ', transactions: 15, total: 150000, returned: 0 },
-                { id: '987654321', name: 'דפקא השקעות', transactions: 8, total: 80000, returned: 1 },
-                { id: '555444333', name: 'זח טק סולושיינס', transactions: 25, total: 300000, returned: 0 },
-                { id: '111222333', name: 'יכל אנטרפרייזס', transactions: 5, total: 25000, returned: 2 },
-                { id: '777888999', name: 'מנוף קפיטל', transactions: 12, total: 120000, returned: 0 }
+            const samplePayers = [
+                { id: '510123456', name: 'אבג טק בע"מ', transactions: 15, total: 450000, returned: 0, cancelled: 0 },
+                { id: '520987654', name: 'דפקא השקעות (1995) בע"מ', transactions: 8, total: 280000, returned: 1, cancelled: 0 },
+                { id: '530555444', name: 'זח טק סולושיינס בע"מ', transactions: 25, total: 850000, returned: 0, cancelled: 1 },
+                { id: '540111222', name: 'יכל אנטרפרייזס בע"מ', transactions: 5, total: 125000, returned: 2, cancelled: 1 },
+                { id: '550777888', name: 'מנוף קפיטל פיננסים בע"מ', transactions: 12, total: 380000, returned: 0, cancelled: 0 }
             ];
 
-            sampleData.forEach(data => {
+            const sampleClients = [
+                { id: '123456789', name: 'דוד כהן', transactions: 8, total: 180000, reliability: 95 },
+                { id: '987654321', name: 'שרה לוי', transactions: 12, total: 320000, reliability: 90 },
+                { id: '555444333', name: 'מיכאל אברהם', transactions: 5, total: 85000, reliability: 75 },
+                { id: '111222333', name: 'רחל גולדברג', transactions: 15, total: 450000, reliability: 100 },
+                { id: '777888999', name: 'יוסף מזרחי', transactions: 3, total: 45000, reliability: 60 }
+            ];
+
+            // יצירת נתוני חברות
+            samplePayers.forEach(data => {
                 payersMap.set(data.id, {
                     id: data.id,
                     name: data.name,
                     transactions: Array(data.transactions).fill().map((_, i) => ({
-                        amount: (data.total / data.transactions) + (Math.random() - 0.5) * 1000
+                        amount: (data.total / data.transactions) + (Math.random() - 0.5) * 5000,
+                        clientName: sampleClients[i % sampleClients.length].name,
+                        clientId: sampleClients[i % sampleClients.length].id
                     })),
                     metrics: {
                         totalAmount: data.total,
                         transactionCount: data.transactions,
                         averageAmount: data.total / data.transactions,
                         returnedChecks: data.returned,
-                        cancellations: Math.floor(Math.random() * 2)
+                        cancellations: data.cancelled,
+                        clients: new Set(sampleClients.map(c => c.name))
                     }
                 });
             });
+
+            // יצירת נתוני לקוחות
+            sampleClients.forEach(data => {
+                clientsMap.set(data.id, {
+                    id: data.id,
+                    name: data.name,
+                    transactions: Array(data.transactions).fill().map((_, i) => ({
+                        amount: (data.total / data.transactions) + (Math.random() - 0.5) * 3000,
+                        payerName: samplePayers[i % samplePayers.length].name,
+                        payerId: samplePayers[i % samplePayers.length].id
+                    })),
+                    metrics: {
+                        totalAmount: data.total,
+                        transactionCount: data.transactions,
+                        averageAmount: data.total / data.transactions,
+                        reliability: data.reliability,
+                        payers: new Set(samplePayers.map(p => p.name))
+                    }
+                });
+            });
+
+            // עדכון סטטוס הקבצים
+            document.getElementById('mainFileStatus').textContent = '✓ דמו';
+            document.getElementById('mainFileStatus').className = 'file-status loaded';
+            document.getElementById('returnedFileStatus').textContent = '✓ דמו';
+            document.getElementById('returnedFileStatus').className = 'file-status loaded';
+            document.getElementById('warningsFileStatus').textContent = '✓ דמו';
+            document.getElementById('warningsFileStatus').className = 'file-status loaded';
 
             isDataLoaded = true;
             updateDataStatus();
@@ -966,10 +1407,14 @@
         function resetForm() {
             document.getElementById('payerName').value = '';
             document.getElementById('payerID').value = '';
+            document.getElementById('clientName').value = '';
+            document.getElementById('clientID').value = '';
             document.getElementById('checkAmount').value = '';
             document.getElementById('creditDays').value = '30';
             document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('clientHistory').style.display = 'none';
             document.getElementById('payerNameSuggestions').style.display = 'none';
+            document.getElementById('clientNameSuggestions').style.display = 'none';
         }
 
         function showNotification(message, type = 'success') {
@@ -982,7 +1427,7 @@
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
-            }, 3000);
+            }, 4000);
         }
 
         // אתחול
