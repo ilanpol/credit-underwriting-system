@@ -1576,6 +1576,8 @@
                 
                 if (value.length < 2) {
                     payerSuggestions.style.display = 'none';
+                    // איפוס ח.פ. מושך כשמוחקים את השם
+                    document.getElementById('payerID').value = '';
                     return;
                 }
 
@@ -1598,11 +1600,12 @@
                             document.getElementById('payerID').value = payer.id;
                             payerSuggestions.style.display = 'none';
                             
-                            // מילוי פרטי D&B אם קיימים
-                            if (dnbData.has(payer.id)) {
-                                const dnbInfo = dnbData.get(payer.id);
-                                console.log('נמצאו נתוני D&B:', dnbInfo);
-                            }
+                            // לוג לבדיקה
+                            console.log('נבחר מושך:', {
+                                name: payer.name,
+                                id: payer.id,
+                                dnbExists: dnbData.has(payer.id)
+                            });
                         };
                         payerSuggestions.appendChild(div);
                     });
@@ -1622,6 +1625,8 @@
                 if (value.length < 2) {
                     clientSuggestions.style.display = 'none';
                     document.getElementById('clientHistory').style.display = 'none';
+                    // איפוס ח.פ. לקוח כשמוחקים את השם
+                    document.getElementById('clientID').value = '';
                     return;
                 }
 
@@ -1636,7 +1641,8 @@
                         div.className = 'autocomplete-suggestion';
                         div.innerHTML = `
                             <div class="suggestion-name">${client.name}</div>
-                            <div class="suggestion-details">ת.ז: ${client.id} | ${client.metrics.transactionCount} עסקאות | אמינות: ${Math.max(0, client.metrics.reliability)}%</div>
+                            <div class="suggestion-details">ת.ז: ${client.id} | ${client.metrics.transactionCount} עסקאות | אמינות: ${Math.max(0, client.metrics.reliability)}%
+                            ${behaviorData.has(client.name) ? ` | התנהגות: ${Math.round(behaviorData.get(client.name).behaviorScore)}%` : ''}</div>
                         `;
                         div.onclick = () => {
                             clientInput.value = client.name;
@@ -1692,13 +1698,25 @@
         }
 
         function calculateCreditRating() {
+            const payerName = document.getElementById('payerName').value.trim();
             const payerId = document.getElementById('payerID').value.trim();
+            const clientName = document.getElementById('clientName').value.trim();
             const clientId = document.getElementById('clientID').value.trim();
             const checkAmount = parseFloat(document.getElementById('checkAmount').value) || 0;
             const creditDays = parseInt(document.getElementById('creditDays').value) || 30;
 
+            console.log('נתוני קלט לחישוב:', {
+                payerName,
+                payerId,
+                clientName,
+                clientId,
+                checkAmount,
+                creditDays
+            });
+
             if (!payerId || !payersMap.has(payerId)) {
-                showNotification('חברה מושכת לא נמצאה בנתונים', 'warning');
+                showNotification('חברה מושכת לא נמצאה בנתונים או ח.פ. ריק', 'warning');
+                console.warn('מושך לא נמצא:', { payerId, hasInMap: payersMap.has(payerId) });
                 return;
             }
 
@@ -1709,6 +1727,9 @@
 
             const payer = payersMap.get(payerId);
             const client = clientId && clientsMap.has(clientId) ? clientsMap.get(clientId) : null;
+            
+            console.log('נתוני מושך:', payer);
+            console.log('נתוני לקוח:', client);
             
             const rating = calculateRating(payer, client, checkAmount, creditDays);
             displayResults(rating, payer, client, checkAmount, creditDays);
