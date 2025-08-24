@@ -1342,11 +1342,11 @@
             const rows = excelData.main.slice(1);
             
             // חיפוש אינטליגנטי של עמודות
-            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך', 'מושך', 'חברה']);
-            const payerIdIndex = findBestColumnMatch(headers, ['ח.פ', 'ח.פ.', 'עוסק מורשה', 'ע.מ', 'מספר חברה']);
-            const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח', 'לקוח', 'נהנה']);
-            const clientIdIndex = findBestColumnMatch(headers, ['זהות לקוח', 'ת.ז לקוח', 'מספר זהות']);
-            const amountIndex = findBestColumnMatch(headers, ['סכום', 'amount', 'סה"כ']);
+            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך', 'מושך', 'חברה', 'שם חברה']);
+            const payerIdIndex = findBestColumnMatch(headers, ['מספר זהות מושך', 'ח.פ מושך', 'ח.פ.', 'עוסק מורשה', 'ע.מ', 'מספר חברה', 'זהות מושך']);
+            const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח', 'לקוח', 'נהנה', 'שם נהנה']);
+            const clientIdIndex = findBestColumnMatch(headers, ['מספר זהות לקוח', 'זהות לקוח', 'ת.ז לקוח', 'מספר זהות', 'ת.ז.']);
+            const amountIndex = findBestColumnMatch(headers, ['סכום', 'amount', 'סה"כ', 'כסף']);
             
             console.log('מיפוי עמודות:', {
                 payer: payerNameIndex,
@@ -1366,75 +1366,83 @@
 
             rows.forEach((row, index) => {
                 const payerName = row[payerNameIndex]?.toString().trim();
-                const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : `AUTO_${index}`;
+                const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : null;
                 const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
                 const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
                 const amount = parseFloat(row[amountIndex]) || 0;
 
-                if (payerName && amount > 0) {
-                    // עיבוד נתוני מושך (חברה)
-                    if (!payersMap.has(payerId)) {
-                        payersMap.set(payerId, {
-                            id: payerId,
-                            name: payerName,
+                // דילוג על שורות ללא ח.פ. מושך או שם
+                if (!payerName || !payerId || amount <= 0) {
+                    console.warn(`שורה ${index + 1}: חסר נתונים חיוניים`, { payerName, payerId, amount });
+                    return;
+                }
+
+                console.log(`שורה ${index + 1}:`, { payerName, payerId, clientName, clientId, amount });
+
+                // עיבוד נתוני מושך (חברה)
+                if (!payersMap.has(payerId)) {
+                    payersMap.set(payerId, {
+                        id: payerId,
+                        name: payerName,
+                        transactions: [],
+                        metrics: {
+                            totalAmount: 0,
+                            transactionCount: 0,
+                            averageAmount: 0,
+                            returnedChecks: 0,
+                            cancellations: 0,
+                            clients: new Set()
+                        }
+                    });
+                    console.log(`יצירת מושך חדש: ${payerName} (${payerId})`);
+                }
+
+                const payer = payersMap.get(payerId);
+                payer.transactions.push({ 
+                    amount, 
+                    clientName, 
+                    clientId, 
+                    row, 
+                    index 
+                });
+                payer.metrics.totalAmount += amount;
+                payer.metrics.transactionCount++;
+                payer.metrics.averageAmount = payer.metrics.totalAmount / payer.metrics.transactionCount;
+                
+                if (clientName) {
+                    payer.metrics.clients.add(clientName);
+                }
+
+                // עיבוד נתוני לקוח
+                if (clientName && clientId) {
+                    if (!clientsMap.has(clientId)) {
+                        clientsMap.set(clientId, {
+                            id: clientId,
+                            name: clientName,
                             transactions: [],
                             metrics: {
                                 totalAmount: 0,
                                 transactionCount: 0,
                                 averageAmount: 0,
-                                returnedChecks: 0,
-                                cancellations: 0,
-                                clients: new Set()
+                                payers: new Set(),
+                                reliability: 100
                             }
                         });
+                        console.log(`יצירת לקוח חדש: ${clientName} (${clientId})`);
                     }
 
-                    const payer = payersMap.get(payerId);
-                    payer.transactions.push({ 
+                    const client = clientsMap.get(clientId);
+                    client.transactions.push({ 
                         amount, 
-                        clientName, 
-                        clientId, 
+                        payerName, 
+                        payerId, 
                         row, 
                         index 
                     });
-                    payer.metrics.totalAmount += amount;
-                    payer.metrics.transactionCount++;
-                    payer.metrics.averageAmount = payer.metrics.totalAmount / payer.metrics.transactionCount;
-                    
-                    if (clientName) {
-                        payer.metrics.clients.add(clientName);
-                    }
-
-                    // עיבוד נתוני לקוח
-                    if (clientName && clientId) {
-                        if (!clientsMap.has(clientId)) {
-                            clientsMap.set(clientId, {
-                                id: clientId,
-                                name: clientName,
-                                transactions: [],
-                                metrics: {
-                                    totalAmount: 0,
-                                    transactionCount: 0,
-                                    averageAmount: 0,
-                                    payers: new Set(),
-                                    reliability: 100
-                                }
-                            });
-                        }
-
-                        const client = clientsMap.get(clientId);
-                        client.transactions.push({ 
-                            amount, 
-                            payerName, 
-                            payerId, 
-                            row, 
-                            index 
-                        });
-                        client.metrics.totalAmount += amount;
-                        client.metrics.transactionCount++;
-                        client.metrics.averageAmount = client.metrics.totalAmount / client.metrics.transactionCount;
-                        client.metrics.payers.add(payerName);
-                    }
+                    client.metrics.totalAmount += amount;
+                    client.metrics.transactionCount++;
+                    client.metrics.averageAmount = client.metrics.totalAmount / client.metrics.transactionCount;
+                    client.metrics.payers.add(payerName);
                 }
             });
 
@@ -1494,12 +1502,19 @@
         }
 
         function findBestColumnMatch(headers, patterns) {
+            console.log('מחפש עמודה עבור:', patterns, 'בכותרות:', headers);
+            
             for (let pattern of patterns) {
                 const index = headers.findIndex(header => 
-                    header && header.toString().includes(pattern)
+                    header && header.toString().toLowerCase().includes(pattern.toLowerCase())
                 );
-                if (index >= 0) return index;
+                if (index >= 0) {
+                    console.log(`נמצאה עמודה "${pattern}" באינדקס ${index}: "${headers[index]}"`);
+                    return index;
+                }
             }
+            
+            console.warn('לא נמצאה עמודה עבור:', patterns);
             return -1;
         }
 
