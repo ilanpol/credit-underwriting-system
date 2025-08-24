@@ -1,30 +1,4 @@
-function getDnbDisplayText(payer) {
-            // חיפוש נתוני D&B
-            let dnbInfo = null;
-            
-            if (dnbData.has(payer.id)) {
-                dnbInfo = dnbData.get(payer.id);
-            } else if (dnbData.has(`NAME_${payer.name}`)) {
-                dnbInfo = dnbData.get(`NAME_${payer.name}`);
-            } else {
-                // חיפוש חלקי
-                dnbInfo = Array.from(dnbData.values()).find(dnb => {
-                    if (!dnb.companyName) return false;
-                    const payerWords = payer.name.toLowerCase().split(' ').filter(w => w.length > 2);
-                    const dnbWords = dnb.companyName.toLowerCase().split(' ').filter(w => w.length > 2);
-                    const commonWords = payerWords.filter(word => 
-                        dnbWords.some(dnbWord => dnbWord.includes(word) || word.includes(dnbWord))
-                    );
-                    return commonWords.length >= Math.min(2, payerWords.length);
-                });
-            }
-            
-            if (dnbInfo && dnbInfo.dnbScore > 0) {
-                return ` | D&B: ${Math.round(dnbInfo.dnbScore)} | ₪${dnbInfo.revenue?.toLocaleString() || '0'} מחזור`;
-            }
-            
-            return '';
-        }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -39,6 +13,7 @@ function getDnbDisplayText(payer) {
             --success-color: #27ae60;
             --warning-color: #f39c12;
             --danger-color: #e74c3c;
+            --info-color: #17a2b8;
             --border-radius: 12px;
             --transition: all 0.3s ease;
         }
@@ -77,6 +52,12 @@ function getDnbDisplayText(payer) {
             font-size: 2.2em;
         }
 
+        .login-subtitle {
+            color: #6c757d;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
         .form-group { 
             margin-bottom: 20px; 
             text-align: right; 
@@ -94,7 +75,13 @@ function getDnbDisplayText(payer) {
             padding: 14px 16px; 
             border: 2px solid #e1e8ed; 
             border-radius: var(--border-radius); 
-            font-size: 15px; 
+            font-size: 15px;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus {
+            border-color: var(--secondary-color);
+            outline: none;
         }
 
         .login-btn { 
@@ -107,6 +94,12 @@ function getDnbDisplayText(payer) {
             font-weight: 600; 
             cursor: pointer; 
             width: 100%; 
+            transition: var(--transition);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
         }
 
         .demo-accounts {
@@ -119,9 +112,16 @@ function getDnbDisplayText(payer) {
         .demo-account {
             display: flex;
             justify-content: space-between;
-            padding: 5px 0;
+            padding: 10px;
             border-bottom: 1px solid #e9ecef;
             cursor: pointer;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: var(--transition);
+        }
+
+        .demo-account:hover {
+            background: #e9ecef;
         }
 
         .error-message { 
@@ -174,7 +174,12 @@ function getDnbDisplayText(payer) {
             padding: 8px 16px; 
             border: none; 
             border-radius: 15px; 
-            cursor: pointer; 
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
         }
 
         .main-content { 
@@ -211,6 +216,12 @@ function getDnbDisplayText(payer) {
             border: 2px dashed var(--success-color);
             text-align: center;
             position: relative;
+            transition: var(--transition);
+        }
+
+        .file-upload-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
         }
 
         .file-upload-section h4 {
@@ -259,6 +270,12 @@ function getDnbDisplayText(payer) {
             width: 100%;
             margin-top: 10px;
             font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(39, 174, 96, 0.3);
         }
 
         .btn { 
@@ -271,16 +288,28 @@ function getDnbDisplayText(payer) {
             font-weight: 600; 
             cursor: pointer; 
             width: 100%; 
-            margin-top: 20px; 
+            margin-top: 20px;
+            transition: var(--transition);
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
         }
 
         .btn:disabled {
             background: #bdc3c7;
             cursor: not-allowed;
+            transform: none;
         }
 
         .btn-secondary {
             background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
         }
 
         .form-row {
@@ -308,12 +337,24 @@ function getDnbDisplayText(payer) {
             border-radius: var(--border-radius); 
             text-align: center; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: var(--transition);
+        }
+
+        .rating-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
         }
 
         .rating-score { 
             font-size: 2.5em; 
             font-weight: bold; 
             margin-bottom: 10px; 
+        }
+
+        .rating-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            font-weight: 600;
         }
 
         .rating-AAA { color: #27ae60; }
@@ -350,7 +391,22 @@ function getDnbDisplayText(payer) {
             gap: 15px; 
             padding: 15px; 
             border-bottom: 1px solid #f1f2f6; 
-            align-items: center; 
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .parameter-row:hover {
+            background: #f8f9fa;
+        }
+
+        .parameter-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .parameter-value {
+            text-align: center;
+            font-weight: 500;
         }
 
         .autocomplete-suggestions {
@@ -372,6 +428,7 @@ function getDnbDisplayText(payer) {
             padding: 12px 15px;
             cursor: pointer;
             border-bottom: 1px solid #eee;
+            transition: var(--transition);
         }
 
         .autocomplete-suggestion:hover {
@@ -465,6 +522,11 @@ function getDnbDisplayText(payer) {
             padding: 15px;
             border-radius: var(--border-radius);
             text-align: center;
+            transition: var(--transition);
+        }
+
+        .history-card:hover {
+            background: #e9ecef;
         }
 
         .history-value {
@@ -483,11 +545,45 @@ function getDnbDisplayText(payer) {
             z-index: 9999;
             min-width: 300px;
             text-align: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         .notification.success { background: var(--success-color); }
         .notification.error { background: var(--danger-color); }
         .notification.warning { background: var(--warning-color); }
+
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
+
+        .debug-toggle {
+            background: #6c757d;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
 
         @media (max-width: 768px) {
             .main-content { 
@@ -510,6 +606,16 @@ function getDnbDisplayText(payer) {
             
             .rating-display { 
                 grid-template-columns: repeat(2, 1fr); 
+            }
+
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
             }
         }
     </style>
@@ -559,7 +665,7 @@ function getDnbDisplayText(payer) {
                 <div style="display: flex; align-items: center;">
                     <div class="current-date" id="currentDate"></div>
                     <div style="text-align: left; margin-left: 15px;">
-                        <div id="currentUser" style="margin-bottom: 10px;"></div>
+                        <div id="currentUser" style="margin-bottom: 10px; font-weight: 600;"></div>
                         <button onclick="logout()" class="logout-btn">התנתק</button>
                     </div>
                 </div>
@@ -569,6 +675,10 @@ function getDnbDisplayText(payer) {
                 <!-- קלט נתונים -->
                 <div class="section-card">
                     <h2 class="section-title">📋 נתוני העסקה</h2>
+                    
+                    <!-- כפתור דיבוג -->
+                    <button class="debug-toggle" onclick="toggleDebug()">🔧 מצב דיבוג</button>
+                    <div id="debugInfo" class="debug-info"></div>
                     
                     <!-- סטטוס נתונים -->
                     <div class="data-status">
@@ -754,6 +864,7 @@ function getDnbDisplayText(payer) {
         let dnbData = new Map();
         let behaviorData = new Map();
         let isDataLoaded = false;
+        let debugMode = false;
 
         const users = {
             'admin': { password: 'admin123', role: 'מנהל מערכת' },
@@ -771,6 +882,39 @@ function getDnbDisplayText(payer) {
             returnedChecks: { weight: 0.08, name: 'שיקים חוזרים' },
             cancellations: { weight: 0.05, name: 'ביטולים ואכ"מ' }
         };
+
+        // פונקציות דיבוג
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const debugInfo = document.getElementById('debugInfo');
+            debugInfo.style.display = debugMode ? 'block' : 'none';
+            if (debugMode) {
+                updateDebugInfo();
+            }
+        }
+
+        function updateDebugInfo() {
+            if (!debugMode) return;
+            
+            const debugInfo = document.getElementById('debugInfo');
+            debugInfo.innerHTML = `
+                <strong>מצב נתונים:</strong><br>
+                - חברות מושכות: ${payersMap.size}<br>
+                - לקוחות: ${clientsMap.size}<br>
+                - נתוני D&B: ${dnbData.size}<br>
+                - נתוני התנהגות: ${behaviorData.size}<br>
+                - קבצי עסקאות: ${excelData.main.length} שורות<br>
+                - קבצי שיקים חוזרים: ${excelData.returned.length} שורות<br>
+                - קבצי ביטולים: ${excelData.warnings.length} שורות<br>
+                <br>
+                <strong>נתוני קלט נוכחיים:</strong><br>
+                - מושך: ${document.getElementById('payerName').value || 'ריק'}<br>
+                - ח.פ. מושך: ${document.getElementById('payerID').value || 'ריק'}<br>
+                - לקוח: ${document.getElementById('clientName').value || 'ריק'}<br>
+                - ת.ז. לקוח: ${document.getElementById('clientID').value || 'ריק'}<br>
+                - סכום: ${document.getElementById('checkAmount').value || '0'}<br>
+            `;
+        }
 
         // פונקציות התחברות
         function setLogin(username, password) {
@@ -790,9 +934,11 @@ function getDnbDisplayText(payer) {
                 document.getElementById('mainApp').style.display = 'block';
                 updateCurrentDate();
                 showNotification('התחברת בהצלחה!', 'success');
+                console.log('✅ התחברות הצליחה:', username);
             } else {
                 document.getElementById('loginError').textContent = 'שם משתמש או סיסמה שגויים';
                 document.getElementById('loginError').style.display = 'block';
+                console.log('❌ התחברות נכשלה:', username);
             }
             return false;
         }
@@ -803,6 +949,7 @@ function getDnbDisplayText(payer) {
                 document.getElementById('loginScreen').style.display = 'flex';
                 document.getElementById('mainApp').style.display = 'none';
                 resetForm();
+                console.log('🚪 יצאת מהמערכת');
             }
         }
 
@@ -827,6 +974,7 @@ function getDnbDisplayText(payer) {
             
             // חישוב ימי אשראי
             calculateCreditDays();
+            console.log('📅 תאריך עודכן:', today);
         }
 
         // חישוב אוטומטי של ימי אשראי
@@ -841,6 +989,8 @@ function getDnbDisplayText(payer) {
                 const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
                 
                 document.getElementById('creditDays').value = Math.max(0, daysDiff);
+                console.log('⏰ ימי אשראי מחושבים:', daysDiff);
+                updateDebugInfo();
             }
         }
 
@@ -848,6 +998,12 @@ function getDnbDisplayText(payer) {
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('transactionDate').addEventListener('change', calculateCreditDays);
             document.getElementById('dueDate').addEventListener('change', calculateCreditDays);
+            document.getElementById('payerName').addEventListener('input', updateDebugInfo);
+            document.getElementById('payerID').addEventListener('input', updateDebugInfo);
+            document.getElementById('clientName').addEventListener('input', updateDebugInfo);
+            document.getElementById('clientID').addEventListener('input', updateDebugInfo);
+            document.getElementById('checkAmount').addEventListener('input', updateDebugInfo);
+            
             console.log('🏦 מערכת חיתום אשראי נטענה בהצלחה');
         });
 
@@ -856,11 +1012,17 @@ function getDnbDisplayText(payer) {
             const fileInput = document.getElementById(type + 'File');
             const statusElement = document.getElementById(type + 'FileStatus');
             
-            if (!fileInput.files[0]) return;
+            if (!fileInput.files[0]) {
+                console.warn('⚠️ לא נבחר קובץ עבור:', type);
+                return;
+            }
 
             try {
                 const file = fileInput.files[0];
+                console.log(`🔄 טוען קובץ ${type}:`, file.name, 'גודל:', file.size, 'bytes');
+                
                 const workbook = await readExcelFile(file);
+                console.log(`📊 קובץ ${type} נקרא, גיליונות:`, workbook.SheetNames);
                 
                 // עיבוד הקובץ לפי סוג
                 if (type === 'main') {
@@ -876,12 +1038,13 @@ function getDnbDisplayText(payer) {
                 
                 checkAllFilesLoaded();
                 showNotification(`קובץ ${getFileTypeName(type)} נטען בהצלחה`, 'success');
+                console.log(`✅ קובץ ${type} עובד בהצלחה`);
 
             } catch (error) {
-                console.error('שגיאה:', error);
+                console.error(`❌ שגיאה בטעינת קובץ ${type}:`, error);
                 statusElement.textContent = '❌ שגיאה';
                 statusElement.className = 'file-status empty';
-                showNotification(`שגיאה בטעינת קובץ ${getFileTypeName(type)}`, 'error');
+                showNotification(`שגיאה בטעינת קובץ ${getFileTypeName(type)}: ${error.message}`, 'error');
             }
         }
 
@@ -889,13 +1052,18 @@ function getDnbDisplayText(payer) {
             const folderInput = document.getElementById(type + 'Folder');
             const statusElement = document.getElementById(type + 'FolderStatus');
             
-            if (!folderInput.files || folderInput.files.length === 0) return;
+            if (!folderInput.files || folderInput.files.length === 0) {
+                console.warn('⚠️ לא נבחרו קבצים עבור תיקייה:', type);
+                return;
+            }
 
             try {
                 let processedFiles = 0;
+                console.log(`🔄 טוען תיקייה ${type}:`, folderInput.files.length, 'קבצים');
                 
                 for (let file of folderInput.files) {
                     if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
+                        console.log(`📄 מעבד קובץ:`, file.name);
                         const workbook = await readExcelFile(file);
                         
                         if (type === 'returned') {
@@ -912,18 +1080,20 @@ function getDnbDisplayText(payer) {
                     statusElement.textContent = `✓ ${processedFiles} קבצים`;
                     statusElement.className = 'file-status loaded';
                     showNotification(`תיקיית ${getFileTypeName(type)}: ${processedFiles} קבצים נטענו`, 'success');
+                    console.log(`✅ תיקייה ${type} עובדה: ${processedFiles} קבצים`);
                 } else {
                     statusElement.textContent = '❌ אין קבצים';
                     statusElement.className = 'file-status empty';
+                    console.warn(`⚠️ לא נמצאו קבצי Excel בתיקייה ${type}`);
                 }
                 
                 checkAllFilesLoaded();
 
             } catch (error) {
-                console.error('שגיאה:', error);
+                console.error(`❌ שגיאה בטעינת תיקייה ${type}:`, error);
                 statusElement.textContent = '❌ שגיאה';
                 statusElement.className = 'file-status empty';
-                showNotification(`שגיאה בטעינת תיקיית ${getFileTypeName(type)}`, 'error');
+                showNotification(`שגיאה בטעינת תיקיית ${getFileTypeName(type)}: ${error.message}`, 'error');
             }
         }
 
@@ -931,13 +1101,19 @@ function getDnbDisplayText(payer) {
             const filesInput = document.getElementById('allFiles');
             const statusElement = document.getElementById('allFilesStatus');
             
-            if (!filesInput.files || filesInput.files.length === 0) return;
+            if (!filesInput.files || filesInput.files.length === 0) {
+                console.warn('⚠️ לא נבחרו קבצים מרובים');
+                return;
+            }
 
             try {
                 let processedCount = 0;
+                console.log(`🔄 טוען ${filesInput.files.length} קבצים`);
                 
                 for (let file of filesInput.files) {
                     const fileName = file.name.toLowerCase();
+                    console.log(`📄 מזהה קובץ:`, file.name);
+                    
                     const workbook = await readExcelFile(file);
                     
                     // זיהוי אוטומטי של סוג הקובץ
@@ -945,18 +1121,25 @@ function getDnbDisplayText(payer) {
                         processMainFile(workbook);
                         document.getElementById('mainFileStatus').textContent = '✓ נטען';
                         document.getElementById('mainFileStatus').className = 'file-status loaded';
+                        console.log('📊 זוהה כקובץ עסקאות ראשי');
                     } else if (fileName.includes('חוזר') || fileName.includes('returned')) {
                         processReturnedFile(workbook, file.name);
+                        console.log('💳 זוהה כקובץ שיקים חוזרים');
                     } else if (fileName.includes('ביטול') || fileName.includes('אכ"מ')) {
                         processWarningsFile(workbook);
                         document.getElementById('warningsFileStatus').textContent = '✓ נטען';
                         document.getElementById('warningsFileStatus').className = 'file-status loaded';
+                        console.log('⚠️ זוהה כקובץ ביטולים');
                     } else if (fileName.includes('חיתום') || fileName.includes('credit') || fileName.includes('d&b')) {
                         processCreditFile(workbook);
                         document.getElementById('creditFileStatus').textContent = '✓ נטען';
                         document.getElementById('creditFileStatus').className = 'file-status loaded';
+                        console.log('🏢 זוהה כקובץ חיתום אשראי');
                     } else if (fileName.includes('ניתוח') || fileName.includes('behavior')) {
                         processBehaviorFile(workbook, file.name);
+                        console.log('📈 זוהה כקובץ ניתוח התנהגות');
+                    } else {
+                        console.warn('❓ לא זוהה סוג הקובץ:', file.name);
                     }
                     
                     processedCount++;
@@ -981,10 +1164,11 @@ function getDnbDisplayText(payer) {
                 
                 checkAllFilesLoaded();
                 showNotification(`${processedCount} קבצים נטענו בהצלחה`, 'success');
+                console.log(`✅ סיום טעינת קבצים מרובים: ${processedCount} קבצים`);
 
             } catch (error) {
-                console.error('שגיאה:', error);
-                showNotification('שגיאה בטעינת קבצים מרובים', 'error');
+                console.error('❌ שגיאה בטעינת קבצים מרובים:', error);
+                showNotification('שגיאה בטעינת קבצים מרובים: ' + error.message, 'error');
             }
         }
 
@@ -1008,84 +1192,123 @@ function getDnbDisplayText(payer) {
                         const workbook = XLSX.read(data, { type: 'array' });
                         resolve(workbook);
                     } catch (error) {
-                        reject(error);
+                        console.error('❌ שגיאה בפענוח Excel:', error);
+                        reject(new Error('שגיאה בפענוח קובץ Excel: ' + error.message));
                     }
                 };
-                reader.onerror = () => reject(new Error('שגיאה בקריאה'));
+                reader.onerror = () => {
+                    console.error('❌ שגיאה בקריאת קובץ');
+                    reject(new Error('שגיאה בקריאת הקובץ'));
+                };
                 reader.readAsArrayBuffer(file);
             });
         }
 
         function processMainFile(workbook) {
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            
-            excelData.main = jsonData;
-            processMainData();
+            try {
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                console.log(`📊 עיבוד קובץ ראשי - גיליון: ${sheetName}, שורות: ${jsonData.length}`);
+                excelData.main = jsonData;
+                processMainData();
+            } catch (error) {
+                console.error('❌ שגיאה בעיבוד קובץ ראשי:', error);
+                throw new Error('שגיאה בעיבוד קובץ העסקאות הראשי');
+            }
         }
 
         function processReturnedFile(workbook, fileName = '') {
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            
-            if (jsonData.length > 1) {
-                excelData.returned = excelData.returned.concat(jsonData);
-                processReturnedData();
-                console.log(`קובץ שיקים חוזרים ${fileName}: ${jsonData.length} שורות`);
+            try {
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length > 1) {
+                    excelData.returned = excelData.returned.concat(jsonData);
+                    processReturnedData();
+                    console.log(`💳 קובץ שיקים חוזרים ${fileName}: ${jsonData.length} שורות`);
+                } else {
+                    console.warn(`⚠️ קובץ שיקים חוזרים ${fileName} ריק או לא תקין`);
+                }
+            } catch (error) {
+                console.error(`❌ שגיאה בעיבוד קובץ שיקים חוזרים ${fileName}:`, error);
+                throw new Error(`שגיאה בעיבוד קובץ שיקים חוזרים: ${fileName}`);
             }
         }
 
         function processWarningsFile(workbook) {
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            
-            if (jsonData.length > 1) {
-                excelData.warnings = jsonData;
-                processWarningsData();
+            try {
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length > 1) {
+                    excelData.warnings = jsonData;
+                    processWarningsData();
+                    console.log(`⚠️ קובץ ביטולים: ${jsonData.length} שורות`);
+                } else {
+                    console.warn('⚠️ קובץ ביטולים ריק או לא תקין');
+                }
+            } catch (error) {
+                console.error('❌ שגיאה בעיבוד קובץ ביטולים:', error);
+                throw new Error('שגיאה בעיבוד קובץ הביטולים');
             }
         }
 
         function processCreditFile(workbook) {
-            // חיפוש הטבלה scoreM_N
-            const targetSheetName = workbook.SheetNames.find(name => 
-                name.toLowerCase().includes('scorem') || 
-                name.toLowerCase().includes('score') ||
-                name === 'scoreM_N'
-            );
-            
-            if (!targetSheetName) {
-                console.warn('לא נמצאה טבלת scoreM_N');
-                return;
-            }
-            
-            const worksheet = workbook.Sheets[targetSheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            
-            if (jsonData.length > 1) {
-                excelData.credit = jsonData;
-                processDnbData();
-                console.log(`טבלת D&B ${targetSheetName}: ${jsonData.length} רשומות`);
+            try {
+                // חיפוש הטבלה scoreM_N
+                const targetSheetName = workbook.SheetNames.find(name => 
+                    name.toLowerCase().includes('scorem') || 
+                    name.toLowerCase().includes('score') ||
+                    name === 'scoreM_N'
+                ) || workbook.SheetNames[0]; // אם לא מוצא, קח את הראשון
+                
+                console.log(`🏢 מעבד קובץ D&B - גיליון: ${targetSheetName}`);
+                
+                const worksheet = workbook.Sheets[targetSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length > 1) {
+                    excelData.credit = jsonData;
+                    processDnbData();
+                    console.log(`🏢 טבלת D&B ${targetSheetName}: ${jsonData.length} רשומות`);
+                } else {
+                    console.warn(`⚠️ טבלת D&B ${targetSheetName} ריקה`);
+                }
+            } catch (error) {
+                console.error('❌ שגיאה בעיבוד קובץ D&B:', error);
+                throw new Error('שגיאה בעיבוד קובץ חיתום האשראי (D&B)');
             }
         }
 
         function processBehaviorFile(workbook, fileName) {
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            
-            if (jsonData.length > 1) {
-                // הוספה לנתוני התנהגות עם מזהה הקובץ
-                const dataWithSource = jsonData.map(row => [...row, fileName]);
-                excelData.behavior = excelData.behavior.concat(dataWithSource);
-                console.log(`קובץ התנהגות ${fileName}: ${jsonData.length} רשומות`);
+            try {
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length > 1) {
+                    // הוספה לנתוני התנהגות עם מזהה הקובץ
+                    const dataWithSource = jsonData.map(row => [...row, fileName]);
+                    excelData.behavior = excelData.behavior.concat(dataWithSource);
+                    console.log(`📈 קובץ התנהגות ${fileName}: ${jsonData.length} רשומות`);
+                } else {
+                    console.warn(`⚠️ קובץ התנהגות ${fileName} ריק`);
+                }
+            } catch (error) {
+                console.error(`❌ שגיאה בעיבוד קובץ התנהגות ${fileName}:`, error);
+                throw new Error(`שגיאה בעיבוד קובץ התנהגות: ${fileName}`);
             }
         }
 
         function processDnbData() {
-            if (excelData.credit.length < 2) return;
+            if (excelData.credit.length < 2) {
+                console.warn('⚠️ אין מספיק נתוני D&B לעיבוד');
+                return;
+            }
 
             console.log('🏢 מעבד נתוני D&B מטבלת scoreM_N...');
             
@@ -1104,6 +1327,7 @@ function getDnbDisplayText(payer) {
                 ))) {
                     headers = row;
                     headerRowIndex = i;
+                    console.log('📋 נמצאה שורת כותרות D&B בשורה:', i);
                     break;
                 }
             }
@@ -1111,19 +1335,21 @@ function getDnbDisplayText(payer) {
             if (headers.length === 0) {
                 headers = excelData.credit[0];
                 headerRowIndex = 0;
+                console.log('📋 משתמש בשורה הראשונה ככותרות D&B');
             }
 
+            console.log('📋 כותרות D&B:', headers);
             const rows = excelData.credit.slice(headerRowIndex + 1);
             
             // מיפוי עמודות D&B בהתבסס על הכותרות המדויקות שלך
-            const companyNameIndex = findBestColumnMatch(headers, ['שם מושך']);
-            const companyIdIndex = findBestColumnMatch(headers, ['מס\' ח.פ']);
+            const companyNameIndex = findBestColumnMatch(headers, ['שם מושך', 'שם חברה']);
+            const companyIdIndex = findBestColumnMatch(headers, ['מס\' ח.פ', 'ח.פ', 'מזהה']);
             const sectorRatingIndex = findBestColumnMatch(headers, ['סקור']);
             const industrySectorIndex = findBestColumnMatch(headers, ['סקור ענף']);
             const yearsActiveIndex = findBestColumnMatch(headers, ['שנות ותק']);
-            const employeesIndex = findBestColumnMatch(headers, ['מס\' מועסקים']);
+            const employeesIndex = findBestColumnMatch(headers, ['מס\' מועסקים', 'עובדים']);
             const addressIndex = findBestColumnMatch(headers, ['כתובת']);
-            const revenueIndex = findBestColumnMatch(headers, ['מחזור בא\' ₪']);
+            const revenueIndex = findBestColumnMatch(headers, ['מחזור בא\' ₪', 'מחזור', 'הכנסות']);
             const cityIndex = findBestColumnMatch(headers, ['עיר']);
             const totalTransactionsIndex = findBestColumnMatch(headers, ['סה"כ עסקאות']);
             const currentObligationIndex = findBestColumnMatch(headers, ['אובליגו קיים']);
@@ -1132,308 +1358,339 @@ function getDnbDisplayText(payer) {
                 companyName: `${companyNameIndex >= 0 ? headers[companyNameIndex] : 'לא נמצא'} (${companyNameIndex})`,
                 companyId: `${companyIdIndex >= 0 ? headers[companyIdIndex] : 'לא נמצא'} (${companyIdIndex})`,
                 sectorRating: `${sectorRatingIndex >= 0 ? headers[sectorRatingIndex] : 'לא נמצא'} (${sectorRatingIndex})`,
-                industrySector: `${industrySectorIndex >= 0 ? headers[industrySectorIndex] : 'לא נמצא'} (${industrySectorIndex})`,
-                yearsActive: `${yearsActiveIndex >= 0 ? headers[yearsActiveIndex] : 'לא נמצא'} (${yearsActiveIndex})`,
-                employees: `${employeesIndex >= 0 ? headers[employeesIndex] : 'לא נמצא'} (${employeesIndex})`,
-                revenue: `${revenueIndex >= 0 ? headers[revenueIndex] : 'לא נמצא'} (${revenueIndex})`,
-                obligation: `${currentObligationIndex >= 0 ? headers[currentObligationIndex] : 'לא נמצא'} (${currentObligationIndex})`
+                revenue: `${revenueIndex >= 0 ? headers[revenueIndex] : 'לא נמצא'} (${revenueIndex})`
             });
 
             dnbData.clear();
             let processedCompanies = 0;
 
             rows.forEach((row, index) => {
-                const companyName = companyNameIndex >= 0 ? row[companyNameIndex]?.toString().trim() : '';
-                const companyId = companyIdIndex >= 0 ? row[companyIdIndex]?.toString().trim() : '';
-                const sectorRating = sectorRatingIndex >= 0 ? parseFloat(row[sectorRatingIndex]) || 0 : 0;
-                const industrySector = industrySectorIndex >= 0 ? parseFloat(row[industrySectorIndex]) || 0 : 0;
-                const yearsActive = yearsActiveIndex >= 0 ? parseFloat(row[yearsActiveIndex]) || 0 : 0;
-                const employees = employeesIndex >= 0 ? parseInt(row[employeesIndex]) || 0 : 0;
-                const address = addressIndex >= 0 ? row[addressIndex]?.toString().trim() : '';
-                const revenue = revenueIndex >= 0 ? parseFloat(row[revenueIndex]) || 0 : 0;
-                const city = cityIndex >= 0 ? row[cityIndex]?.toString().trim() : '';
-                const totalTransactions = totalTransactionsIndex >= 0 ? parseInt(row[totalTransactionsIndex]) || 0 : 0;
-                const currentObligation = currentObligationIndex >= 0 ? parseFloat(row[currentObligationIndex]) || 0 : 0;
+                try {
+                    const companyName = companyNameIndex >= 0 ? row[companyNameIndex]?.toString().trim() : '';
+                    const companyId = companyIdIndex >= 0 ? row[companyIdIndex]?.toString().trim() : '';
+                    const sectorRating = sectorRatingIndex >= 0 ? parseFloat(row[sectorRatingIndex]) || 0 : 0;
+                    const industrySector = industrySectorIndex >= 0 ? parseFloat(row[industrySectorIndex]) || 0 : 0;
+                    const yearsActive = yearsActiveIndex >= 0 ? parseFloat(row[yearsActiveIndex]) || 0 : 0;
+                    const employees = employeesIndex >= 0 ? parseInt(row[employeesIndex]) || 0 : 0;
+                    const address = addressIndex >= 0 ? row[addressIndex]?.toString().trim() : '';
+                    const revenue = revenueIndex >= 0 ? parseFloat(row[revenueIndex]) || 0 : 0;
+                    const city = cityIndex >= 0 ? row[cityIndex]?.toString().trim() : '';
+                    const totalTransactions = totalTransactionsIndex >= 0 ? parseInt(row[totalTransactionsIndex]) || 0 : 0;
+                    const currentObligation = currentObligationIndex >= 0 ? parseFloat(row[currentObligationIndex]) || 0 : 0;
 
-                // לוג לשורות הראשונות
-                if (index < 3) {
-                    console.log(`D&B חברה ${index + 1}:`, {
-                        companyName, companyId, sectorRating, industrySector, 
-                        yearsActive, employees, revenue, currentObligation
-                    });
-                }
-
-                // אם יש שם חברה אבל לא ח.פ., נחפש את ח.פ. בנתונים הראשיים
-                let finalCompanyId = companyId;
-                if (!companyId && companyName) {
-                    // חיפוש חברה לפי שם במפת המושכים
-                    const foundPayer = Array.from(payersMap.values()).find(payer => 
-                        payer.name === companyName || 
-                        payer.name.includes(companyName) || 
-                        companyName.includes(payer.name) ||
-                        // חיפוש חלקי (מילים ראשונות)
-                        payer.name.split(' ').slice(0, 2).join(' ') === companyName.split(' ').slice(0, 2).join(' ')
-                    );
-                    
-                    if (foundPayer) {
-                        finalCompanyId = foundPayer.id;
-                        console.log(`מצא ח.פ. לפי שם: "${companyName}" -> ${finalCompanyId}`);
-                    }
-                }
-
-                if ((finalCompanyId || companyName) && 
-                    (sectorRating > 0 || industrySector > 0 || revenue > 0 || yearsActive > 0)) {
-                    
-                    const riskLevel = calculateAdvancedDnbRisk({
-                        sectorRating,
-                        industrySector,
-                        yearsActive,
-                        employees,
-                        revenue,
-                        currentObligation,
-                        totalTransactions
-                    });
-
-                    // שמירה לפי ח.פ. וגם לפי שם (לחיפוש כפול)
-                    const dnbRecord = {
-                        companyId: finalCompanyId,
-                        companyName,
-                        sectorRating,
-                        industrySector, 
-                        yearsActive,
-                        employees,
-                        address,
-                        revenue,
-                        city,
-                        totalTransactions,
-                        currentObligation,
-                        riskLevel,
-                        dnbScore: riskLevel
-                    };
-
-                    if (finalCompanyId) {
-                        dnbData.set(finalCompanyId, dnbRecord);
-                    }
-                    if (companyName) {
-                        dnbData.set(`NAME_${companyName}`, dnbRecord);
+                    // לוג לשורות הראשונות
+                    if (index < 3) {
+                        console.log(`D&B חברה ${index + 1}:`, {
+                            companyName, companyId, sectorRating, industrySector, 
+                            yearsActive, employees, revenue, currentObligation
+                        });
                     }
 
-                    processedCompanies++;
-
-                    if (processedCompanies <= 5) {
-                        console.log(`נשמר D&B: ${companyName} (${finalCompanyId}) - ציון סקטור: ${sectorRating}, ענף: ${industrySector}, ותק: ${yearsActive}, עובדים: ${employees}, מחזור: ${revenue}`);
+                    // אם יש שם חברה אבל לא ח.פ., נחפש את ח.פ. בנתונים הראשיים
+                    let finalCompanyId = companyId;
+                    if (!companyId && companyName) {
+                        // חיפוש חברה לפי שם במפת המושכים
+                        const foundPayer = Array.from(payersMap.values()).find(payer => 
+                            payer.name === companyName || 
+                            payer.name.includes(companyName) || 
+                            companyName.includes(payer.name) ||
+                            // חיפוש חלקי (מילים ראשונות)
+                            payer.name.split(' ').slice(0, 2).join(' ') === companyName.split(' ').slice(0, 2).join(' ')
+                        );
+                        
+                        if (foundPayer) {
+                            finalCompanyId = foundPayer.id;
+                            console.log(`מצא ח.פ. לפי שם: "${companyName}" -> ${finalCompanyId}`);
+                        }
                     }
+
+                    if ((finalCompanyId || companyName) && 
+                        (sectorRating > 0 || industrySector > 0 || revenue > 0 || yearsActive > 0)) {
+                        
+                        const riskLevel = calculateAdvancedDnbRisk({
+                            sectorRating,
+                            industrySector,
+                            yearsActive,
+                            employees,
+                            revenue,
+                            currentObligation,
+                            totalTransactions
+                        });
+
+                        // שמירה לפי ח.פ. וגם לפי שם (לחיפוש כפול)
+                        const dnbRecord = {
+                            companyId: finalCompanyId,
+                            companyName,
+                            sectorRating,
+                            industrySector, 
+                            yearsActive,
+                            employees,
+                            address,
+                            revenue,
+                            city,
+                            totalTransactions,
+                            currentObligation,
+                            riskLevel,
+                            dnbScore: riskLevel
+                        };
+
+                        if (finalCompanyId) {
+                            dnbData.set(finalCompanyId, dnbRecord);
+                        }
+                        if (companyName) {
+                            dnbData.set(`NAME_${companyName}`, dnbRecord);
+                        }
+
+                        processedCompanies++;
+
+                        if (processedCompanies <= 5) {
+                            console.log(`נשמר D&B: ${companyName} (${finalCompanyId}) - ציון: ${riskLevel}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`❌ שגיאה בעיבוד שורת D&B ${index}:`, error);
                 }
             });
 
             console.log(`✅ עובדו ${processedCompanies} חברות D&B מתוך ${rows.length} שורות`);
+            updateDebugInfo();
         }
 
         function calculateAdvancedDnbRisk(dnbInfo) {
             let score = 50; // ציון בסיס
 
-            // דירוג סקטוריאלי - משקל גבוה (הערך העיקרי)
-            if (dnbInfo.sectorRating > 0) {
-                // הנתונים נראים כמו ציונים 1-100, כאשר ערכים גבוהים יותר = טוב יותר
-                score += (dnbInfo.sectorRating - 50) * 0.3; // משקל 30%
-            }
-
-            // דירוג ענף - משקל בינוני
-            if (dnbInfo.industrySector > 0) {
-                score += (dnbInfo.industrySector - 50) * 0.2; // משקל 20%
-            }
-
-            // שנות ותק - יציבות
-            if (dnbInfo.yearsActive > 0) {
-                if (dnbInfo.yearsActive >= 20) {
-                    score += 15; // חברה ותיקה מאוד
-                } else if (dnbInfo.yearsActive >= 10) {
-                    score += 12; // חברה ותיקה
-                } else if (dnbInfo.yearsActive >= 5) {
-                    score += 8; // חברה בינונית
-                } else if (dnbInfo.yearsActive < 2) {
-                    score -= 5; // חברה צעירה
+            try {
+                // דירוג סקטוריאלי - משקל גבוה (הערך העיקרי)
+                if (dnbInfo.sectorRating > 0) {
+                    // הנתונים נראים כמו ציונים 1-100, כאשר ערכים גבוהים יותר = טוב יותר
+                    score += (dnbInfo.sectorRating - 50) * 0.3; // משקל 30%
                 }
-            }
 
-            // מספר עובדים - גודל וכוח כלכלי
-            if (dnbInfo.employees > 0) {
-                if (dnbInfo.employees >= 200) {
-                    score += 15; // חברה גדולה מאוד
-                } else if (dnbInfo.employees >= 100) {
-                    score += 12; // חברה גדולה
-                } else if (dnbInfo.employees >= 50) {
-                    score += 8; // חברה בינונית-גדולה
-                } else if (dnbInfo.employees >= 20) {
-                    score += 5; // חברה בינונית
-                } else if (dnbInfo.employees >= 5) {
-                    score += 2; // חברה קטנה
+                // דירוג ענף - משקל בינוני
+                if (dnbInfo.industrySector > 0) {
+                    score += (dnbInfo.industrySector - 50) * 0.2; // משקל 20%
                 }
-            }
 
-            // מחזור עסקים
-            if (dnbInfo.revenue > 0) {
-                if (dnbInfo.revenue >= 50000000) { // 50 מיליון ומעלה
-                    score += 15;
-                } else if (dnbInfo.revenue >= 10000000) { // 10-50 מיליון
-                    score += 12;
-                } else if (dnbInfo.revenue >= 5000000) { // 5-10 מיליון
-                    score += 8;
-                } else if (dnbInfo.revenue >= 1000000) { // 1-5 מיליון
-                    score += 5;
-                } else if (dnbInfo.revenue >= 500000) { // 500k-1M
-                    score += 2;
+                // שנות ותק - יציבות
+                if (dnbInfo.yearsActive > 0) {
+                    if (dnbInfo.yearsActive >= 20) {
+                        score += 15; // חברה ותיקה מאוד
+                    } else if (dnbInfo.yearsActive >= 10) {
+                        score += 12; // חברה ותיקה
+                    } else if (dnbInfo.yearsActive >= 5) {
+                        score += 8; // חברה בינונית
+                    } else if (dnbInfo.yearsActive < 2) {
+                        score -= 5; // חברה צעירה
+                    }
                 }
-            }
 
-            // אובליגו קיים - סיכון נוכחי (רק אם חיובי)
-            if (dnbInfo.currentObligation > 0 && dnbInfo.revenue > 0) {
-                const obligationRatio = dnbInfo.currentObligation / dnbInfo.revenue;
-                if (obligationRatio > 1.0) {
-                    score -= 25; // אובליגו גבוה מהמחזור
-                } else if (obligationRatio > 0.8) {
-                    score -= 20; // אובליגו גבוה מאוד
-                } else if (obligationRatio > 0.5) {
-                    score -= 15; // אובליגו גבוה
-                } else if (obligationRatio > 0.3) {
-                    score -= 10; // אובליגו בינוני
-                } else if (obligationRatio > 0.1) {
-                    score -= 5; // אובליגו נמוך
+                // מספר עובדים - גודל וכוח כלכלי
+                if (dnbInfo.employees > 0) {
+                    if (dnbInfo.employees >= 200) {
+                        score += 15; // חברה גדולה מאוד
+                    } else if (dnbInfo.employees >= 100) {
+                        score += 12; // חברה גדולה
+                    } else if (dnbInfo.employees >= 50) {
+                        score += 8; // חברה בינונית-גדולה
+                    } else if (dnbInfo.employees >= 20) {
+                        score += 5; // חברה בינונית
+                    } else if (dnbInfo.employees >= 5) {
+                        score += 2; // חברה קטנה
+                    }
                 }
-            }
 
-            // סה"כ עסקאות - ניסיון
-            if (dnbInfo.totalTransactions > 0) {
-                if (dnbInfo.totalTransactions >= 100) {
-                    score += 10;
-                } else if (dnbInfo.totalTransactions >= 50) {
-                    score += 7;
-                } else if (dnbInfo.totalTransactions >= 20) {
-                    score += 4;
-                } else if (dnbInfo.totalTransactions >= 10) {
-                    score += 2;
+                // מחזור עסקים
+                if (dnbInfo.revenue > 0) {
+                    if (dnbInfo.revenue >= 50000000) { // 50 מיליון ומעלה
+                        score += 15;
+                    } else if (dnbInfo.revenue >= 10000000) { // 10-50 מיליון
+                        score += 12;
+                    } else if (dnbInfo.revenue >= 5000000) { // 5-10 מיליון
+                        score += 8;
+                    } else if (dnbInfo.revenue >= 1000000) { // 1-5 מיליון
+                        score += 5;
+                    } else if (dnbInfo.revenue >= 500000) { // 500k-1M
+                        score += 2;
+                    }
                 }
-            }
 
-            return Math.max(0, Math.min(100, score));
+                // אובליגו קיים - סיכון נוכחי (רק אם חיובי)
+                if (dnbInfo.currentObligation > 0 && dnbInfo.revenue > 0) {
+                    const obligationRatio = dnbInfo.currentObligation / dnbInfo.revenue;
+                    if (obligationRatio > 1.0) {
+                        score -= 25; // אובליגו גבוה מהמחזור
+                    } else if (obligationRatio > 0.8) {
+                        score -= 20; // אובליגו גבוה מאוד
+                    } else if (obligationRatio > 0.5) {
+                        score -= 15; // אובליגו גבוה
+                    } else if (obligationRatio > 0.3) {
+                        score -= 10; // אובליגו בינוני
+                    } else if (obligationRatio > 0.1) {
+                        score -= 5; // אובליגו נמוך
+                    }
+                }
+
+                // סה"כ עסקאות - ניסיון
+                if (dnbInfo.totalTransactions > 0) {
+                    if (dnbInfo.totalTransactions >= 100) {
+                        score += 10;
+                    } else if (dnbInfo.totalTransactions >= 50) {
+                        score += 7;
+                    } else if (dnbInfo.totalTransactions >= 20) {
+                        score += 4;
+                    } else if (dnbInfo.totalTransactions >= 10) {
+                        score += 2;
+                    }
+                }
+
+                return Math.max(0, Math.min(100, score));
+            } catch (error) {
+                console.error('❌ שגיאה בחישוב ציון D&B:', error);
+                return 50; // ציון ברירת מחדל במקרה של שגיאה
+            }
         }
 
         function processClientBehaviorData() {
-            if (excelData.behavior.length < 1) return;
+            if (excelData.behavior.length < 1) {
+                console.log('⚠️ אין נתוני התנהגות לעיבוד');
+                return;
+            }
 
+            console.log('📈 מעבד נתוני התנהגות לקוח...');
             behaviorData.clear();
 
             // עיבוד נתוני התנהגות לקוח
-            excelData.behavior.forEach(row => {
-                // זיהוי עמודות בהתבסס על הקוד שסיפקת
-                const customerName = row[17]; // tCusName
-                const cashReceived = parseFloat(row[14]) || 0; // tKopatCash
-                const checkReceived = parseFloat(row[15]) || 0; // tKopatCheck
-                const bankTransfers = parseFloat(row[9]) || 0; // tBankim
-                const commissions = parseFloat(row[11]) || 0; // tAmlot
-                const expenses = parseFloat(row[10]) || 0; // tHozaot
-                const balance = parseFloat(row[12]) || 0; // tBalance
-                const date = row[40]; // tDate
+            excelData.behavior.forEach((row, index) => {
+                try {
+                    // זיהוי עמודות בהתבסס על הקוד שסיפקת
+                    const customerName = row[17]; // tCusName
+                    const cashReceived = parseFloat(row[14]) || 0; // tKopatCash
+                    const checkReceived = parseFloat(row[15]) || 0; // tKopatCheck
+                    const bankTransfers = parseFloat(row[9]) || 0; // tBankim
+                    const commissions = parseFloat(row[11]) || 0; // tAmlot
+                    const expenses = parseFloat(row[10]) || 0; // tHozaot
+                    const balance = parseFloat(row[12]) || 0; // tBalance
+                    const date = row[40]; // tDate
 
-                if (customerName && customerName.toString().trim()) {
-                    const clientName = customerName.toString().trim();
-                    
-                    if (!behaviorData.has(clientName)) {
-                        behaviorData.set(clientName, {
-                            name: clientName,
-                            transactions: [],
-                            totals: {
-                                cashReceived: 0,
-                                checkReceived: 0,
-                                bankTransfers: 0,
-                                commissions: 0,
-                                expenses: 0,
-                                balance: 0,
-                                transactionCount: 0
-                            },
-                            behaviorScore: 0
+                    if (customerName && customerName.toString().trim()) {
+                        const clientName = customerName.toString().trim();
+                        
+                        if (!behaviorData.has(clientName)) {
+                            behaviorData.set(clientName, {
+                                name: clientName,
+                                transactions: [],
+                                totals: {
+                                    cashReceived: 0,
+                                    checkReceived: 0,
+                                    bankTransfers: 0,
+                                    commissions: 0,
+                                    expenses: 0,
+                                    balance: 0,
+                                    transactionCount: 0
+                                },
+                                behaviorScore: 0
+                            });
+                        }
+
+                        const clientBehavior = behaviorData.get(clientName);
+                        clientBehavior.transactions.push({
+                            date,
+                            cashReceived,
+                            checkReceived,
+                            bankTransfers,
+                            commissions,
+                            expenses,
+                            balance
                         });
+
+                        // עדכון סיכומים
+                        clientBehavior.totals.cashReceived += cashReceived;
+                        clientBehavior.totals.checkReceived += checkReceived;
+                        clientBehavior.totals.bankTransfers += bankTransfers;
+                        clientBehavior.totals.commissions += commissions;
+                        clientBehavior.totals.expenses += expenses;
+                        clientBehavior.totals.balance = balance; // יתרה אחרונה
+                        clientBehavior.totals.transactionCount++;
+
+                        // חישוב ציון התנהגות
+                        clientBehavior.behaviorScore = calculateBehaviorScore(clientBehavior);
                     }
-
-                    const clientBehavior = behaviorData.get(clientName);
-                    clientBehavior.transactions.push({
-                        date,
-                        cashReceived,
-                        checkReceived,
-                        bankTransfers,
-                        commissions,
-                        expenses,
-                        balance
-                    });
-
-                    // עדכון סיכומים
-                    clientBehavior.totals.cashReceived += cashReceived;
-                    clientBehavior.totals.checkReceived += checkReceived;
-                    clientBehavior.totals.bankTransfers += bankTransfers;
-                    clientBehavior.totals.commissions += commissions;
-                    clientBehavior.totals.expenses += expenses;
-                    clientBehavior.totals.balance = balance; // יתרה אחרונה
-                    clientBehavior.totals.transactionCount++;
-
-                    // חישוב ציון התנהגות
-                    clientBehavior.behaviorScore = calculateBehaviorScore(clientBehavior);
+                } catch (error) {
+                    console.error(`❌ שגיאה בעיבוד שורת התנהגות ${index}:`, error);
                 }
             });
 
-            console.log(`עובדו ${behaviorData.size} דוחות התנהגות לקוחות`);
+            console.log(`✅ עובדו ${behaviorData.size} דוחות התנהגות לקוחות`);
+            updateDebugInfo();
         }
 
         function calculateBehaviorScore(clientBehavior) {
-            const totals = clientBehavior.totals;
-            let score = 50; // ציון בסיס
+            try {
+                const totals = clientBehavior.totals;
+                let score = 50; // ציון בסיס
 
-            // עדיפות למזומן על פני שיקים
-            const cashRatio = totals.cashReceived / (totals.cashReceived + totals.checkReceived + 1);
-            score += cashRatio * 20;
-
-            // יתרה חיובית
-            if (totals.balance > 0) {
-                score += Math.min(20, totals.balance / 10000);
-            } else {
-                score -= Math.abs(totals.balance) / 5000;
-            }
-
-            // פעילות קבועה
-            if (totals.transactionCount > 10) {
-                score += 10;
-            }
-
-            // יחס הוצאות להכנסות
-            const totalIncome = totals.cashReceived + totals.checkReceived + totals.bankTransfers;
-            if (totalIncome > 0) {
-                const expenseRatio = totals.expenses / totalIncome;
-                if (expenseRatio < 0.3) {
-                    score += 15;
-                } else if (expenseRatio > 0.7) {
-                    score -= 15;
+                // עדיפות למזומן על פני שיקים
+                const totalReceived = totals.cashReceived + totals.checkReceived;
+                if (totalReceived > 0) {
+                    const cashRatio = totals.cashReceived / totalReceived;
+                    score += cashRatio * 20;
                 }
-            }
 
-            return Math.max(0, Math.min(100, score));
+                // יתרה חיובית
+                if (totals.balance > 0) {
+                    score += Math.min(20, totals.balance / 10000);
+                } else {
+                    score -= Math.abs(totals.balance) / 5000;
+                }
+
+                // פעילות קבועה
+                if (totals.transactionCount > 10) {
+                    score += 10;
+                } else if (totals.transactionCount > 5) {
+                    score += 5;
+                }
+
+                // יחס הוצאות להכנסות
+                const totalIncome = totals.cashReceived + totals.checkReceived + totals.bankTransfers;
+                if (totalIncome > 0) {
+                    const expenseRatio = totals.expenses / totalIncome;
+                    if (expenseRatio < 0.3) {
+                        score += 15;
+                    } else if (expenseRatio > 0.7) {
+                        score -= 15;
+                    }
+                }
+
+                return Math.max(0, Math.min(100, score));
+            } catch (error) {
+                console.error('❌ שגיאה בחישוב ציון התנהגות:', error);
+                return 50;
+            }
         }
 
         function processMainData() {
-            if (excelData.main.length < 2) return;
+            if (excelData.main.length < 2) {
+                console.warn('⚠️ אין מספיק נתונים ראשיים לעיבוד');
+                return;
+            }
 
+            console.log('📊 מעבד נתוני עסקאות ראשיים...');
             const headers = excelData.main[0];
             const rows = excelData.main.slice(1);
             
+            console.log('📋 כותרות קובץ ראשי:', headers);
+            
             // חיפוש אינטליגנטי של עמודות - בהתבסס על הכותרות המדויקות
-            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך']);
-            const payerIdIndex = findBestColumnMatch(headers, ['מספר זהות מושך']);
-            const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח']);
-            const clientIdIndex = findBestColumnMatch(headers, ['מ.זהות']);
-            const amountIndex = findBestColumnMatch(headers, ['סכום']);
+            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך', 'שם חברה']);
+            const payerIdIndex = findBestColumnMatch(headers, ['מספר זהות מושך', 'ח.פ', 'מזהה מושך']);
+            const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח', 'שם נהנה']);
+            const clientIdIndex = findBestColumnMatch(headers, ['מ.זהות', 'ת.ז', 'מספר זהות לקוח']);
+            const amountIndex = findBestColumnMatch(headers, ['סכום', 'סכום שיק']);
             const commissionIndex = findBestColumnMatch(headers, ['עמלה']);
             const transactionDateIndex = findBestColumnMatch(headers, ['תאריך עיסקה', 'תאריך עסקה']);
-            const dueDateIndex = findBestColumnMatch(headers, ['ת.פירעון']);
+            const dueDateIndex = findBestColumnMatch(headers, ['ת.פירעון', 'תאריך פירעון']);
             const actualPaymentDateIndex = findBestColumnMatch(headers, ['ת.פרעון בפועל']);
-            const statusIndex = findBestColumnMatch(headers, ['סטטוס']);
+            const statusIndex = findBestColumnMatch(headers, ['סטטוס', 'מצב']);
             const checkNumberIndex = findBestColumnMatch(headers, ['מספר שיק']);
             const commissionRateIndex = findBestColumnMatch(headers, ['אחוז עמלה']);
             const partialCommissionRateIndex = findBestColumnMatch(headers, ['אחוז עמלה - חלקי']);
@@ -1448,168 +1705,197 @@ function getDnbDisplayText(payer) {
                 amount: `${amountIndex >= 0 ? headers[amountIndex] : 'לא נמצא'} (${amountIndex})`
             });
 
-            if (payerNameIndex === -1 || amountIndex === -1) {
-                console.warn('לא נמצאו עמודות חיוניות');
-                return;
+            if (payerNameIndex === -1 && payerIdIndex === -1) {
+                console.error('❌ לא נמצאו עמודות חיוניות (שם מושך או ח.פ.)');
+                throw new Error('לא נמצאו עמודות חיוניות בקובץ העסקאות');
+            }
+
+            if (amountIndex === -1) {
+                console.error('❌ לא נמצאה עמודת סכום');
+                throw new Error('לא נמצאה עמודת הסכום בקובץ העסקאות');
             }
 
             payersMap.clear();
             clientsMap.clear();
 
+            let processedRows = 0;
+            let skippedRows = 0;
+
             rows.forEach((row, index) => {
-                const payerName = row[payerNameIndex]?.toString().trim();
-                const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : null;
-                const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
-                const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
-                const amount = parseFloat(row[amountIndex]) || 0;
-                const commission = commissionIndex >= 0 ? parseFloat(row[commissionIndex]) || 0 : 0;
-                const status = statusIndex >= 0 ? row[statusIndex]?.toString().trim() : '';
-                const checkNumber = checkNumberIndex >= 0 ? row[checkNumberIndex]?.toString().trim() : '';
-                const commissionRate = commissionRateIndex >= 0 ? parseFloat(row[commissionRateIndex]) || 0 : 0;
-                const returnDate = returnDateIndex >= 0 ? row[returnDateIndex] : null;
-                
-                // דילוג על שורות ללא ח.פ. מושך או שם או סכום
-                if (!payerName || !payerId || amount <= 0) {
-                    if (index < 5) { // רק לוג לשורות הראשונות
-                        console.warn(`שורה ${index + 1}: חסר נתונים`, { 
-                            payerName: payerName || 'חסר', 
-                            payerId: payerId || 'חסר', 
-                            amount: amount || 'חסר' 
+                try {
+                    const payerName = payerNameIndex >= 0 ? row[payerNameIndex]?.toString().trim() : '';
+                    const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : null;
+                    const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
+                    const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
+                    const amount = parseFloat(row[amountIndex]) || 0;
+                    const commission = commissionIndex >= 0 ? parseFloat(row[commissionIndex]) || 0 : 0;
+                    const status = statusIndex >= 0 ? row[statusIndex]?.toString().trim() : '';
+                    const checkNumber = checkNumberIndex >= 0 ? row[checkNumberIndex]?.toString().trim() : '';
+                    const commissionRate = commissionRateIndex >= 0 ? parseFloat(row[commissionRateIndex]) || 0 : 0;
+                    const returnDate = returnDateIndex >= 0 ? row[returnDateIndex] : null;
+                    
+                    // דילוג על שורות ללא נתונים חיוניים
+                    if (!payerName && !payerId) {
+                        if (index < 5) { // רק לוג לשורות הראשונות
+                            console.warn(`שורה ${index + 2}: חסר שם ומזהה מושך`);
+                        }
+                        skippedRows++;
+                        return;
+                    }
+
+                    if (amount <= 0) {
+                        if (index < 5) {
+                            console.warn(`שורה ${index + 2}: סכום לא תקין: ${amount}`);
+                        }
+                        skippedRows++;
+                        return;
+                    }
+
+                    // יצירת מזהה מושך (העדפה לח.פ.)
+                    const effectivePayerId = payerId || `NAME_${payerName}`;
+                    const effectivePayerName = payerName || 'לא ידוע';
+
+                    // לוג לשורות הראשונות לוודא שהנתונים נקראים נכון
+                    if (index < 3) {
+                        console.log(`שורה ${index + 2} - נתונים:`, { 
+                            payerName: effectivePayerName, 
+                            payerId: effectivePayerId, 
+                            clientName, 
+                            clientId, 
+                            amount,
+                            commission,
+                            status,
+                            checkNumber
                         });
                     }
-                    return;
-                }
 
-                // לוג לשורות הראשונות לוודא שהנתונים נקראים נכון
-                if (index < 3) {
-                    console.log(`שורה ${index + 1} - נתונים נקראו:`, { 
-                        payerName, 
-                        payerId, 
-                        clientName, 
-                        clientId, 
-                        amount,
-                        commission,
-                        status,
-                        checkNumber
-                    });
-                }
-
-                // עיבוד נתוני מושך (חברה)
-                if (!payersMap.has(payerId)) {
-                    payersMap.set(payerId, {
-                        id: payerId,
-                        name: payerName,
-                        transactions: [],
-                        metrics: {
-                            totalAmount: 0,
-                            transactionCount: 0,
-                            averageAmount: 0,
-                            totalCommission: 0,
-                            averageCommission: 0,
-                            returnedChecks: 0,
-                            cancellations: 0,
-                            clients: new Set(),
-                            firstTransactionDate: null,
-                            lastTransactionDate: null
-                        }
-                    });
-                    
-                    if (payersMap.size <= 5) { // לוג רק ל-5 הראשונים
-                        console.log(`יצירת מושך חדש: "${payerName}" (${payerId})`);
-                    }
-                }
-
-                const payer = payersMap.get(payerId);
-                
-                // יצירת עסקה מפורטת
-                const transaction = {
-                    amount, 
-                    commission,
-                    clientName, 
-                    clientId, 
-                    status,
-                    checkNumber,
-                    commissionRate,
-                    returnDate,
-                    row, 
-                    index,
-                    isReturned: returnDate ? true : false,
-                    isCancelled: status && (status.includes('ביטול') || status.includes('אכ"מ') || status.includes('לא שולם'))
-                };
-                
-                payer.transactions.push(transaction);
-                
-                // עדכון מטריקות מושך
-                payer.metrics.totalAmount += amount;
-                payer.metrics.totalCommission += commission;
-                payer.metrics.transactionCount++;
-                payer.metrics.averageAmount = payer.metrics.totalAmount / payer.metrics.transactionCount;
-                payer.metrics.averageCommission = payer.metrics.totalCommission / payer.metrics.transactionCount;
-                
-                if (transaction.isReturned) payer.metrics.returnedChecks++;
-                if (transaction.isCancelled) payer.metrics.cancellations++;
-                if (clientName) payer.metrics.clients.add(clientName);
-
-                // עיבוד נתוני לקוח
-                if (clientName && clientId) {
-                    if (!clientsMap.has(clientId)) {
-                        clientsMap.set(clientId, {
-                            id: clientId,
-                            name: clientName,
+                    // עיבוד נתוני מושך (חברה)
+                    if (!payersMap.has(effectivePayerId)) {
+                        payersMap.set(effectivePayerId, {
+                            id: effectivePayerId,
+                            name: effectivePayerName,
                             transactions: [],
                             metrics: {
                                 totalAmount: 0,
                                 transactionCount: 0,
                                 averageAmount: 0,
-                                payers: new Set(),
-                                reliability: 100,
-                                returnedCount: 0,
-                                cancelledCount: 0
+                                totalCommission: 0,
+                                averageCommission: 0,
+                                returnedChecks: 0,
+                                cancellations: 0,
+                                clients: new Set(),
+                                firstTransactionDate: null,
+                                lastTransactionDate: null
                             }
                         });
                         
-                        if (clientsMap.size <= 5) {
-                            console.log(`יצירת לקוח חדש: "${clientName}" (${clientId})`);
+                        if (payersMap.size <= 5) { // לוג רק ל-5 הראשונים
+                            console.log(`יצירת מושך חדש: "${effectivePayerName}" (${effectivePayerId})`);
                         }
                     }
 
-                    const client = clientsMap.get(clientId);
-                    client.transactions.push({ 
+                    const payer = payersMap.get(effectivePayerId);
+                    
+                    // יצירת עסקה מפורטת
+                    const transaction = {
                         amount, 
                         commission,
-                        payerName, 
-                        payerId, 
+                        clientName, 
+                        clientId, 
                         status,
-                        isReturned: transaction.isReturned,
-                        isCancelled: transaction.isCancelled,
+                        checkNumber,
+                        commissionRate,
+                        returnDate,
                         row, 
-                        index 
-                    });
+                        index,
+                        isReturned: returnDate ? true : false,
+                        isCancelled: status && (status.includes('ביטול') || status.includes('אכ"מ') || status.includes('לא שולם'))
+                    };
                     
-                    client.metrics.totalAmount += amount;
-                    client.metrics.transactionCount++;
-                    client.metrics.averageAmount = client.metrics.totalAmount / client.metrics.transactionCount;
-                    client.metrics.payers.add(payerName);
+                    payer.transactions.push(transaction);
                     
-                    // הפחתת אמינות על בסיס שיקים חוזרים וביטולים
-                    if (transaction.isReturned) {
-                        client.metrics.returnedCount++;
-                        client.metrics.reliability -= 15;
+                    // עדכון מטריקות מושך
+                    payer.metrics.totalAmount += amount;
+                    payer.metrics.totalCommission += commission;
+                    payer.metrics.transactionCount++;
+                    payer.metrics.averageAmount = payer.metrics.totalAmount / payer.metrics.transactionCount;
+                    payer.metrics.averageCommission = payer.metrics.totalCommission / payer.metrics.transactionCount;
+                    
+                    if (transaction.isReturned) payer.metrics.returnedChecks++;
+                    if (transaction.isCancelled) payer.metrics.cancellations++;
+                    if (clientName) payer.metrics.clients.add(clientName);
+
+                    // עיבוד נתוני לקוח
+                    if (clientName && clientId) {
+                        if (!clientsMap.has(clientId)) {
+                            clientsMap.set(clientId, {
+                                id: clientId,
+                                name: clientName,
+                                transactions: [],
+                                metrics: {
+                                    totalAmount: 0,
+                                    transactionCount: 0,
+                                    averageAmount: 0,
+                                    payers: new Set(),
+                                    reliability: 100,
+                                    returnedCount: 0,
+                                    cancelledCount: 0
+                                }
+                            });
+                            
+                            if (clientsMap.size <= 5) {
+                                console.log(`יצירת לקוח חדש: "${clientName}" (${clientId})`);
+                            }
+                        }
+
+                        const client = clientsMap.get(clientId);
+                        client.transactions.push({ 
+                            amount, 
+                            commission,
+                            payerName: effectivePayerName, 
+                            payerId: effectivePayerId, 
+                            status,
+                            isReturned: transaction.isReturned,
+                            isCancelled: transaction.isCancelled,
+                            row, 
+                            index 
+                        });
+                        
+                        client.metrics.totalAmount += amount;
+                        client.metrics.transactionCount++;
+                        client.metrics.averageAmount = client.metrics.totalAmount / client.metrics.transactionCount;
+                        client.metrics.payers.add(effectivePayerName);
+                        
+                        // הפחתת אמינות על בסיס שיקים חוזרים וביטולים
+                        if (transaction.isReturned) {
+                            client.metrics.returnedCount++;
+                            client.metrics.reliability -= 15;
+                        }
+                        if (transaction.isCancelled) {
+                            client.metrics.cancelledCount++;
+                            client.metrics.reliability -= 10;
+                        }
+                        
+                        client.metrics.reliability = Math.max(0, client.metrics.reliability);
                     }
-                    if (transaction.isCancelled) {
-                        client.metrics.cancelledCount++;
-                        client.metrics.reliability -= 10;
-                    }
-                    
-                    client.metrics.reliability = Math.max(0, client.metrics.reliability);
+
+                    processedRows++;
+                } catch (error) {
+                    console.error(`❌ שגיאה בעיבוד שורה ${index + 2}:`, error);
+                    skippedRows++;
                 }
             });
 
-            console.log(`עובדו ${payersMap.size} מושכים ו-${clientsMap.size} לקוחות`);
+            console.log(`✅ עובדו ${payersMap.size} מושכים ו-${clientsMap.size} לקוחות`);
+            console.log(`📊 סטטיסטיקות עיבוד: ${processedRows} שורות עובדו, ${skippedRows} שורות דולגו`);
+            updateDebugInfo();
         }
 
         function processReturnedData() {
-            if (excelData.returned.length < 2) return;
+            if (excelData.returned.length < 2) {
+                console.log('⚠️ אין מספיק נתוני שיקים חוזרים לעיבוד');
+                return;
+            }
 
             console.log('🔄 מעבד נתוני שיקים חוזרים...');
             
@@ -1628,6 +1914,7 @@ function getDnbDisplayText(payer) {
                 ))) {
                     headers = row;
                     headerRowIndex = i;
+                    console.log('📋 נמצאה שורת כותרות שיקים חוזרים בשורה:', i);
                     break;
                 }
             }
@@ -1636,15 +1923,17 @@ function getDnbDisplayText(payer) {
                 // אם לא מצאנו כותרות, נשתמש בשורה הראשונה
                 headers = excelData.returned[0];
                 headerRowIndex = 0;
+                console.log('📋 משתמש בשורה הראשונה ככותרות שיקים חוזרים');
             }
 
+            console.log('📋 כותרות שיקים חוזרים:', headers);
             const rows = excelData.returned.slice(headerRowIndex + 1);
             
             // מיפוי עמודות שיקים חוזרים
             const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח']);
-            const clientIdIndex = findBestColumnMatch(headers, ['מס\' לקוח']);
+            const clientIdIndex = findBestColumnMatch(headers, ['מס\' לקוח', 'ת.ז']);
             const payerNameIndex = findBestColumnMatch(headers, ['שם מושך']);
-            const payerIdIndex = findBestColumnMatch(headers, ['מספר מזהה מושך']);
+            const payerIdIndex = findBestColumnMatch(headers, ['מספר מזהה מושך', 'ח.פ']);
             const checkNumberIndex = findBestColumnMatch(headers, ['מספר שיק']);
             const amountIndex = findBestColumnMatch(headers, ['סכום']);
             const returnReasonIndex = findBestColumnMatch(headers, ['סיבת החזרה']);
@@ -1656,80 +1945,85 @@ function getDnbDisplayText(payer) {
                 clientId: `${clientIdIndex >= 0 ? headers[clientIdIndex] : 'לא נמצא'} (${clientIdIndex})`,
                 payerName: `${payerNameIndex >= 0 ? headers[payerNameIndex] : 'לא נמצא'} (${payerNameIndex})`,
                 payerId: `${payerIdIndex >= 0 ? headers[payerIdIndex] : 'לא נמצא'} (${payerIdIndex})`,
-                amount: `${amountIndex >= 0 ? headers[amountIndex] : 'לא נמצא'} (${amountIndex})`,
-                returnReason: `${returnReasonIndex >= 0 ? headers[returnReasonIndex] : 'לא נמצא'} (${returnReasonIndex})`
+                amount: `${amountIndex >= 0 ? headers[amountIndex] : 'לא נמצא'} (${amountIndex})`
             });
 
             let processedReturns = 0;
             
             rows.forEach((row, index) => {
-                const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
-                const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
-                const payerName = payerNameIndex >= 0 ? row[payerNameIndex]?.toString().trim() : '';
-                const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : '';
-                const amount = amountIndex >= 0 ? parseFloat(row[amountIndex]) || 0 : 0;
-                const returnReason = returnReasonIndex >= 0 ? row[returnReasonIndex]?.toString().trim() : '';
-                const returnCount = returnCountIndex >= 0 ? parseInt(row[returnCountIndex]) || 1 : 1;
+                try {
+                    const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
+                    const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
+                    const payerName = payerNameIndex >= 0 ? row[payerNameIndex]?.toString().trim() : '';
+                    const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : '';
+                    const amount = amountIndex >= 0 ? parseFloat(row[amountIndex]) || 0 : 0;
+                    const returnReason = returnReasonIndex >= 0 ? row[returnReasonIndex]?.toString().trim() : '';
+                    const returnCount = returnCountIndex >= 0 ? parseInt(row[returnCountIndex]) || 1 : 1;
 
-                // לוג לשורות הראשונות
-                if (index < 3) {
-                    console.log(`שיק חוזר ${index + 1}:`, {
-                        clientName, clientId, payerName, payerId, amount, returnReason
-                    });
-                }
-
-                // עדכון נתוני מושך
-                if (payerId && payersMap.has(payerId)) {
-                    const payer = payersMap.get(payerId);
-                    payer.metrics.returnedChecks += returnCount;
-                    processedReturns++;
-                    
-                    if (processedReturns <= 3) {
-                        console.log(`עודכן מושך ${payerName}: +${returnCount} שיקים חוזרים`);
+                    // לוג לשורות הראשונות
+                    if (index < 3) {
+                        console.log(`שיק חוזר ${index + 1}:`, {
+                            clientName, clientId, payerName, payerId, amount, returnReason
+                        });
                     }
-                }
 
-                // עדכון נתוני לקוח
-                if (clientId && clientsMap.has(clientId)) {
-                    const client = clientsMap.get(clientId);
-                    client.metrics.returnedCount += returnCount;
-                    client.metrics.reliability -= (returnCount * 15); // הפחתה של 15 נקודות לכל החזרה
-                    client.metrics.reliability = Math.max(0, client.metrics.reliability);
-                    
-                    if (processedReturns <= 3) {
-                        console.log(`עודכן לקוח ${clientName}: +${returnCount} שיקים חוזרים, אמינות: ${client.metrics.reliability}%`);
+                    // עדכון נתוני מושך
+                    if (payerId && payersMap.has(payerId)) {
+                        const payer = payersMap.get(payerId);
+                        payer.metrics.returnedChecks += returnCount;
+                        processedReturns++;
+                        
+                        if (processedReturns <= 3) {
+                            console.log(`עודכן מושך ${payerName}: +${returnCount} שיקים חוזרים`);
+                        }
+                    } else if (payerName) {
+                        // נסה לחפש לפי שם
+                        const foundPayer = Array.from(payersMap.values()).find(p => 
+                            p.name === payerName || p.name.includes(payerName) || payerName.includes(p.name)
+                        );
+                        if (foundPayer) {
+                            foundPayer.metrics.returnedChecks += returnCount;
+                            processedReturns++;
+                            console.log(`מצא מושך לפי שם: ${payerName} -> ${foundPayer.name}`);
+                        }
                     }
-                }
 
-                // אם לא מצאנו את המושך/לקוח במפות הראשיות, ננסה לחפש לפי שם
-                if (!payerId || !payersMap.has(payerId)) {
-                    const foundPayer = Array.from(payersMap.values()).find(p => 
-                        p.name === payerName || p.name.includes(payerName) || payerName.includes(p.name)
-                    );
-                    if (foundPayer) {
-                        foundPayer.metrics.returnedChecks += returnCount;
-                        console.log(`מצא מושך לפי שם: ${payerName} -> ${foundPayer.name}`);
+                    // עדכון נתוני לקוח
+                    if (clientId && clientsMap.has(clientId)) {
+                        const client = clientsMap.get(clientId);
+                        client.metrics.returnedCount += returnCount;
+                        client.metrics.reliability -= (returnCount * 15); // הפחתה של 15 נקודות לכל החזרה
+                        client.metrics.reliability = Math.max(0, client.metrics.reliability);
+                        
+                        if (processedReturns <= 3) {
+                            console.log(`עודכן לקוח ${clientName}: +${returnCount} שיקים חוזרים, אמינות: ${client.metrics.reliability}%`);
+                        }
+                    } else if (clientName) {
+                        // נסה לחפש לפי שם
+                        const foundClient = Array.from(clientsMap.values()).find(c => 
+                            c.name === clientName || c.name.includes(clientName) || clientName.includes(c.name)
+                        );
+                        if (foundClient) {
+                            foundClient.metrics.returnedCount += returnCount;
+                            foundClient.metrics.reliability -= (returnCount * 15);
+                            foundClient.metrics.reliability = Math.max(0, foundClient.metrics.reliability);
+                            console.log(`מצא לקוח לפי שם: ${clientName} -> ${foundClient.name}`);
+                        }
                     }
-                }
-
-                if (!clientId || !clientsMap.has(clientId)) {
-                    const foundClient = Array.from(clientsMap.values()).find(c => 
-                        c.name === clientName || c.name.includes(clientName) || clientName.includes(c.name)
-                    );
-                    if (foundClient) {
-                        foundClient.metrics.returnedCount += returnCount;
-                        foundClient.metrics.reliability -= (returnCount * 15);
-                        foundClient.metrics.reliability = Math.max(0, foundClient.metrics.reliability);
-                        console.log(`מצא לקוח לפי שם: ${clientName} -> ${foundClient.name}`);
-                    }
+                } catch (error) {
+                    console.error(`❌ שגיאה בעיבוד שיק חוזר ${index + 1}:`, error);
                 }
             });
 
             console.log(`✅ עובדו ${processedReturns} שיקים חוזרים מתוך ${rows.length} שורות`);
+            updateDebugInfo();
         }
 
         function processWarningsData() {
-            if (excelData.warnings.length < 2) return;
+            if (excelData.warnings.length < 2) {
+                console.log('⚠️ אין מספיק נתוני ביטולים לעיבוד');
+                return;
+            }
 
             console.log('⚠️ מעבד נתוני ביטולים/אכ"מ...');
             
@@ -1747,6 +2041,7 @@ function getDnbDisplayText(payer) {
                 ))) {
                     headers = row;
                     headerRowIndex = i;
+                    console.log('📋 נמצאה שורת כותרות ביטולים בשורה:', i);
                     break;
                 }
             }
@@ -1754,8 +2049,10 @@ function getDnbDisplayText(payer) {
             if (headers.length === 0) {
                 headers = excelData.warnings[0];
                 headerRowIndex = 0;
+                console.log('📋 משתמש בשורה הראשונה ככותרות ביטולים');
             }
 
+            console.log('📋 כותרות ביטולים:', headers);
             const rows = excelData.warnings.slice(headerRowIndex + 1);
             
             // מיפוי עמודות ביטולים
@@ -1773,47 +2070,76 @@ function getDnbDisplayText(payer) {
             let processedCancellations = 0;
 
             rows.forEach((row, index) => {
-                const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : '';
-                const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
-                const payerName = payerNameIndex >= 0 ? row[payerNameIndex]?.toString().trim() : '';
-                const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
+                try {
+                    const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : '';
+                    const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
+                    const payerName = payerNameIndex >= 0 ? row[payerNameIndex]?.toString().trim() : '';
+                    const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
+                    const reason = reasonIndex >= 0 ? row[reasonIndex]?.toString().trim() : '';
 
-                // עדכון נתוני מושך
-                if (payerId && payersMap.has(payerId)) {
-                    payersMap.get(payerId).metrics.cancellations++;
-                    processedCancellations++;
-                }
+                    // עדכון נתוני מושך
+                    if (payerId && payersMap.has(payerId)) {
+                        payersMap.get(payerId).metrics.cancellations++;
+                        processedCancellations++;
+                    } else if (payerName) {
+                        // חיפוש לפי שם
+                        const foundPayer = Array.from(payersMap.values()).find(p => 
+                            p.name === payerName || p.name.includes(payerName) || payerName.includes(p.name)
+                        );
+                        if (foundPayer) {
+                            foundPayer.metrics.cancellations++;
+                            processedCancellations++;
+                            console.log(`מצא מושך לביטול לפי שם: ${payerName} -> ${foundPayer.name}`);
+                        }
+                    }
 
-                // עדכון נתוני לקוח
-                if (clientId && clientsMap.has(clientId)) {
-                    const client = clientsMap.get(clientId);
-                    client.metrics.cancelledCount++;
-                    client.metrics.reliability -= 10; // הפחתה של 10 נקודות לכל ביטול
-                    client.metrics.reliability = Math.max(0, client.metrics.reliability);
+                    // עדכון נתוני לקוח
+                    if (clientId && clientsMap.has(clientId)) {
+                        const client = clientsMap.get(clientId);
+                        client.metrics.cancelledCount++;
+                        client.metrics.reliability -= 10; // הפחתה של 10 נקודות לכל ביטול
+                        client.metrics.reliability = Math.max(0, client.metrics.reliability);
+                    } else if (clientName) {
+                        // חיפוש לפי שם
+                        const foundClient = Array.from(clientsMap.values()).find(c => 
+                            c.name === clientName || c.name.includes(clientName) || clientName.includes(c.name)
+                        );
+                        if (foundClient) {
+                            foundClient.metrics.cancelledCount++;
+                            foundClient.metrics.reliability -= 10;
+                            foundClient.metrics.reliability = Math.max(0, foundClient.metrics.reliability);
+                            console.log(`מצא לקוח לביטול לפי שם: ${clientName} -> ${foundClient.name}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`❌ שגיאה בעיבוד ביטול ${index + 1}:`, error);
                 }
             });
 
             console.log(`✅ עובדו ${processedCancellations} ביטולים`);
+            updateDebugInfo();
         }
 
         function findBestColumnMatch(headers, patterns) {
-            console.log('מחפש עמודה עבור:', patterns, 'בכותרות:', headers);
+            console.log('🔍 מחפש עמודה עבור:', patterns, 'בכותרות:', headers);
             
             for (let pattern of patterns) {
                 const index = headers.findIndex(header => 
                     header && header.toString().toLowerCase().includes(pattern.toLowerCase())
                 );
                 if (index >= 0) {
-                    console.log(`נמצאה עמודה "${pattern}" באינדקס ${index}: "${headers[index]}"`);
+                    console.log(`✅ נמצאה עמודה "${pattern}" באינדקס ${index}: "${headers[index]}"`);
                     return index;
                 }
             }
             
-            console.warn('לא נמצאה עמודה עבור:', patterns);
+            console.warn('❌ לא נמצאה עמודה עבור:', patterns);
             return -1;
         }
 
         function checkAllFilesLoaded() {
+            console.log('🔍 בודק סטטוס טעינת קבצים...');
+            
             // עיבוד נתוני התנהגות אם קיימים
             if (excelData.behavior.length > 0) {
                 processClientBehaviorData();
@@ -1824,58 +2150,102 @@ function getDnbDisplayText(payer) {
                 updateDataStatus();
                 setupAutocomplete();
                 document.getElementById('calculateBtn').disabled = false;
+                console.log('✅ המערכת מוכנה לחישובי דירוג');
+            } else {
+                console.log('⚠️ עדיין לא נטענו מספיק נתונים לחישוב');
             }
+
+            updateDebugInfo();
         }
 
         function updateDataStatus() {
-            const transactionsCount = payersMap.size;
-            const returnedCount = Array.from(payersMap.values())
-                .reduce((sum, payer) => sum + payer.metrics.returnedChecks, 0);
-            const cancellationsCount = Array.from(payersMap.values())
-                .reduce((sum, payer) => sum + payer.metrics.cancellations, 0);
-            const dnbCount = dnbData.size;
-            const behaviorCount = behaviorData.size;
-            
-            document.getElementById('transactionsStatus').innerHTML = 
-                `<span class="status-loaded">✓ ${transactionsCount} חברות</span>`;
-            document.getElementById('returnedStatus').innerHTML = 
-                `<span class="status-loaded">✓ ${returnedCount} שיקים חוזרים</span>`;
-            document.getElementById('warningsStatus').innerHTML = 
-                `<span class="status-loaded">✓ ${cancellationsCount} ביטולים</span>`;
+            try {
+                const transactionsCount = payersMap.size;
+                const returnedCount = Array.from(payersMap.values())
+                    .reduce((sum, payer) => sum + payer.metrics.returnedChecks, 0);
+                const cancellationsCount = Array.from(payersMap.values())
+                    .reduce((sum, payer) => sum + payer.metrics.cancellations, 0);
+                const dnbCount = dnbData.size;
+                const behaviorCount = behaviorData.size;
                 
-            // הוספת סטטוס חדש אם יש נתונים
-            const statusGrid = document.querySelector('.status-grid');
-            
-            // הסרת סטטוס קיים של D&B ו-התנהגות
-            const existingDnb = document.getElementById('dnbStatus');
-            const existingBehavior = document.getElementById('behaviorStatus');
-            if (existingDnb) existingDnb.parentElement.remove();
-            if (existingBehavior) existingBehavior.parentElement.remove();
-            
-            // הוספת סטטוס D&B
-            if (dnbCount > 0) {
-                const dnbStatusItem = document.createElement('div');
-                dnbStatusItem.className = 'status-item';
-                dnbStatusItem.innerHTML = `
-                    <span>🏢 דירוגי D&B</span>
-                    <span id="dnbStatus" class="status-loaded">✓ ${dnbCount} חברות</span>
-                `;
-                statusGrid.appendChild(dnbStatusItem);
-            }
-            
-            // הוספת סטטוס התנהגות
-            if (behaviorCount > 0) {
-                const behaviorStatusItem = document.createElement('div');
-                behaviorStatusItem.className = 'status-item';
-                behaviorStatusItem.innerHTML = `
-                    <span>📈 ניתוח התנהגות</span>
-                    <span id="behaviorStatus" class="status-loaded">✓ ${behaviorCount} לקוחות</span>
-                `;
-                statusGrid.appendChild(behaviorStatusItem);
+                document.getElementById('transactionsStatus').innerHTML = 
+                    `<span class="status-loaded">✓ ${transactionsCount} חברות</span>`;
+                document.getElementById('returnedStatus').innerHTML = 
+                    `<span class="status-loaded">✓ ${returnedCount} שיקים חוזרים</span>`;
+                document.getElementById('warningsStatus').innerHTML = 
+                    `<span class="status-loaded">✓ ${cancellationsCount} ביטולים</span>`;
+                    
+                // הוספת סטטוס חדש אם יש נתונים
+                const statusGrid = document.querySelector('.status-grid');
+                
+                // הסרת סטטוס קיים של D&B ו-התנהגות
+                const existingDnb = document.getElementById('dnbStatusItem');
+                const existingBehavior = document.getElementById('behaviorStatusItem');
+                if (existingDnb) existingDnb.remove();
+                if (existingBehavior) existingBehavior.remove();
+                
+                // הוספת סטטוס D&B
+                if (dnbCount > 0) {
+                    const dnbStatusItem = document.createElement('div');
+                    dnbStatusItem.id = 'dnbStatusItem';
+                    dnbStatusItem.className = 'status-item';
+                    dnbStatusItem.innerHTML = `
+                        <span>🏢 דירוגי D&B</span>
+                        <span id="dnbStatus" class="status-loaded">✓ ${dnbCount} חברות</span>
+                    `;
+                    statusGrid.appendChild(dnbStatusItem);
+                }
+                
+                // הוספת סטטוס התנהגות
+                if (behaviorCount > 0) {
+                    const behaviorStatusItem = document.createElement('div');
+                    behaviorStatusItem.id = 'behaviorStatusItem';
+                    behaviorStatusItem.className = 'status-item';
+                    behaviorStatusItem.innerHTML = `
+                        <span>📈 ניתוח התנהגות</span>
+                        <span id="behaviorStatus" class="status-loaded">✓ ${behaviorCount} לקוחות</span>
+                    `;
+                    statusGrid.appendChild(behaviorStatusItem);
+                }
+
+                console.log(`📊 סטטוס נתונים עודכן: ${transactionsCount} חברות, ${dnbCount} D&B, ${behaviorCount} התנהגות`);
+            } catch (error) {
+                console.error('❌ שגיאה בעדכון סטטוס נתונים:', error);
             }
         }
 
         function setupAutocomplete() {
+            console.log('🔧 מגדיר השלמה אוטומטית...');
+            
+            // פונקציה מסייעת לחיפוש D&B
+            function getDnbDisplayText(payer) {
+                // חיפוש נתוני D&B
+                let dnbInfo = null;
+                
+                if (dnbData.has(payer.id)) {
+                    dnbInfo = dnbData.get(payer.id);
+                } else if (dnbData.has(`NAME_${payer.name}`)) {
+                    dnbInfo = dnbData.get(`NAME_${payer.name}`);
+                } else {
+                    // חיפוש חלקי
+                    dnbInfo = Array.from(dnbData.values()).find(dnb => {
+                        if (!dnb.companyName) return false;
+                        const payerWords = payer.name.toLowerCase().split(' ').filter(w => w.length > 2);
+                        const dnbWords = dnb.companyName.toLowerCase().split(' ').filter(w => w.length > 2);
+                        const commonWords = payerWords.filter(word => 
+                            dnbWords.some(dnbWord => dnbWord.includes(word) || word.includes(dnbWord))
+                        );
+                        return commonWords.length >= Math.min(2, payerWords.length);
+                    });
+                }
+                
+                if (dnbInfo && dnbInfo.dnbScore > 0) {
+                    return ` | D&B: ${Math.round(dnbInfo.dnbScore)} | ₪${dnbInfo.revenue?.toLocaleString() || '0'} מחזור`;
+                }
+                
+                return '';
+            }
+
             // השלמה אוטומטית לחברות מושכות
             const payerInput = document.getElementById('payerName');
             const payerSuggestions = document.getElementById('payerNameSuggestions');
@@ -1925,6 +2295,7 @@ function getDnbDisplayText(payer) {
                             document.getElementById('payerID').value = payer.id;
                             payerSuggestions.style.display = 'none';
                             console.log('נבחר מושך:', payer.name, '->', payer.id);
+                            updateDebugInfo();
                         };
                         payerSuggestions.appendChild(div);
                     });
@@ -1952,6 +2323,7 @@ function getDnbDisplayText(payer) {
                         document.getElementById('clientID').value = foundClient.id;
                         console.log('XLOOKUP לקוח:', foundClient.name, '->', foundClient.id);
                         showClientHistory(foundClient);
+                        updateDebugInfo();
                     } else {
                         // אין התאמה מדויקת - ריקון ת.ז.
                         document.getElementById('clientID').value = '';
@@ -1986,6 +2358,7 @@ function getDnbDisplayText(payer) {
                             clientSuggestions.style.display = 'none';
                             showClientHistory(client);
                             console.log('נבחר לקוח:', client.name, '->', client.id);
+                            updateDebugInfo();
                         };
                         clientSuggestions.appendChild(div);
                     });
@@ -2001,441 +2374,627 @@ function getDnbDisplayText(payer) {
                     clientSuggestions.style.display = 'none';
                 }
             });
+
+            console.log('✅ השלמה אוטומטית הוגדרה בהצלחה');
         }
 
         function showClientHistory(client) {
-            const historyDiv = document.getElementById('clientHistory');
-            const summaryDiv = document.getElementById('clientHistorySummary');
-            
-            const reliability = Math.max(0, client.metrics.reliability);
-            const avgAmount = client.metrics.averageAmount;
-            const totalAmount = client.metrics.totalAmount;
-            const transactionCount = client.metrics.transactionCount;
-            
-            summaryDiv.innerHTML = `
-                <div class="history-card">
-                    <div class="history-value">${transactionCount}</div>
-                    <div>עסקאות קודמות</div>
-                </div>
-                <div class="history-card">
-                    <div class="history-value">₪${totalAmount.toLocaleString()}</div>
-                    <div>סך כולל</div>
-                </div>
-                <div class="history-card">
-                    <div class="history-value">₪${avgAmount.toLocaleString()}</div>
-                    <div>ממוצע לעסקה</div>
-                </div>
-                <div class="history-card">
-                    <div class="history-value" style="color: ${reliability >= 80 ? '#27ae60' : reliability >= 60 ? '#f39c12' : '#e74c3c'}">${reliability}%</div>
-                    <div>דירוג אמינות</div>
-                </div>
-            `;
-            
-            historyDiv.style.display = 'block';
+            try {
+                const historyDiv = document.getElementById('clientHistory');
+                const summaryDiv = document.getElementById('clientHistorySummary');
+                
+                const reliability = Math.max(0, client.metrics.reliability);
+                const avgAmount = client.metrics.averageAmount;
+                const totalAmount = client.metrics.totalAmount;
+                const transactionCount = client.metrics.transactionCount;
+                
+                summaryDiv.innerHTML = `
+                    <div class="history-card">
+                        <div class="history-value">${transactionCount}</div>
+                        <div>עסקאות קודמות</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value">₪${totalAmount.toLocaleString()}</div>
+                        <div>סך כולל</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value">₪${avgAmount.toLocaleString()}</div>
+                        <div>ממוצע לעסקה</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value" style="color: ${reliability >= 80 ? '#27ae60' : reliability >= 60 ? '#f39c12' : '#e74c3c'}">${reliability}%</div>
+                        <div>דירוג אמינות</div>
+                    </div>
+                `;
+                
+                historyDiv.style.display = 'block';
+                console.log('📋 הוצגה היסטוריית לקוח:', client.name);
+            } catch (error) {
+                console.error('❌ שגיאה בהצגת היסטוריית לקוח:', error);
+            }
         }
 
         function calculateCreditRating() {
-            const payerName = document.getElementById('payerName').value.trim();
-            const payerId = document.getElementById('payerID').value.trim();
-            const clientName = document.getElementById('clientName').value.trim();
-            const clientId = document.getElementById('clientID').value.trim();
-            const checkAmount = parseFloat(document.getElementById('checkAmount').value) || 0;
-            const creditDays = parseInt(document.getElementById('creditDays').value) || 30;
+            try {
+                const payerName = document.getElementById('payerName').value.trim();
+                const payerId = document.getElementById('payerID').value.trim();
+                const clientName = document.getElementById('clientName').value.trim();
+                const clientId = document.getElementById('clientID').value.trim();
+                const checkAmount = parseFloat(document.getElementById('checkAmount').value) || 0;
+                const creditDays = parseInt(document.getElementById('creditDays').value) || 30;
 
-            console.log('נתוני קלט לחישוב:', {
-                payerName,
-                payerId,
-                clientName,
-                clientId,
-                checkAmount,
-                creditDays
-            });
+                console.log('🧮 מתחיל חישוב דירוג אשראי...');
+                console.log('נתוני קלט לחישוב:', {
+                    payerName,
+                    payerId,
+                    clientName,
+                    clientId,
+                    checkAmount,
+                    creditDays
+                });
 
-            if (!payerId || !payersMap.has(payerId)) {
-                showNotification('חברה מושכת לא נמצאה בנתונים או ח.פ. ריק', 'warning');
-                console.warn('מושך לא נמצא:', { payerId, hasInMap: payersMap.has(payerId) });
-                return;
+                if (!payerId || !payersMap.has(payerId)) {
+                    showNotification('חברה מושכת לא נמצאה בנתונים או ח.פ. ריק', 'warning');
+                    console.warn('❌ מושך לא נמצא:', { payerId, hasInMap: payersMap.has(payerId) });
+                    return;
+                }
+
+                if (checkAmount <= 0) {
+                    showNotification('נא להזין סכום תקין', 'warning');
+                    console.warn('❌ סכום לא תקין:', checkAmount);
+                    return;
+                }
+
+                const payer = payersMap.get(payerId);
+                const client = clientId && clientsMap.has(clientId) ? clientsMap.get(clientId) : null;
+                
+                console.log('📊 נתוני מושך:', {
+                    name: payer.name,
+                    transactions: payer.metrics.transactionCount,
+                    totalAmount: payer.metrics.totalAmount,
+                    returned: payer.metrics.returnedChecks
+                });
+                
+                if (client) {
+                    console.log('👤 נתוני לקוח:', {
+                        name: client.name,
+                        transactions: client.metrics.transactionCount,
+                        reliability: client.metrics.reliability
+                    });
+                } else {
+                    console.log('👤 לא נמצא לקוח במערכת');
+                }
+                
+                const rating = calculateRating(payer, client, checkAmount, creditDays);
+                displayResults(rating, payer, client, checkAmount, creditDays);
+                
+                console.log('✅ חישוב דירוג הושלם בהצלחה');
+            } catch (error) {
+                console.error('❌ שגיאה בחישוב דירוג אשראי:', error);
+                showNotification('שגיאה בחישוב הדירוג: ' + error.message, 'error');
             }
-
-            if (checkAmount <= 0) {
-                showNotification('נא להזין סכום תקין', 'warning');
-                return;
-            }
-
-            const payer = payersMap.get(payerId);
-            const client = clientId && clientsMap.has(clientId) ? clientsMap.get(clientId) : null;
-            
-            console.log('נתוני מושך:', payer);
-            console.log('נתוני לקוח:', client);
-            
-            const rating = calculateRating(payer, client, checkAmount, creditDays);
-            displayResults(rating, payer, client, checkAmount, creditDays);
         }
 
         function calculateRating(payer, client, checkAmount, creditDays) {
-            const payerMetrics = payer.metrics;
-            const clientMetrics = client ? client.metrics : null;
-            
-            // חיפוש נתוני D&B - חיפוש משולב
-            let dnbInfo = null;
-            
-            // חיפוש ראשון לפי ח.פ.
-            if (dnbData.has(payer.id)) {
-                dnbInfo = dnbData.get(payer.id);
-                console.log(`מצא D&B לפי ח.פ.: ${payer.id}`);
-            }
-            
-            // חיפוש שני לפי שם חברה
-            if (!dnbInfo) {
-                const nameKey = `NAME_${payer.name}`;
-                if (dnbData.has(nameKey)) {
-                    dnbInfo = dnbData.get(nameKey);
-                    console.log(`מצא D&B לפי שם: ${payer.name}`);
-                }
-            }
-            
-            // חיפוש שלישי - חיפוש חלקי בשם
-            if (!dnbInfo) {
-                const foundDnb = Array.from(dnbData.values()).find(dnb => {
-                    if (!dnb.companyName) return false;
-                    
-                    const payerWords = payer.name.toLowerCase().split(' ').filter(w => w.length > 2);
-                    const dnbWords = dnb.companyName.toLowerCase().split(' ').filter(w => w.length > 2);
-                    
-                    // בדיקה אם יש לפחות 2 מילים משותפות
-                    const commonWords = payerWords.filter(word => 
-                        dnbWords.some(dnbWord => dnbWord.includes(word) || word.includes(dnbWord))
-                    );
-                    
-                    return commonWords.length >= Math.min(2, payerWords.length);
-                });
+            try {
+                console.log('🔢 מתחיל חישוב פרמטרי דירוג...');
                 
-                if (foundDnb) {
-                    dnbInfo = foundDnb;
-                    console.log(`מצא D&B בחיפוש חלקי: "${payer.name}" -> "${foundDnb.companyName}"`);
+                const payerMetrics = payer.metrics;
+                const clientMetrics = client ? client.metrics : null;
+                
+                // חיפוש נתוני D&B - חיפוש משולב
+                let dnbInfo = null;
+                
+                // חיפוש ראשון לפי ח.פ.
+                if (dnbData.has(payer.id)) {
+                    dnbInfo = dnbData.get(payer.id);
+                    console.log(`🏢 מצא D&B לפי ח.פ.: ${payer.id}`);
                 }
-            }
-            
-            // אם לא מצאנו - צור ברירת מחדל
-            if (!dnbInfo) {
-                dnbInfo = { 
-                    dnbScore: 50, 
-                    rating: 0, 
-                    riskLevel: 50,
-                    companyName: '',
-                    yearsActive: 0,
-                    employees: 0,
-                    revenue: 0,
-                    obligation: 0
+                
+                // חיפוש שני לפי שם חברה
+                if (!dnbInfo) {
+                    const nameKey = `NAME_${payer.name}`;
+                    if (dnbData.has(nameKey)) {
+                        dnbInfo = dnbData.get(nameKey);
+                        console.log(`🏢 מצא D&B לפי שם: ${payer.name}`);
+                    }
+                }
+                
+                // חיפוש שלישי - חיפוש חלקי בשם
+                if (!dnbInfo) {
+                    const foundDnb = Array.from(dnbData.values()).find(dnb => {
+                        if (!dnb.companyName) return false;
+                        
+                        const payerWords = payer.name.toLowerCase().split(' ').filter(w => w.length > 2);
+                        const dnbWords = dnb.companyName.toLowerCase().split(' ').filter(w => w.length > 2);
+                        
+                        // בדיקה אם יש לפחות 2 מילים משותפות
+                        const commonWords = payerWords.filter(word => 
+                            dnbWords.some(dnbWord => dnbWord.includes(word) || word.includes(dnbWord))
+                        );
+                        
+                        return commonWords.length >= Math.min(2, payerWords.length);
+                    });
+                    
+                    if (foundDnb) {
+                        dnbInfo = foundDnb;
+                        console.log(`🏢 מצא D&B בחיפוש חלקי: "${payer.name}" -> "${foundDnb.companyName}"`);
+                    }
+                }
+                
+                // אם לא מצאנו - צור ברירת מחדל
+                if (!dnbInfo) {
+                    dnbInfo = { 
+                        dnbScore: 50, 
+                        rating: 0, 
+                        riskLevel: 50,
+                        companyName: '',
+                        yearsActive: 0,
+                        employees: 0,
+                        revenue: 0,
+                        obligation: 0
+                    };
+                    console.log(`⚠️ לא נמצא D&B עבור: ${payer.name} (${payer.id}) - משתמש ברירת מחדל`);
+                } else {
+                    console.log(`✅ נתוני D&B למושך ${payer.name}:`, {
+                        companyName: dnbInfo.companyName,
+                        dnbScore: dnbInfo.dnbScore,
+                        yearsActive: dnbInfo.yearsActive,
+                        employees: dnbInfo.employees,
+                        revenue: dnbInfo.revenue
+                    });
+                }
+                
+                // קבלת נתוני התנהגות לקוח
+                const clientBehaviorInfo = client && behaviorData.has(client.name) 
+                    ? behaviorData.get(client.name) 
+                    : { behaviorScore: 50, totals: { transactionCount: 0 } };
+                
+                if (clientBehaviorInfo.totals.transactionCount > 0) {
+                    console.log(`📈 נמצאו נתוני התנהגות לקוח ${client.name}: ${clientBehaviorInfo.behaviorScore}`);
+                }
+                
+                // חישוב פרמטרים משולבים
+                const parameters = {
+                    historyLength: Math.min(100, (payerMetrics.transactionCount / 10) * 30),
+                    transactionCount: Math.min(100, (payerMetrics.transactionCount / 20) * 40),
+                    averageAmount: Math.min(100, (payerMetrics.averageAmount / 20000) * 35),
+                    clientHistory: clientMetrics ? Math.min(100, (clientMetrics.transactionCount / 5) * 25) : 0,
+                    clientReliability: clientMetrics ? Math.max(0, clientMetrics.reliability) : 50,
+                    clientBehavior: clientBehaviorInfo.behaviorScore,
+                    dnbRating: dnbInfo.dnbScore, // השתמש בציון המחושב
+                    returnedChecks: Math.max(0, 100 - (payerMetrics.returnedChecks * 25)),
+                    cancellations: Math.max(0, 100 - (payerMetrics.cancellations * 20))
                 };
-                console.log(`לא נמצא D&B עבור: ${payer.name} (${payer.id}) - משתמש ברירת מחדל`);
-            } else {
-                console.log(`נתוני D&B למושך ${payer.name}:`, {
-                    companyName: dnbInfo.companyName,
-                    dnbScore: dnbInfo.dnbScore,
-                    yearsActive: dnbInfo.yearsActive,
-                    employees: dnbInfo.employees,
-                    revenue: dnbInfo.revenue
+
+                console.log('📊 פרמטרים מחושבים:', parameters);
+
+                // חישוב ציון משוקלל
+                let totalScore = 0;
+                let normalizedParams = {};
+                let weightedParams = {};
+
+                Object.keys(ratingParameters).forEach(key => {
+                    const param = ratingParameters[key];
+                    const rawValue = parameters[key] || 0;
+                    const normalized = Math.max(0, Math.min(100, rawValue));
+                    const weighted = normalized * param.weight;
+                    
+                    normalizedParams[key] = normalized;
+                    weightedParams[key] = weighted;
+                    totalScore += weighted;
                 });
-            }
-            
-            // קבלת נתוני התנהגות לקוח
-            const clientBehaviorInfo = client && behaviorData.has(client.name) 
-                ? behaviorData.get(client.name) 
-                : { behaviorScore: 50, totals: { transactionCount: 0 } };
-            
-            // חישוב פרמטרים משולבים
-            const parameters = {
-                historyLength: Math.min(100, (payerMetrics.transactionCount / 10) * 30),
-                transactionCount: Math.min(100, (payerMetrics.transactionCount / 20) * 40),
-                averageAmount: Math.min(100, (payerMetrics.averageAmount / 20000) * 35),
-                clientHistory: clientMetrics ? Math.min(100, (clientMetrics.transactionCount / 5) * 25) : 0,
-                clientReliability: clientMetrics ? Math.max(0, clientMetrics.reliability) : 50,
-                clientBehavior: clientBehaviorInfo.behaviorScore,
-                dnbRating: dnbInfo.dnbScore, // השתמש בציון המחושב
-                returnedChecks: Math.max(0, 100 - (payerMetrics.returnedChecks * 25)),
-                cancellations: Math.max(0, 100 - (payerMetrics.cancellations * 20))
-            };
 
-            // חישוב ציון משוקלל
-            let totalScore = 0;
-            let normalizedParams = {};
-            let weightedParams = {};
+                console.log('🧮 ציון כולל מחושב:', totalScore);
 
-            Object.keys(ratingParameters).forEach(key => {
-                const param = ratingParameters[key];
-                const rawValue = parameters[key] || 0;
-                const normalized = Math.max(0, Math.min(100, rawValue));
-                const weighted = normalized * param.weight;
+                // קביעת דירוג אותיות משולב
+                let letterRating, riskLevel, recommendation;
                 
-                normalizedParams[key] = normalized;
-                weightedParams[key] = weighted;
-                totalScore += weighted;
-            });
+                if (totalScore >= 85) {
+                    letterRating = 'AAA';
+                    riskLevel = 'סיכון נמוך מאוד';
+                    recommendation = 'מומלץ בחום לאישור - לקוח איכותי מעולה';
+                } else if (totalScore >= 75) {
+                    letterRating = 'AA';
+                    riskLevel = 'סיכון נמוך';
+                    recommendation = 'מומלץ לאישור';
+                } else if (totalScore >= 65) {
+                    letterRating = 'A';
+                    riskLevel = 'סיכון בינוני-נמוך';
+                    recommendation = 'ניתן לאישור עם מעקב';
+                } else if (totalScore >= 55) {
+                    letterRating = 'BBB';
+                    riskLevel = 'סיכון בינוני';
+                    recommendation = 'דורש בדיקה נוספת';
+                } else if (totalScore >= 45) {
+                    letterRating = 'BB';
+                    riskLevel = 'סיכון בינוני-גבוה';
+                    recommendation = 'לא מומלץ - סיכון גבוה';
+                } else if (totalScore >= 35) {
+                    letterRating = 'B';
+                    riskLevel = 'סיכון גבוה';
+                    recommendation = 'לא מומלץ לאישור';
+                } else if (totalScore >= 25) {
+                    letterRating = 'CCC';
+                    riskLevel = 'סיכון גבוה מאוד';
+                    recommendation = 'דחייה - סיכון גבוה מאוד';
+                } else {
+                    letterRating = 'D';
+                    riskLevel = 'סיכון קיצוני';
+                    recommendation = 'דחייה מיידית';
+                }
 
-            // קביעת דירוג אותיות משולב
-            let letterRating, riskLevel, recommendation;
-            
-            if (totalScore >= 85) {
-                letterRating = 'AAA';
-                riskLevel = 'סיכון נמוך מאוד';
-                recommendation = 'מומלץ בחום לאישור - לקוח איכותי מעולה';
-            } else if (totalScore >= 75) {
-                letterRating = 'AA';
-                riskLevel = 'סיכון נמוך';
-                recommendation = 'מומלץ לאישור';
-            } else if (totalScore >= 65) {
-                letterRating = 'A';
-                riskLevel = 'סיכון בינוני-נמוך';
-                recommendation = 'ניתן לאישור עם מעקב';
-            } else if (totalScore >= 55) {
-                letterRating = 'BBB';
-                riskLevel = 'סיכון בינוני';
-                recommendation = 'דורש בדיקה נוספת';
-            } else if (totalScore >= 45) {
-                letterRating = 'BB';
-                riskLevel = 'סיכון בינוני-גבוה';
-                recommendation = 'לא מומלץ - סיכון גבוה';
-            } else if (totalScore >= 35) {
-                letterRating = 'B';
-                riskLevel = 'סיכון גבוה';
-                recommendation = 'לא מומלץ לאישור';
-            } else if (totalScore >= 25) {
-                letterRating = 'CCC';
-                riskLevel = 'סיכון גבוה מאוד';
-                recommendation = 'דחייה - סיכון גבוה מאוד';
-            } else {
-                letterRating = 'D';
-                riskLevel = 'סיכון קיצוני';
-                recommendation = 'דחייה מיידית';
+                const result = {
+                    totalScore: Math.round(totalScore),
+                    letterRating,
+                    riskLevel,
+                    recommendation,
+                    parameters: parameters,
+                    normalizedParams,
+                    weightedParams,
+                    dnbInfo,
+                    clientBehaviorInfo
+                };
+
+                console.log('✅ דירוג מחושב:', {
+                    score: result.totalScore,
+                    rating: result.letterRating,
+                    risk: result.riskLevel
+                });
+
+                return result;
+            } catch (error) {
+                console.error('❌ שגיאה בחישוב דירוג:', error);
+                throw new Error('שגיאה בחישוב הדירוג: ' + error.message);
             }
-
-            return {
-                totalScore: Math.round(totalScore),
-                letterRating,
-                riskLevel,
-                recommendation,
-                parameters: parameters,
-                normalizedParams,
-                weightedParams,
-                dnbInfo,
-                clientBehaviorInfo
-            };
-        }
-
-        function calculatePaymentConsistency(payer) {
-            if (payer.transactions.length < 3) return 50;
-            
-            const amounts = payer.transactions.map(t => t.amount);
-            const mean = amounts.reduce((a, b) => a + b, 0) / amounts.length;
-            const variance = amounts.reduce((sum, amount) => sum + Math.pow(amount - mean, 2), 0) / amounts.length;
-            const stdDev = Math.sqrt(variance);
-            
-            const consistencyScore = Math.max(0, 100 - (stdDev / mean) * 100);
-            return Math.min(100, consistencyScore);
         }
 
         function displayResults(rating, payer, client, checkAmount, creditDays) {
-            // הצגת כרטיסי דירוג
-            const ratingDisplay = document.getElementById('ratingDisplay');
-            const dnbInfo = rating.dnbInfo || {};
-            
-            ratingDisplay.innerHTML = `
-                <div class="rating-card">
-                    <div class="rating-score rating-${rating.letterRating}">${rating.letterRating}</div>
-                    <div class="rating-label">דירוג אשראי</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score">${rating.totalScore}</div>
-                    <div class="rating-label">ציון כולל</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score">${Math.round(dnbInfo.dnbScore || 0)}</div>
-                    <div class="rating-label">ציון D&B</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score">${payer.metrics.transactionCount}</div>
-                    <div class="rating-label">עסקאות חברה</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score">${client ? client.metrics.transactionCount : 0}</div>
-                    <div class="rating-label">עסקאות לקוח</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score">${dnbInfo.yearsActive || 0}</div>
-                    <div class="rating-label">שנות ותק</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score">${dnbInfo.employees || 0}</div>
-                    <div class="rating-label">מספר עובדים</div>
-                </div>
-                <div class="rating-card">
-                    <div class="rating-score">₪${(dnbInfo.revenue || 0).toLocaleString()}</div>
-                    <div class="rating-label">מחזור שנתי</div>
-                </div>
-            `;
-
-            // הצגת פרמטרים מפורטים
-            const parametersDisplay = document.getElementById('parametersDisplay');
-            parametersDisplay.innerHTML = '';
-            
-            Object.keys(ratingParameters).forEach(key => {
-                const param = ratingParameters[key];
-                const rawValue = rating.parameters[key] || 0;
-                const normalized = rating.normalizedParams[key] || 0;
-                const weighted = rating.weightedParams[key] || 0;
+            try {
+                console.log('📊 מציג תוצאות דירוג...');
                 
-                const row = document.createElement('div');
-                row.className = 'parameter-row';
-                row.innerHTML = `
-                    <div class="parameter-name">${param.name}</div>
-                    <div class="parameter-value">${(param.weight * 100).toFixed(1)}%</div>
-                    <div class="parameter-value">${rawValue.toFixed(1)}</div>
-                    <div class="parameter-value">${normalized.toFixed(1)}</div>
-                    <div class="parameter-value">${weighted.toFixed(2)}</div>
+                // הצגת כרטיסי דירוג
+                const ratingDisplay = document.getElementById('ratingDisplay');
+                const dnbInfo = rating.dnbInfo || {};
+                
+                ratingDisplay.innerHTML = `
+                    <div class="rating-card">
+                        <div class="rating-score rating-${rating.letterRating}">${rating.letterRating}</div>
+                        <div class="rating-label">דירוג אשראי</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${rating.totalScore}</div>
+                        <div class="rating-label">ציון כולל</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${Math.round(dnbInfo.dnbScore || 0)}</div>
+                        <div class="rating-label">ציון D&B</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${payer.metrics.transactionCount}</div>
+                        <div class="rating-label">עסקאות חברה</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${client ? client.metrics.transactionCount : 0}</div>
+                        <div class="rating-label">עסקאות לקוח</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${dnbInfo.yearsActive || 0}</div>
+                        <div class="rating-label">שנות ותק</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${dnbInfo.employees || 0}</div>
+                        <div class="rating-label">מספר עובדים</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">₪${(dnbInfo.revenue || 0).toLocaleString()}</div>
+                        <div class="rating-label">מחזור שנתי</div>
+                    </div>
                 `;
-                parametersDisplay.appendChild(row);
-            });
 
-            // המלצה
-            const recommendation = document.getElementById('recommendation');
-            let recClass = 'excellent';
-            if (rating.totalScore < 75) recClass = 'good';
-            if (rating.totalScore < 65) recClass = 'average';
-            if (rating.totalScore < 55) recClass = 'poor';
-            if (rating.totalScore < 45) recClass = 'danger';
+                // הצגת פרמטרים מפורטים
+                const parametersDisplay = document.getElementById('parametersDisplay');
+                parametersDisplay.innerHTML = '';
+                
+                Object.keys(ratingParameters).forEach(key => {
+                    const param = ratingParameters[key];
+                    const rawValue = rating.parameters[key] || 0;
+                    const normalized = rating.normalizedParams[key] || 0;
+                    const weighted = rating.weightedParams[key] || 0;
+                    
+                    const row = document.createElement('div');
+                    row.className = 'parameter-row';
+                    row.innerHTML = `
+                        <div class="parameter-name">${param.name}</div>
+                        <div class="parameter-value">${(param.weight * 100).toFixed(1)}%</div>
+                        <div class="parameter-value">${rawValue.toFixed(1)}</div>
+                        <div class="parameter-value">${normalized.toFixed(1)}</div>
+                        <div class="parameter-value">${weighted.toFixed(2)}</div>
+                    `;
+                    parametersDisplay.appendChild(row);
+                });
 
-            recommendation.className = `recommendation ${recClass}`;
-            recommendation.innerHTML = `
-                <h3>${rating.recommendation}</h3>
-                <p>רמת סיכון: ${rating.riskLevel}</p>
-                <p>עבור עסקה של ₪${checkAmount.toLocaleString()} ל-${creditDays} ימים</p>
-                ${client ? `<p>לקוח: ${client.name} (אמינות: ${Math.max(0, client.metrics.reliability)}%)</p>` : ''}
-                ${rating.dnbInfo.companyName ? `<p>D&B: ${rating.dnbInfo.companyName} | ${rating.dnbInfo.yearsActive} שנות ותק | ${rating.dnbInfo.employees} עובדים</p>` : ''}
-                ${rating.clientBehaviorInfo.totals.transactionCount > 0 ? `<p>התנהגות לקוח: ${Math.round(rating.clientBehaviorInfo.behaviorScore)}% (${rating.clientBehaviorInfo.totals.transactionCount} דוחות)</p>` : ''}
-            `;
+                // המלצה
+                const recommendation = document.getElementById('recommendation');
+                let recClass = 'excellent';
+                if (rating.totalScore < 75) recClass = 'good';
+                if (rating.totalScore < 65) recClass = 'average';
+                if (rating.totalScore < 55) recClass = 'poor';
+                if (rating.totalScore < 45) recClass = 'danger';
 
-            // הצגת התוצאות
-            document.getElementById('resultsSection').style.display = 'block';
-            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+                recommendation.className = `recommendation ${recClass}`;
+                recommendation.innerHTML = `
+                    <h3>${rating.recommendation}</h3>
+                    <p>רמת סיכון: ${rating.riskLevel}</p>
+                    <p>עבור עסקה של ₪${checkAmount.toLocaleString()} ל-${creditDays} ימים</p>
+                    ${client ? `<p>לקוח: ${client.name} (אמינות: ${Math.max(0, client.metrics.reliability)}%)</p>` : ''}
+                    ${rating.dnbInfo.companyName ? `<p>D&B: ${rating.dnbInfo.companyName} | ${rating.dnbInfo.yearsActive} שנות ותק | ${rating.dnbInfo.employees} עובדים</p>` : ''}
+                    ${rating.clientBehaviorInfo.totals.transactionCount > 0 ? `<p>התנהגות לקוח: ${Math.round(rating.clientBehaviorInfo.behaviorScore)}% (${rating.clientBehaviorInfo.totals.transactionCount} דוחות)</p>` : ''}
+                `;
+
+                // הצגת התוצאות
+                document.getElementById('resultsSection').style.display = 'block';
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+                console.log('✅ תוצאות הוצגו בהצלחה');
+            } catch (error) {
+                console.error('❌ שגיאה בהצגת תוצאות:', error);
+                throw new Error('שגיאה בהצגת התוצאות: ' + error.message);
+            }
         }
 
         function loadSampleData() {
-            // נתוני דוגמה מרחיבים
-            payersMap.clear();
-            clientsMap.clear();
-            
-            const samplePayers = [
-                { id: '510123456', name: 'אבג טק בע"מ', transactions: 15, total: 450000, returned: 0, cancelled: 0 },
-                { id: '520987654', name: 'דפקא השקעות (1995) בע"מ', transactions: 8, total: 280000, returned: 1, cancelled: 0 },
-                { id: '530555444', name: 'זח טק סולושיינס בע"מ', transactions: 25, total: 850000, returned: 0, cancelled: 1 },
-                { id: '540111222', name: 'יכל אנטרפרייזס בע"מ', transactions: 5, total: 125000, returned: 2, cancelled: 1 },
-                { id: '550777888', name: 'מנוף קפיטל פיננסים בע"מ', transactions: 12, total: 380000, returned: 0, cancelled: 0 }
-            ];
+            try {
+                console.log('📋 טוען נתוני דוגמה...');
+                
+                // נתוני דוגמה מרחיבים
+                payersMap.clear();
+                clientsMap.clear();
+                dnbData.clear();
+                behaviorData.clear();
+                
+                const samplePayers = [
+                    { id: '510123456', name: 'אבג טק בע"מ', transactions: 15, total: 450000, returned: 0, cancelled: 0 },
+                    { id: '520987654', name: 'דפקא השקעות (1995) בע"מ', transactions: 8, total: 280000, returned: 1, cancelled: 0 },
+                    { id: '530555444', name: 'זח טק סולושיינס בע"מ', transactions: 25, total: 850000, returned: 0, cancelled: 1 },
+                    { id: '540111222', name: 'יכל אנטרפרייזס בע"מ', transactions: 5, total: 125000, returned: 2, cancelled: 1 },
+                    { id: '550777888', name: 'מנוף קפיטל פיננסים בע"מ', transactions: 12, total: 380000, returned: 0, cancelled: 0 }
+                ];
 
-            const sampleClients = [
-                { id: '123456789', name: 'דוד כהן', transactions: 8, total: 180000, reliability: 95 },
-                { id: '987654321', name: 'שרה לוי', transactions: 12, total: 320000, reliability: 90 },
-                { id: '555444333', name: 'מיכאל אברהם', transactions: 5, total: 85000, reliability: 75 },
-                { id: '111222333', name: 'רחל גולדברג', transactions: 15, total: 450000, reliability: 100 },
-                { id: '777888999', name: 'יוסף מזרחי', transactions: 3, total: 45000, reliability: 60 }
-            ];
+                const sampleClients = [
+                    { id: '123456789', name: 'דוד כהן', transactions: 8, total: 180000, reliability: 95 },
+                    { id: '987654321', name: 'שרה לוי', transactions: 12, total: 320000, reliability: 90 },
+                    { id: '555444333', name: 'מיכאל אברהם', transactions: 5, total: 85000, reliability: 75 },
+                    { id: '111222333', name: 'רחל גולדברג', transactions: 15, total: 450000, reliability: 100 },
+                    { id: '777888999', name: 'יוסף מזרחי', transactions: 3, total: 45000, reliability: 60 }
+                ];
 
-            // יצירת נתוני חברות
-            samplePayers.forEach(data => {
-                payersMap.set(data.id, {
-                    id: data.id,
-                    name: data.name,
-                    transactions: Array(data.transactions).fill().map((_, i) => ({
-                        amount: (data.total / data.transactions) + (Math.random() - 0.5) * 5000,
-                        clientName: sampleClients[i % sampleClients.length].name,
-                        clientId: sampleClients[i % sampleClients.length].id
-                    })),
-                    metrics: {
-                        totalAmount: data.total,
-                        transactionCount: data.transactions,
-                        averageAmount: data.total / data.transactions,
-                        returnedChecks: data.returned,
-                        cancellations: data.cancelled,
-                        clients: new Set(sampleClients.map(c => c.name))
-                    }
+                const sampleDnbData = [
+                    { id: '510123456', name: 'אבג טק בע"מ', score: 85, years: 12, employees: 45, revenue: 8500000 },
+                    { id: '520987654', name: 'דפקא השקעות (1995) בע"מ', score: 72, years: 28, employees: 120, revenue: 15200000 },
+                    { id: '530555444', name: 'זח טק סולושיינס בע"מ', score: 91, years: 8, employees: 85, revenue: 12800000 },
+                    { id: '540111222', name: 'יכל אנטרפרייזס בע"מ', score: 45, years: 3, employees: 12, revenue: 2400000 },
+                    { id: '550777888', name: 'מנוף קפיטל פיננסים בע"מ', score: 78, years: 15, employees: 65, revenue: 9800000 }
+                ];
+
+                // יצירת נתוני חברות
+                samplePayers.forEach(data => {
+                    payersMap.set(data.id, {
+                        id: data.id,
+                        name: data.name,
+                        transactions: Array(data.transactions).fill().map((_, i) => ({
+                            amount: (data.total / data.transactions) + (Math.random() - 0.5) * 5000,
+                            clientName: sampleClients[i % sampleClients.length].name,
+                            clientId: sampleClients[i % sampleClients.length].id
+                        })),
+                        metrics: {
+                            totalAmount: data.total,
+                            transactionCount: data.transactions,
+                            averageAmount: data.total / data.transactions,
+                            totalCommission: data.total * 0.03,
+                            averageCommission: (data.total * 0.03) / data.transactions,
+                            returnedChecks: data.returned,
+                            cancellations: data.cancelled,
+                            clients: new Set(sampleClients.map(c => c.name))
+                        }
+                    });
                 });
-            });
 
-            // יצירת נתוני לקוחות
-            sampleClients.forEach(data => {
-                clientsMap.set(data.id, {
-                    id: data.id,
-                    name: data.name,
-                    transactions: Array(data.transactions).fill().map((_, i) => ({
-                        amount: (data.total / data.transactions) + (Math.random() - 0.5) * 3000,
-                        payerName: samplePayers[i % samplePayers.length].name,
-                        payerId: samplePayers[i % samplePayers.length].id
-                    })),
-                    metrics: {
-                        totalAmount: data.total,
-                        transactionCount: data.transactions,
-                        averageAmount: data.total / data.transactions,
-                        reliability: data.reliability,
-                        payers: new Set(samplePayers.map(p => p.name))
-                    }
+                // יצירת נתוני לקוחות
+                sampleClients.forEach(data => {
+                    clientsMap.set(data.id, {
+                        id: data.id,
+                        name: data.name,
+                        transactions: Array(data.transactions).fill().map((_, i) => ({
+                            amount: (data.total / data.transactions) + (Math.random() - 0.5) * 3000,
+                            payerName: samplePayers[i % samplePayers.length].name,
+                            payerId: samplePayers[i % samplePayers.length].id
+                        })),
+                        metrics: {
+                            totalAmount: data.total,
+                            transactionCount: data.transactions,
+                            averageAmount: data.total / data.transactions,
+                            payers: new Set(samplePayers.map(p => p.name)),
+                            reliability: data.reliability,
+                            returnedCount: 0,
+                            cancelledCount: 0
+                        }
+                    });
                 });
-            });
 
-            // עדכון סטטוס הקבצים
-            document.getElementById('mainFileStatus').textContent = '✓ דמו';
-            document.getElementById('mainFileStatus').className = 'file-status loaded';
-            document.getElementById('returnedFileStatus').textContent = '✓ דמו';
-            document.getElementById('returnedFileStatus').className = 'file-status loaded';
-            document.getElementById('warningsFileStatus').textContent = '✓ דמו';
-            document.getElementById('warningsFileStatus').className = 'file-status loaded';
+                // יצירת נתוני D&B
+                sampleDnbData.forEach(data => {
+                    const dnbRecord = {
+                        companyId: data.id,
+                        companyName: data.name,
+                        sectorRating: data.score,
+                        industrySector: data.score - 5,
+                        yearsActive: data.years,
+                        employees: data.employees,
+                        revenue: data.revenue,
+                        currentObligation: data.revenue * 0.15,
+                        totalTransactions: Math.floor(Math.random() * 50) + 10,
+                        riskLevel: data.score,
+                        dnbScore: data.score
+                    };
+                    
+                    dnbData.set(data.id, dnbRecord);
+                    dnbData.set(`NAME_${data.name}`, dnbRecord);
+                });
 
-            isDataLoaded = true;
-            updateDataStatus();
-            setupAutocomplete();
-            document.getElementById('calculateBtn').disabled = false;
-            showNotification('נתוני דוגמה נטענו בהצלחה!', 'success');
+                // יצירת נתוני התנהגות לדוגמה
+                sampleClients.forEach(client => {
+                    behaviorData.set(client.name, {
+                        name: client.name,
+                        transactions: [],
+                        totals: {
+                            cashReceived: client.total * 0.6,
+                            checkReceived: client.total * 0.4,
+                            bankTransfers: client.total * 0.2,
+                            commissions: client.total * 0.03,
+                            expenses: client.total * 0.15,
+                            balance: (client.total * 0.1) * (Math.random() > 0.5 ? 1 : -1),
+                            transactionCount: client.transactions
+                        },
+                        behaviorScore: client.reliability
+                    });
+                });
+
+                // עדכון סטטוס הקבצים
+                document.getElementById('mainFileStatus').textContent = '✓ דמו';
+                document.getElementById('mainFileStatus').className = 'file-status loaded';
+                document.getElementById('returnedFolderStatus').textContent = '✓ דמו';
+                document.getElementById('returnedFolderStatus').className = 'file-status loaded';
+                document.getElementById('warningsFileStatus').textContent = '✓ דמו';
+                document.getElementById('warningsFileStatus').className = 'file-status loaded';
+                document.getElementById('creditFileStatus').textContent = '✓ דמו';
+                document.getElementById('creditFileStatus').className = 'file-status loaded';
+                document.getElementById('behaviorFolderStatus').textContent = '✓ דמו';
+                document.getElementById('behaviorFolderStatus').className = 'file-status loaded';
+
+                // סימון שהנתונים נטענו
+                excelData.main = [['dummy'], ['data']]; // נתוני dummy כדי שהבדיקות יעבדו
+                excelData.returned = [['dummy'], ['data']];
+                excelData.warnings = [['dummy'], ['data']];
+                excelData.credit = [['dummy'], ['data']];
+                excelData.behavior = [['dummy'], ['data']];
+
+                isDataLoaded = true;
+                updateDataStatus();
+                setupAutocomplete();
+                document.getElementById('calculateBtn').disabled = false;
+                
+                showNotification('נתוני דוגמה נטענו בהצלחה! המערכת מוכנה לחישובים', 'success');
+                console.log('✅ נתוני דוגמה נטענו בהצלחה');
+                updateDebugInfo();
+            } catch (error) {
+                console.error('❌ שגיאה בטעינת נתוני דוגמה:', error);
+                showNotification('שגיאה בטעינת נתוני דוגמה: ' + error.message, 'error');
+            }
         }
 
         function resetForm() {
-            document.getElementById('payerName').value = '';
-            document.getElementById('payerID').value = '';
-            document.getElementById('clientName').value = '';
-            document.getElementById('clientID').value = '';
-            document.getElementById('checkAmount').value = '';
-            
-            // איפוס תאריכים לברירת מחדל
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('transactionDate').value = today;
-            
-            const dueDate = new Date();
-            dueDate.setDate(dueDate.getDate() + 30);
-            document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
-            document.getElementById('creditDays').value = '30';
-            
-            document.getElementById('resultsSection').style.display = 'none';
-            document.getElementById('clientHistory').style.display = 'none';
-            document.getElementById('payerNameSuggestions').style.display = 'none';
-            document.getElementById('clientNameSuggestions').style.display = 'none';
+            try {
+                console.log('🔄 מאפס טופס...');
+                
+                document.getElementById('payerName').value = '';
+                document.getElementById('payerID').value = '';
+                document.getElementById('clientName').value = '';
+                document.getElementById('clientID').value = '';
+                document.getElementById('checkAmount').value = '';
+                
+                // איפוס תאריכים לברירת מחדל
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('transactionDate').value = today;
+                
+                const dueDate = new Date();
+                dueDate.setDate(dueDate.getDate() + 30);
+                document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
+                document.getElementById('creditDays').value = '30';
+                
+                document.getElementById('resultsSection').style.display = 'none';
+                document.getElementById('clientHistory').style.display = 'none';
+                document.getElementById('payerNameSuggestions').style.display = 'none';
+                document.getElementById('clientNameSuggestions').style.display = 'none';
+                
+                updateDebugInfo();
+                console.log('✅ טופס אופס בהצלחה');
+            } catch (error) {
+                console.error('❌ שגיאה באיפוס טופס:', error);
+            }
         }
 
         function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
+            try {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
 
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 4000);
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 4000);
+
+                console.log(`📢 הודעה (${type}): ${message}`);
+            } catch (error) {
+                console.error('❌ שגיאה בהצגת הודעה:', error);
+            }
         }
 
         // אתחול
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🏦 מערכת חיתום אשראי נטענה בהצלחה');
+            console.log('🏦 מערכת חיתום אשראי נטענה בהצלחה - גרסה מתוקנת');
+            console.log('🔧 מצבי דיבוג זמינים לפתרון בעיות');
+            
+            // בדיקה שהספריות נטענו
+            if (typeof XLSX === 'undefined') {
+                console.error('❌ ספריית XLSX לא נטענה');
+                showNotification('שגיאה: ספריית Excel לא נטענה', 'error');
+            } else {
+                console.log('✅ ספריית XLSX נטענה בהצלחה');
+            }
+            
+            if (typeof Chart === 'undefined') {
+                console.warn('⚠️ ספריית Chart.js לא נטענה - תרשימים לא יהיו זמינים');
+            } else {
+                console.log('✅ ספריית Chart.js נטענה בהצלחה');
+            }
         });
+
+        // פונקציות שירות נוספות לדיבוג
+        window.debugFunctions = {
+            showPayersMap: () => {
+                console.log('📊 רשימת מושכים:', Array.from(payersMap.entries()));
+                return payersMap;
+            },
+            showClientsMap: () => {
+                console.log('👥 רשימת לקוחות:', Array.from(clientsMap.entries()));
+                return clientsMap;
+            },
+            showDnbData: () => {
+                console.log('🏢 נתוני D&B:', Array.from(dnbData.entries()));
+                return dnbData;
+            },
+            showBehaviorData: () => {
+                console.log('📈 נתוני התנהגות:', Array.from(behaviorData.entries()));
+                return behaviorData;
+            },
+            resetAllData: () => {
+                payersMap.clear();
+                clientsMap.clear();
+                dnbData.clear();
+                behaviorData.clear();
+                isDataLoaded = false;
+                document.getElementById('calculateBtn').disabled = true;
+                console.log('🧹 כל הנתונים נמחקו');
+                updateDataStatus();
+                updateDebugInfo();
+            }
+        };
+        
+        console.log('🛠️ פונקציות דיבוג זמינות ב- window.debugFunctions');
     </script>
 </body>
 </html>
