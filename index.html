@@ -1061,179 +1061,193 @@
         function processDnbData() {
             if (excelData.credit.length < 2) return;
 
-            const headers = excelData.credit[0];
-            const rows = excelData.credit.slice(1);
+            console.log('🏢 מעבד נתוני D&B מטבלת scoreM_N...');
             
-            // חיפוש עמודות D&B מפורט
-            const companyNameIndex = findBestColumnMatch(headers, ['שם מושך', 'שם חברה', 'Company Name']);
-            const companyIdIndex = findBestColumnMatch(headers, ['מס\' ח.פ', 'ח.פ', 'מספר חברה', 'Company ID']);
-            const sectorRatingIndex = findBestColumnMatch(headers, ['סקור', 'דירוג כללי', 'Rating']);
-            const industrySectorIndex = findBestColumnMatch(headers, ['סקור ענף', 'דירוג ענף', 'Industry Rating']);
-            const yearsActiveIndex = findBestColumnMatch(headers, ['שנות ותק', 'ותק', 'Years Active']);
-            const employeesIndex = findBestColumnMatch(headers, ['מס\' מועסקים', 'עובדים', 'Employees']);
-            const addressIndex = findBestColumnMatch(headers, ['כתובת', 'Address']);
-            const revenueIndex = findBestColumnMatch(headers, ['מחזור בא\' ₪', 'מחזור', 'Revenue']);
-            const cityIndex = findBestColumnMatch(headers, ['עיר', 'City']);
-            const totalTransactionsIndex = findBestColumnMatch(headers, ['סה"כ עסקאות', 'עסקאות', 'Transactions']);
-            const currentObligationIndex = findBestColumnMatch(headers, ['אובליגו קיים', 'אובליגו', 'Current Obligation']);
-
-            console.log('מיפוי עמודות D&B:', {
-                companyName: companyNameIndex,
-                companyId: companyIdIndex,
-                sectorRating: sectorRatingIndex,
-                industrySector: industrySectorIndex,
-                yearsActive: yearsActiveIndex,
-                employees: employeesIndex,
-                address: addressIndex,
-                revenue: revenueIndex,
-                city: cityIndex,
-                totalTransactions: totalTransactionsIndex,
-                currentObligation: currentObligationIndex
-            });
-
-            if (companyIdIndex === -1) {
-                console.warn('לא נמצא מספר ח.פ בנתוני D&B');
-                return;
+            // מציאת שורת כותרות
+            let headerRowIndex = 0;
+            let headers = [];
+            
+            // חיפוש שורת כותרות
+            for (let i = 0; i < Math.min(5, excelData.credit.length); i++) {
+                const row = excelData.credit[i];
+                if (row.some(cell => cell && (
+                    cell.toString().includes('שם חברה') || 
+                    cell.toString().includes('אובליגו') ||
+                    cell.toString().includes('מחזור') ||
+                    cell.toString().includes('סקור')
+                ))) {
+                    headers = row;
+                    headerRowIndex = i;
+                    break;
+                }
+            }
+            
+            if (headers.length === 0) {
+                headers = excelData.credit[0];
+                headerRowIndex = 0;
             }
 
+            const rows = excelData.credit.slice(headerRowIndex + 1);
+            
+            // מיפוי עמודות D&B בהתבסס על התמונה
+            const companyNameIndex = findBestColumnMatch(headers, ['שם חברה', 'Company Name']);
+            const companyIdIndex = findBestColumnMatch(headers, ['מספר זהות', 'Company ID', 'ח.פ']);
+            const obligationIndex = findBestColumnMatch(headers, ['אובליגו קיים', 'אובליגו']);
+            const revenueIndex = findBestColumnMatch(headers, ['מחזור בא\' ₪', 'מחזור']);
+            const ratingIndex = findBestColumnMatch(headers, ['סקור', 'Rating']);
+            const employeesIndex = findBestColumnMatch(headers, ['מס\' מועסקים', 'עובדים']);
+            const yearsActiveIndex = findBestColumnMatch(headers, ['שנות ותק', 'ותק']);
+            const addressIndex = findBestColumnMatch(headers, ['כתובת', 'Address']);
+            const cityIndex = findBestColumnMatch(headers, ['עיר', 'City']);
+
+            console.log('מיפוי עמודות D&B scoreM_N:', {
+                companyName: `${companyNameIndex >= 0 ? headers[companyNameIndex] : 'לא נמצא'} (${companyNameIndex})`,
+                companyId: `${companyIdIndex >= 0 ? headers[companyIdIndex] : 'לא נמצא'} (${companyIdIndex})`,
+                obligation: `${obligationIndex >= 0 ? headers[obligationIndex] : 'לא נמצא'} (${obligationIndex})`,
+                revenue: `${revenueIndex >= 0 ? headers[revenueIndex] : 'לא נמצא'} (${revenueIndex})`,
+                rating: `${ratingIndex >= 0 ? headers[ratingIndex] : 'לא נמצא'} (${ratingIndex})`
+            });
+
             dnbData.clear();
+            let processedCompanies = 0;
 
             rows.forEach((row, index) => {
                 const companyName = companyNameIndex >= 0 ? row[companyNameIndex]?.toString().trim() : '';
-                const companyId = row[companyIdIndex]?.toString().trim();
-                const sectorRating = sectorRatingIndex >= 0 ? row[sectorRatingIndex]?.toString().trim() : '';
-                const industrySector = industrySectorIndex >= 0 ? row[industrySectorIndex]?.toString().trim() : '';
-                const yearsActive = yearsActiveIndex >= 0 ? parseFloat(row[yearsActiveIndex]) || 0 : 0;
-                const employees = employeesIndex >= 0 ? parseInt(row[employeesIndex]) || 0 : 0;
-                const address = addressIndex >= 0 ? row[addressIndex]?.toString().trim() : '';
+                const companyId = companyIdIndex >= 0 ? row[companyIdIndex]?.toString().trim() : '';
+                const obligation = obligationIndex >= 0 ? parseFloat(row[obligationIndex]) || 0 : 0;
                 const revenue = revenueIndex >= 0 ? parseFloat(row[revenueIndex]) || 0 : 0;
+                const rating = ratingIndex >= 0 ? parseFloat(row[ratingIndex]) || 0 : 0;
+                const employees = employeesIndex >= 0 ? parseInt(row[employeesIndex]) || 0 : 0;
+                const yearsActive = yearsActiveIndex >= 0 ? parseFloat(row[yearsActiveIndex]) || 0 : 0;
+                const address = addressIndex >= 0 ? row[addressIndex]?.toString().trim() : '';
                 const city = cityIndex >= 0 ? row[cityIndex]?.toString().trim() : '';
-                const totalTransactions = totalTransactionsIndex >= 0 ? parseInt(row[totalTransactionsIndex]) || 0 : 0;
-                const currentObligation = currentObligationIndex >= 0 ? parseFloat(row[currentObligationIndex]) || 0 : 0;
 
-                if (companyId) {
+                // לוג לשורות הראשונות
+                if (index < 3) {
+                    console.log(`D&B חברה ${index + 1}:`, {
+                        companyName, companyId, obligation, revenue, rating, employees, yearsActive
+                    });
+                }
+
+                // אם יש שם חברה אבל לא ח.פ., נחפש את ח.פ. בנתונים הראשיים
+                let finalCompanyId = companyId;
+                if (!companyId && companyName) {
+                    // חיפוש חברה לפי שם במפת המושכים
+                    const foundPayer = Array.from(payersMap.values()).find(payer => 
+                        payer.name === companyName || 
+                        payer.name.includes(companyName) || 
+                        companyName.includes(payer.name) ||
+                        // חיפוש חלקי (מילים ראשונות)
+                        payer.name.split(' ').slice(0, 2).join(' ') === companyName.split(' ').slice(0, 2).join(' ')
+                    );
+                    
+                    if (foundPayer) {
+                        finalCompanyId = foundPayer.id;
+                        console.log(`מצא ח.פ. לפי שם: "${companyName}" -> ${finalCompanyId}`);
+                    }
+                }
+
+                if ((finalCompanyId || companyName) && (rating > 0 || revenue > 0)) {
                     const riskLevel = calculateComprehensiveDnbRisk({
-                        sectorRating,
-                        industrySector,
-                        yearsActive,
-                        employees,
+                        rating,
                         revenue,
-                        totalTransactions,
-                        currentObligation
+                        obligation,
+                        employees,
+                        yearsActive
                     });
 
-                    dnbData.set(companyId, {
-                        companyId,
+                    // שמירה לפי ח.פ. וגם לפי שם (לחיפוש כפול)
+                    const dnbRecord = {
+                        companyId: finalCompanyId,
                         companyName,
-                        sectorRating,
-                        industrySector,
-                        yearsActive,
-                        employees,
-                        address,
+                        obligation,
                         revenue,
+                        rating,
+                        employees,
+                        yearsActive,
+                        address,
                         city,
-                        totalTransactions,
-                        currentObligation,
                         riskLevel,
                         dnbScore: riskLevel
-                    });
+                    };
+
+                    if (finalCompanyId) {
+                        dnbData.set(finalCompanyId, dnbRecord);
+                    }
+                    if (companyName) {
+                        dnbData.set(`NAME_${companyName}`, dnbRecord);
+                    }
+
+                    processedCompanies++;
+
+                    if (processedCompanies <= 5) {
+                        console.log(`נשמר D&B: ${companyName} (${finalCompanyId}) - ציון: ${riskLevel}`);
+                    }
                 }
             });
 
-            console.log(`עובדו ${dnbData.size} דירוגי D&B מפורטים`);
+            console.log(`✅ עובדו ${processedCompanies} חברות D&B מתוך ${rows.length} שורות`);
         }
 
         function calculateComprehensiveDnbRisk(dnbInfo) {
             let score = 50; // ציון בסיס
 
-            // דירוג סקטוריאלי - משקל גבוה
-            if (dnbInfo.sectorRating) {
-                const ratingScore = convertDnbRatingToScore(dnbInfo.sectorRating);
-                score += ratingScore * 0.3; // משקל 30%
+            // דירוג D&B מהטבלה - משקל גבוה
+            if (dnbInfo.rating > 0) {
+                // הנתונים בטבלה נראים כמו ציונים (0-100)
+                score += (dnbInfo.rating - 50) * 0.4; // משקל של 40%
             }
 
-            // שנות ותק - יציבות
-            if (dnbInfo.yearsActive > 0) {
-                if (dnbInfo.yearsActive >= 10) {
-                    score += 15; // חברה ותיקה
-                } else if (dnbInfo.yearsActive >= 5) {
-                    score += 10; // חברה בינונית
-                } else if (dnbInfo.yearsActive < 2) {
-                    score -= 5; // חברה צעירה
-                }
-            }
-
-            // מספר עובדים - גודל וכוח כלכלי
-            if (dnbInfo.employees > 0) {
-                if (dnbInfo.employees >= 100) {
-                    score += 12; // חברה גדולה
-                } else if (dnbInfo.employees >= 20) {
-                    score += 8; // חברה בינונית
-                } else if (dnbInfo.employees >= 5) {
-                    score += 4; // חברה קטנה
-                }
-            }
-
-            // מחזור עסקים
+            // מחזור עסקים - אינדיקטור לכוח כלכלי
             if (dnbInfo.revenue > 0) {
                 if (dnbInfo.revenue >= 10000000) { // 10 מיליון ומעלה
-                    score += 10;
-                } else if (dnbInfo.revenue >= 2000000) { // 2-10 מיליון
-                    score += 7;
-                } else if (dnbInfo.revenue >= 500000) { // 500k-2M
-                    score += 4;
-                }
-            }
-
-            // היסטוריית עסקאות
-            if (dnbInfo.totalTransactions > 0) {
-                if (dnbInfo.totalTransactions >= 50) {
+                    score += 15;
+                } else if (dnbInfo.revenue >= 5000000) { // 5-10 מיליון
+                    score += 12;
+                } else if (dnbInfo.revenue >= 1000000) { // 1-5 מיליון
                     score += 8;
-                } else if (dnbInfo.totalTransactions >= 20) {
+                } else if (dnbInfo.revenue >= 500000) { // 500k-1M
                     score += 5;
-                } else if (dnbInfo.totalTransactions >= 10) {
-                    score += 3;
                 }
             }
 
             // אובליגו קיים - סיכון נוכחי
-            if (dnbInfo.currentObligation > 0) {
-                const obligationRatio = dnbInfo.currentObligation / Math.max(dnbInfo.revenue, 1000000);
-                if (obligationRatio > 0.5) {
-                    score -= 15; // אובליגו גבוה מאוד
+            if (dnbInfo.obligation > 0 && dnbInfo.revenue > 0) {
+                const obligationRatio = dnbInfo.obligation / dnbInfo.revenue;
+                if (obligationRatio > 0.8) {
+                    score -= 20; // אובליגו גבוה מאוד
+                } else if (obligationRatio > 0.5) {
+                    score -= 15; // אובליגו גבוה
                 } else if (obligationRatio > 0.3) {
-                    score -= 10; // אובליגו גבוה
+                    score -= 10; // אובליגו בינוני
                 } else if (obligationRatio > 0.1) {
-                    score -= 5; // אובליגו בינוני
+                    score -= 5; // אובליגו נמוך
+                }
+            }
+
+            // מספר עובדים
+            if (dnbInfo.employees > 0) {
+                if (dnbInfo.employees >= 100) {
+                    score += 10;
+                } else if (dnbInfo.employees >= 50) {
+                    score += 7;
+                } else if (dnbInfo.employees >= 10) {
+                    score += 4;
+                }
+            }
+
+            // שנות ותק
+            if (dnbInfo.yearsActive > 0) {
+                if (dnbInfo.yearsActive >= 15) {
+                    score += 12;
+                } else if (dnbInfo.yearsActive >= 10) {
+                    score += 8;
+                } else if (dnbInfo.yearsActive >= 5) {
+                    score += 5;
                 }
             }
 
             return Math.max(0, Math.min(100, score));
-        }
-
-        function convertDnbRatingToScore(rating) {
-            if (!rating) return 0;
-            
-            const ratingUpper = rating.toUpperCase().trim();
-            
-            // דירוגי מספרים (1-9)
-            if (/^[1-9]$/.test(ratingUpper)) {
-                const num = parseInt(ratingUpper);
-                return (10 - num) * 10; // 1=90, 2=80, ..., 9=10
-            }
-            
-            // דירוגי אותיות
-            const letterRatings = {
-                'AAA': 45, 'AA+': 42, 'AA': 40, 'AA-': 37,
-                'A+': 35, 'A': 32, 'A-': 30,
-                'BBB+': 27, 'BBB': 25, 'BBB-': 22,
-                'BB+': 20, 'BB': 17, 'BB-': 15,
-                'B+': 12, 'B': 10, 'B-': 7,
-                'CCC+': 5, 'CCC': 3, 'CCC-': 2,
-                'CC': 1, 'C': 0, 'D': -10
-            };
-            
-            return letterRatings[ratingUpper] || 0;
         }
 
         function processClientBehaviorData() {
@@ -1529,53 +1543,189 @@
         function processReturnedData() {
             if (excelData.returned.length < 2) return;
 
-            const headers = excelData.returned[0];
-            const rows = excelData.returned.slice(1);
+            console.log('🔄 מעבד נתוני שיקים חוזרים...');
             
-            const payerIdIndex = findBestColumnMatch(headers, ['ח.פ', 'ע.מ', 'מספר חברה']);
-            const clientIdIndex = findBestColumnMatch(headers, ['זהות', 'ת.ז', 'מספר זהות']);
+            // מציאת שורת כותרות
+            let headerRowIndex = 0;
+            let headers = [];
+            
+            // חיפוש שורת כותרות
+            for (let i = 0; i < Math.min(5, excelData.returned.length); i++) {
+                const row = excelData.returned[i];
+                if (row.some(cell => cell && (
+                    cell.toString().includes('מספר מזהה מושך') || 
+                    cell.toString().includes('שם מושך') ||
+                    cell.toString().includes('שם לקוח') ||
+                    cell.toString().includes('מס\' לקוח')
+                ))) {
+                    headers = row;
+                    headerRowIndex = i;
+                    break;
+                }
+            }
+            
+            if (headers.length === 0) {
+                // אם לא מצאנו כותרות, נשתמש בשורה הראשונה
+                headers = excelData.returned[0];
+                headerRowIndex = 0;
+            }
 
-            rows.forEach(row => {
-                if (payerIdIndex >= 0) {
-                    const payerId = row[payerIdIndex]?.toString().trim();
-                    if (payerId && payersMap.has(payerId)) {
-                        payersMap.get(payerId).metrics.returnedChecks++;
+            const rows = excelData.returned.slice(headerRowIndex + 1);
+            
+            // מיפוי עמודות שיקים חוזרים
+            const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח']);
+            const clientIdIndex = findBestColumnMatch(headers, ['מס\' לקוח']);
+            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך']);
+            const payerIdIndex = findBestColumnMatch(headers, ['מספר מזהה מושך']);
+            const checkNumberIndex = findBestColumnMatch(headers, ['מספר שיק']);
+            const amountIndex = findBestColumnMatch(headers, ['סכום']);
+            const returnReasonIndex = findBestColumnMatch(headers, ['סיבת החזרה']);
+            const checkDateIndex = findBestColumnMatch(headers, ['תאריך נקוב']);
+            const returnCountIndex = findBestColumnMatch(headers, ['כמות חזרות']);
+
+            console.log('מיפוי עמודות שיקים חוזרים:', {
+                clientName: `${clientNameIndex >= 0 ? headers[clientNameIndex] : 'לא נמצא'} (${clientNameIndex})`,
+                clientId: `${clientIdIndex >= 0 ? headers[clientIdIndex] : 'לא נמצא'} (${clientIdIndex})`,
+                payerName: `${payerNameIndex >= 0 ? headers[payerNameIndex] : 'לא נמצא'} (${payerNameIndex})`,
+                payerId: `${payerIdIndex >= 0 ? headers[payerIdIndex] : 'לא נמצא'} (${payerIdIndex})`,
+                amount: `${amountIndex >= 0 ? headers[amountIndex] : 'לא נמצא'} (${amountIndex})`,
+                returnReason: `${returnReasonIndex >= 0 ? headers[returnReasonIndex] : 'לא נמצא'} (${returnReasonIndex})`
+            });
+
+            let processedReturns = 0;
+            
+            rows.forEach((row, index) => {
+                const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
+                const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
+                const payerName = payerNameIndex >= 0 ? row[payerNameIndex]?.toString().trim() : '';
+                const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : '';
+                const amount = amountIndex >= 0 ? parseFloat(row[amountIndex]) || 0 : 0;
+                const returnReason = returnReasonIndex >= 0 ? row[returnReasonIndex]?.toString().trim() : '';
+                const returnCount = returnCountIndex >= 0 ? parseInt(row[returnCountIndex]) || 1 : 1;
+
+                // לוג לשורות הראשונות
+                if (index < 3) {
+                    console.log(`שיק חוזר ${index + 1}:`, {
+                        clientName, clientId, payerName, payerId, amount, returnReason
+                    });
+                }
+
+                // עדכון נתוני מושך
+                if (payerId && payersMap.has(payerId)) {
+                    const payer = payersMap.get(payerId);
+                    payer.metrics.returnedChecks += returnCount;
+                    processedReturns++;
+                    
+                    if (processedReturns <= 3) {
+                        console.log(`עודכן מושך ${payerName}: +${returnCount} שיקים חוזרים`);
                     }
                 }
 
-                if (clientIdIndex >= 0) {
-                    const clientId = row[clientIdIndex]?.toString().trim();
-                    if (clientId && clientsMap.has(clientId)) {
-                        clientsMap.get(clientId).metrics.reliability -= 10;
+                // עדכון נתוני לקוח
+                if (clientId && clientsMap.has(clientId)) {
+                    const client = clientsMap.get(clientId);
+                    client.metrics.returnedCount += returnCount;
+                    client.metrics.reliability -= (returnCount * 15); // הפחתה של 15 נקודות לכל החזרה
+                    client.metrics.reliability = Math.max(0, client.metrics.reliability);
+                    
+                    if (processedReturns <= 3) {
+                        console.log(`עודכן לקוח ${clientName}: +${returnCount} שיקים חוזרים, אמינות: ${client.metrics.reliability}%`);
+                    }
+                }
+
+                // אם לא מצאנו את המושך/לקוח במפות הראשיות, ננסה לחפש לפי שם
+                if (!payerId || !payersMap.has(payerId)) {
+                    const foundPayer = Array.from(payersMap.values()).find(p => 
+                        p.name === payerName || p.name.includes(payerName) || payerName.includes(p.name)
+                    );
+                    if (foundPayer) {
+                        foundPayer.metrics.returnedChecks += returnCount;
+                        console.log(`מצא מושך לפי שם: ${payerName} -> ${foundPayer.name}`);
+                    }
+                }
+
+                if (!clientId || !clientsMap.has(clientId)) {
+                    const foundClient = Array.from(clientsMap.values()).find(c => 
+                        c.name === clientName || c.name.includes(clientName) || clientName.includes(c.name)
+                    );
+                    if (foundClient) {
+                        foundClient.metrics.returnedCount += returnCount;
+                        foundClient.metrics.reliability -= (returnCount * 15);
+                        foundClient.metrics.reliability = Math.max(0, foundClient.metrics.reliability);
+                        console.log(`מצא לקוח לפי שם: ${clientName} -> ${foundClient.name}`);
                     }
                 }
             });
+
+            console.log(`✅ עובדו ${processedReturns} שיקים חוזרים מתוך ${rows.length} שורות`);
         }
 
         function processWarningsData() {
             if (excelData.warnings.length < 2) return;
 
-            const headers = excelData.warnings[0];
-            const rows = excelData.warnings.slice(1);
+            console.log('⚠️ מעבד נתוני ביטולים/אכ"מ...');
             
-            const payerIdIndex = findBestColumnMatch(headers, ['ח.פ', 'ע.מ', 'מספר חברה']);
-            const clientIdIndex = findBestColumnMatch(headers, ['זהות', 'ת.ז', 'מספר זהות']);
+            // מציאת שורת כותרות
+            let headerRowIndex = 0;
+            let headers = [];
+            
+            // חיפוש שורת כותרות
+            for (let i = 0; i < Math.min(5, excelData.warnings.length); i++) {
+                const row = excelData.warnings[i];
+                if (row.some(cell => cell && (
+                    cell.toString().includes('מספר זהות') || 
+                    cell.toString().includes('שם') ||
+                    cell.toString().includes('סיבה')
+                ))) {
+                    headers = row;
+                    headerRowIndex = i;
+                    break;
+                }
+            }
+            
+            if (headers.length === 0) {
+                headers = excelData.warnings[0];
+                headerRowIndex = 0;
+            }
 
-            rows.forEach(row => {
-                if (payerIdIndex >= 0) {
-                    const payerId = row[payerIdIndex]?.toString().trim();
-                    if (payerId && payersMap.has(payerId)) {
-                        payersMap.get(payerId).metrics.cancellations++;
-                    }
+            const rows = excelData.warnings.slice(headerRowIndex + 1);
+            
+            // מיפוי עמודות ביטולים
+            const payerIdIndex = findBestColumnMatch(headers, ['מספר זהות מושך', 'מספר מזהה מושך', 'ח.פ', 'ע.מ']);
+            const clientIdIndex = findBestColumnMatch(headers, ['מספר זהות לקוח', 'מס\' לקוח', 'זהות', 'ת.ז']);
+            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך']);
+            const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח']);
+            const reasonIndex = findBestColumnMatch(headers, ['סיבת ביטול', 'סיבה', 'הערות']);
+
+            console.log('מיפוי עמודות ביטולים:', {
+                payerId: `${payerIdIndex >= 0 ? headers[payerIdIndex] : 'לא נמצא'} (${payerIdIndex})`,
+                clientId: `${clientIdIndex >= 0 ? headers[clientIdIndex] : 'לא נמצא'} (${clientIdIndex})`
+            });
+
+            let processedCancellations = 0;
+
+            rows.forEach((row, index) => {
+                const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : '';
+                const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
+                const payerName = payerNameIndex >= 0 ? row[payerNameIndex]?.toString().trim() : '';
+                const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
+
+                // עדכון נתוני מושך
+                if (payerId && payersMap.has(payerId)) {
+                    payersMap.get(payerId).metrics.cancellations++;
+                    processedCancellations++;
                 }
 
-                if (clientIdIndex >= 0) {
-                    const clientId = row[clientIdIndex]?.toString().trim();
-                    if (clientId && clientsMap.has(clientId)) {
-                        clientsMap.get(clientId).metrics.reliability -= 15;
-                    }
+                // עדכון נתוני לקוח
+                if (clientId && clientsMap.has(clientId)) {
+                    const client = clientsMap.get(clientId);
+                    client.metrics.cancelledCount++;
+                    client.metrics.reliability -= 10; // הפחתה של 10 נקודות לכל ביטול
+                    client.metrics.reliability = Math.max(0, client.metrics.reliability);
                 }
             });
+
+            console.log(`✅ עובדו ${processedCancellations} ביטולים`);
         }
 
         function findBestColumnMatch(headers, patterns) {
