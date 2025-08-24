@@ -647,12 +647,24 @@
 
                     <div class="form-row">
                         <div class="form-group">
+                            <label>תאריך העסקה</label>
+                            <input type="date" id="transactionDate" value="">
+                        </div>
+                        <div class="form-group">
+                            <label>תאריך פירעון</label>
+                            <input type="date" id="dueDate" value="">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
                             <label>סכום השיק (₪)</label>
                             <input type="number" id="checkAmount" placeholder="0" min="0">
                         </div>
                         <div class="form-group">
                             <label>ימי אשראי</label>
-                            <input type="number" id="creditDays" placeholder="30" value="30" min="0">
+                            <input type="number" id="creditDays" placeholder="30" value="30" min="0" readonly>
+                            <small style="color: #6c757d; font-size: 12px;">מחושב אוטומטית מהתאריכים</small>
                         </div>
                     </div>
 
@@ -777,7 +789,41 @@
                 weekday: 'long'
             });
             document.getElementById('currentDate').textContent = dateStr;
+            
+            // עדכון תאריך ברירת מחדל בטופס
+            const today = now.toISOString().split('T')[0];
+            document.getElementById('transactionDate').value = today;
+            
+            // חישוב תאריך פירעון (30 ימים קדימה)
+            const dueDate = new Date(now);
+            dueDate.setDate(dueDate.getDate() + 30);
+            document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
+            
+            // חישוב ימי אשראי
+            calculateCreditDays();
         }
+
+        // חישוב אוטומטי של ימי אשראי
+        function calculateCreditDays() {
+            const transactionDate = document.getElementById('transactionDate').value;
+            const dueDate = document.getElementById('dueDate').value;
+            
+            if (transactionDate && dueDate) {
+                const startDate = new Date(transactionDate);
+                const endDate = new Date(dueDate);
+                const timeDiff = endDate - startDate;
+                const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                
+                document.getElementById('creditDays').value = Math.max(0, daysDiff);
+            }
+        }
+
+        // הוספת מאזיני אירועים לתאריכים
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('transactionDate').addEventListener('change', calculateCreditDays);
+            document.getElementById('dueDate').addEventListener('change', calculateCreditDays);
+            console.log('🏦 מערכת חיתום אשראי נטענה בהצלחה');
+        });
 
         // טעינת קבצים ותיקיות
         async function loadFile(type) {
@@ -1551,6 +1597,12 @@
                             payerInput.value = payer.name;
                             document.getElementById('payerID').value = payer.id;
                             payerSuggestions.style.display = 'none';
+                            
+                            // מילוי פרטי D&B אם קיימים
+                            if (dnbData.has(payer.id)) {
+                                const dnbInfo = dnbData.get(payer.id);
+                                console.log('נמצאו נתוני D&B:', dnbInfo);
+                            }
                         };
                         payerSuggestions.appendChild(div);
                     });
@@ -1933,7 +1985,16 @@
             document.getElementById('clientName').value = '';
             document.getElementById('clientID').value = '';
             document.getElementById('checkAmount').value = '';
+            
+            // איפוס תאריכים לברירת מחדל
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('transactionDate').value = today;
+            
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 30);
+            document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
             document.getElementById('creditDays').value = '30';
+            
             document.getElementById('resultsSection').style.display = 'none';
             document.getElementById('clientHistory').style.display = 'none';
             document.getElementById('payerNameSuggestions').style.display = 'none';
