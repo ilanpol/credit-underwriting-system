@@ -1571,18 +1571,33 @@
             const payerSuggestions = document.getElementById('payerNameSuggestions');
 
             payerInput.addEventListener('input', function() {
-                const value = this.value.toLowerCase().trim();
+                const value = this.value.trim();
                 payerSuggestions.innerHTML = '';
+                
+                // חיפוש אוטומטי וחזרת ח.פ. - כמו XLOOKUP
+                if (value.length >= 2) {
+                    // חיפוש בנתונים
+                    const foundPayer = Array.from(payersMap.values())
+                        .find(payer => payer.name === value);
+                    
+                    if (foundPayer) {
+                        // מצאנו התאמה מדויקת - מילוי אוטומטי של ח.פ.
+                        document.getElementById('payerID').value = foundPayer.id;
+                        console.log('XLOOKUP מושך:', foundPayer.name, '->', foundPayer.id);
+                    } else {
+                        // אין התאמה מדויקת - ריקון ח.פ.
+                        document.getElementById('payerID').value = '';
+                    }
+                }
                 
                 if (value.length < 2) {
                     payerSuggestions.style.display = 'none';
-                    // איפוס ח.פ. מושך כשמוחקים את השם
                     document.getElementById('payerID').value = '';
                     return;
                 }
 
                 const matches = Array.from(payersMap.values())
-                    .filter(payer => payer.name.toLowerCase().includes(value))
+                    .filter(payer => payer.name.toLowerCase().includes(value.toLowerCase()))
                     .slice(0, 10);
 
                 if (matches.length > 0) {
@@ -1599,13 +1614,7 @@
                             payerInput.value = payer.name;
                             document.getElementById('payerID').value = payer.id;
                             payerSuggestions.style.display = 'none';
-                            
-                            // לוג לבדיקה
-                            console.log('נבחר מושך:', {
-                                name: payer.name,
-                                id: payer.id,
-                                dnbExists: dnbData.has(payer.id)
-                            });
+                            console.log('נבחר מושך:', payer.name, '->', payer.id);
                         };
                         payerSuggestions.appendChild(div);
                     });
@@ -1619,19 +1628,36 @@
             const clientSuggestions = document.getElementById('clientNameSuggestions');
 
             clientInput.addEventListener('input', function() {
-                const value = this.value.toLowerCase().trim();
+                const value = this.value.trim();
                 clientSuggestions.innerHTML = '';
+                
+                // חיפוש אוטומטי וחזרת ת.ז. - כמו XLOOKUP
+                if (value.length >= 2) {
+                    // חיפוש בנתונים
+                    const foundClient = Array.from(clientsMap.values())
+                        .find(client => client.name === value);
+                    
+                    if (foundClient) {
+                        // מצאנו התאמה מדויקת - מילוי אוטומטי של ת.ז.
+                        document.getElementById('clientID').value = foundClient.id;
+                        console.log('XLOOKUP לקוח:', foundClient.name, '->', foundClient.id);
+                        showClientHistory(foundClient);
+                    } else {
+                        // אין התאמה מדויקת - ריקון ת.ז.
+                        document.getElementById('clientID').value = '';
+                        document.getElementById('clientHistory').style.display = 'none';
+                    }
+                }
                 
                 if (value.length < 2) {
                     clientSuggestions.style.display = 'none';
-                    document.getElementById('clientHistory').style.display = 'none';
-                    // איפוס ח.פ. לקוח כשמוחקים את השם
                     document.getElementById('clientID').value = '';
+                    document.getElementById('clientHistory').style.display = 'none';
                     return;
                 }
 
                 const matches = Array.from(clientsMap.values())
-                    .filter(client => client.name.toLowerCase().includes(value))
+                    .filter(client => client.name.toLowerCase().includes(value.toLowerCase()))
                     .slice(0, 10);
 
                 if (matches.length > 0) {
@@ -1649,6 +1675,7 @@
                             document.getElementById('clientID').value = client.id;
                             clientSuggestions.style.display = 'none';
                             showClientHistory(client);
+                            console.log('נבחר לקוח:', client.name, '->', client.id);
                         };
                         clientSuggestions.appendChild(div);
                     });
