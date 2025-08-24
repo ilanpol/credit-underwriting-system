@@ -1,964 +1,940 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏦 מערכת חיתום אשראי</title>
-    <style>
-        /**
-         * עיצוב מערכת חיתום אשראי
-         * תומך בעברית ובעיצוב מודרני
-         */
-
-        /* 🌐 הגדרות בסיס */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-            direction: rtl;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-
-        .screen {
-            display: none;
-        }
-
-        .screen.active {
-            display: block;
-        }
-
-        /* 🔐 מסך התחברות */
-        .login-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-            color: white;
-        }
-
-        .login-header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .login-form {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            width: 100%;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-
-        .error-message {
-            color: #dc3545;
-            margin-top: 10px;
-            text-align: center;
-            font-weight: 500;
-        }
-
-        .demo-users {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 15px;
-            margin-top: 20px;
-            max-width: 400px;
-        }
-
-        .demo-users h3 {
-            margin-bottom: 15px;
-            color: #555;
-        }
-
-        .demo-users ul {
-            list-style: none;
-        }
-
-        .demo-users li {
-            padding: 5px 0;
-            color: #666;
-            font-family: monospace;
-        }
-
-        /* 🏠 מסך ראשי */
-        .main-header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 30px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header-content h1 {
-            color: #333;
-            font-size: 1.8rem;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-info span {
-            color: #666;
-            font-weight: 500;
-        }
-
-        /* 🧭 ניווט */
-        .main-nav {
-            background: white;
-            border-bottom: 1px solid #e1e5e9;
-            padding: 0 30px;
-            display: flex;
-            gap: 5px;
-            overflow-x: auto;
-        }
-
-        .nav-btn {
-            background: none;
-            border: none;
-            padding: 15px 20px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: #666;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .nav-btn:hover {
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        .nav-btn.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        /* 📄 תוכן ראשי */
-        .main-content {
-            padding: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .content-section {
-            display: none;
-        }
-
-        .content-section.active {
-            display: block;
-        }
-
-        /* 📤 סקציית העלאה */
-        .upload-container {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .upload-area {
-            border: 3px dashed #e1e5e9;
-            border-radius: 15px;
-            padding: 60px 30px;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .upload-area:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.02);
-        }
-
-        .upload-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-        }
-
-        .upload-content p {
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        .success-message {
-            background: #d4edda;
-            color: #155724;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #c3e6cb;
-            margin: 20px 0;
-        }
-
-        /* 🔍 סקציית חיפוש */
-        .search-container {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .search-input-container {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .search-input {
-            flex: 1;
-            padding: 15px 20px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .search-suggestions {
-            background: white;
-            border: 1px solid #e1e5e9;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .suggestion-item {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .suggestion-item:hover {
-            background: #f8f9fa;
-        }
-
-        .search-result-card {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 20px;
-            border: 1px solid #e1e5e9;
-        }
-
-        .payer-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .payer-header h3 {
-            color: #333;
-            font-size: 1.5rem;
-        }
-
-        .payer-id {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .payer-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 15px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e1e5e9;
-        }
-
-        .stat-item label {
-            color: #666;
-            font-weight: 500;
-        }
-
-        .stat-item span {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .stat-item span.warning {
-            color: #dc3545;
-        }
-
-        /* ⭐ סקציית דירוג */
-        .rating-container {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .no-selection {
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        .empty-state {
-            color: #666;
-        }
-
-        .empty-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-        }
-
-        .rating-card {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px;
-            border: 1px solid #e1e5e9;
-        }
-
-        .rating-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e1e5e9;
-        }
-
-        .credit-score {
-            text-align: center;
-        }
-
-        .score-value {
-            display: block;
-            font-size: 3rem;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .score-label {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .score-grade {
-            margin-top: 10px;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .score-grade.good {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        /* 📱 תמיכה במובייל */
-        @media (max-width: 768px) {
-            .header-content {
-                padding: 15px 20px;
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .main-nav {
-                padding: 0 20px;
-                justify-content: center;
-            }
-
-            .main-content {
-                padding: 20px;
-            }
-
-            .search-input-container {
-                flex-direction: column;
-            }
-
-            .payer-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-
-            .rating-header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-        }
-
-        /* 🎨 אנימציות */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .content-section.active {
-            animation: fadeIn 0.5s ease;
-        }
-    </style>
-</head>
-<body>
-    <script>
-        /**
-         * קובץ הגדרות מערכת חיתום אשראי
-         * כולל משתנים גלובליים, הגדרות מערכת ופרמטרי דירוג
-         */
-        // 🔐 משתני מערכת גלובליים
-        window.CreditSystem = {
-            // מצב הגדרות מערכת
-            currentUser: null,
-            isInitialized: false,
+/**
+ * מערכת טעינת קבצים מתקדמת
+ * מטפל בהעלאה, אימות ועיבוד של קבצי נתונים עסקיים מורכבים
+ */
+
+class EnhancedFileLoader {
+    constructor() {
+        this.supportedFormats = ['.xlsx', '.xls', '.csv'];
+        this.maxFileSize = 100 * 1024 * 1024; // 100MB למערכות עסקיות
+        this.currentFile = null;
+        this.uploadProgress = 0;
+        this.expectedHeaders = this.initializeExpectedHeaders();
+        this.init();
+    }
+
+    // 🚀 אתחול
+    init() {
+        this.setupEventListeners();
+        this.setupDragAndDrop();
+        console.log('📁 מערכת טעינת קבצים מתקדמת הותחלה');
+    }
+
+    // 📋 רשימת כותרות צפויות
+    initializeExpectedHeaders() {
+        return [
+            // עמודות בסיסיות
+            'סוג עיסקה', 'שם לקוח', 'מ.זהות', 'תחום עיסוק לקוח',
+            'מספר שיק', 'מזהה שיק', 'ב-ס-ח', 'שם מושך', 'מספר זהות מושך',
             
-            // נתוני מערכת
-            excelData: {},
-            payersMap: new Map(),
+            // פרטי קשר
+            'טלפון 1 מושך', 'טלפון 2 מושך', 'כתובת מושך',
             
-            // הגדרות ממשק
-            ui: {
-                autocompleteSuggestions: 10,
-                previewRowsLimit: 5
+            // תאריכים
+            'ת.פירעון', 'ת.פרעון בפועל', 'תאריך הפקדה/מסירה', 'תאריך השבה',
+            
+            // נתונים פיננסיים
+            'סכום', 'יתרה', 'עמלה', 'אחוז עמלה', 'אחוז עמלה - חלקי',
+            'אחוז השתתפות', 'אחוז רווח',
+            
+            // מידע נוסף
+            'שם מוטב', 'סטטוס', 'יעד', 'איש מכירות', 'קטגוריה',
+            'תחום עיסוק מושך', 'מומלץ לגבייה', 'נציג שירות'
+        ];
+    }
+
+    // 🎯 הגדרת מאזיני אירועים
+    setupEventListeners() {
+        // אירועי קבצים מרובים
+        const fileInputs = [
+            'mainExcelFile', 'scoresFile', 'returnedFile', 'warningsFile'
+        ];
+        
+        fileInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('change', (e) => this.handleFileInput(e, inputId));
             }
+        });
+    }
+
+    // 🖱️ הגדרת Drag & Drop
+    setupDragAndDrop() {
+        const uploadAreas = document.querySelectorAll('.upload-area, .excel-upload-section');
+        
+        uploadAreas.forEach(area => {
+            area.addEventListener('dragover', (e) => this.handleDragOver(e));
+            area.addEventListener('drop', (e) => this.handleDrop(e));
+            area.addEventListener('dragenter', (e) => this.handleDragEnter(e));
+            area.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+        });
+    }
+
+    // 📤 העלאת קובץ עם תמיכה בפורמטים מרובים
+    async uploadFile(file, progressCallback = null, fileType = 'main') {
+        try {
+            // אימות קובץ
+            const validation = this.validateFile(file);
+            if (!validation.isValid) {
+                throw new Error(validation.error);
+            }
+
+            this.currentFile = file;
+            this.uploadProgress = 0;
+
+            console.log(`📁 מתחיל בטעינת קובץ: ${file.name} (${fileType})`);
+
+            // עדכון תצוגת התקדמות
+            if (progressCallback) {
+                progressCallback(0, `מתחיל בטעינת ${file.name}...`);
+            }
+
+            // קריאת הקובץ
+            const fileData = await this.readFile(file, progressCallback);
+            
+            // זיהוי סוג קובץ ועיבוד מתאים
+            if (progressCallback) {
+                progressCallback(70, 'מעבד נתונים...');
+            }
+
+            const processedData = await this.processFileData(fileData, file, fileType);
+            
+            // אימות נתונים
+            const validation_result = this.validateProcessedData(processedData);
+            if (!validation_result.isValid) {
+                console.warn('⚠️ אזהרות באימות נתונים:', validation_result.warnings);
+            }
+
+            if (progressCallback) {
+                progressCallback(100, 'הטעינה הושלמה בהצלחה!');
+            }
+
+            // רישום פעילות
+            if (window.authManager) {
+                window.authManager.logActivity('file_upload', 
+                    `הועלה קובץ: ${file.name} (${this.formatFileSize(file.size)}) - סוג: ${fileType}`);
+            }
+
+            return {
+                success: true,
+                data: processedData,
+                file: file,
+                fileType: fileType,
+                summary: this.generateDataSummary(processedData),
+                validation: validation_result
+            };
+
+        } catch (error) {
+            console.error('❌ שגיאה בהעלאת קובץ:', error);
+            
+            if (window.authManager) {
+                window.authManager.logActivity('file_upload_error', 
+                    `שגיאה בהעלאת קובץ: ${error.message}`);
+            }
+
+            return {
+                success: false,
+                error: error.message,
+                fileType: fileType
+            };
+        }
+    }
+
+    // ✅ אימות קובץ מתקדם
+    validateFile(file) {
+        // בדיקת קיום קובץ
+        if (!file) {
+            return { isValid: false, error: 'לא נבחר קובץ' };
+        }
+
+        // בדיקת גודל קובץ
+        if (file.size > this.maxFileSize) {
+            return { 
+                isValid: false, 
+                error: `גודל הקובץ חורג מהמותר (מקסימום: ${this.formatFileSize(this.maxFileSize)})` 
+            };
+        }
+
+        // בדיקת סוג קובץ
+        const fileExtension = this.getFileExtension(file.name);
+        if (!this.supportedFormats.includes(fileExtension)) {
+            return { 
+                isValid: false, 
+                error: `סוג קובץ לא נתמך. סוגים נתמכים: ${this.supportedFormats.join(', ')}` 
+            };
+        }
+
+        // בדיקת הרשאות
+        if (window.authManager && !window.authManager.hasPermission('write')) {
+            return { 
+                isValid: false, 
+                error: 'אין הרשאה להעלות קבצים' 
+            };
+        }
+
+        // בדיקת שם קובץ (מניעת תווים מיוחדים)
+        const invalidChars = /[<>:"/\\|?*]/;
+        if (invalidChars.test(file.name)) {
+            return {
+                isValid: false,
+                error: 'שם הקובץ מכיל תווים לא חוקיים'
+            };
+        }
+
+        return { isValid: true };
+    }
+
+    // 📖 קריאת קובץ מתקדמת
+    async readFile(file, progressCallback = null) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            const fileExtension = this.getFileExtension(file.name);
+            
+            reader.onload = (e) => {
+                try {
+                    if (progressCallback) {
+                        progressCallback(60, 'קובץ נקרא בהצלחה, מפרסר נתונים...');
+                    }
+                    resolve(e.target.result);
+                } catch (error) {
+                    reject(new Error(`שגיאה בפרסור קובץ: ${error.message}`));
+                }
+            };
+            
+            reader.onerror = () => {
+                reject(new Error('שגיאה בקריאת הקובץ'));
+            };
+            
+            reader.onprogress = (e) => {
+                if (e.lengthComputable && progressCallback) {
+                    const progress = Math.round((e.loaded / e.total) * 50); // 50% מההתקדמות לקריאה
+                    progressCallback(progress, 'קורא קובץ...');
+                }
+            };
+
+            // בחירת שיטת קריאה לפי סוג הקובץ
+            if (fileExtension === '.csv') {
+                reader.readAsText(file, 'UTF-8');
+            } else if (fileExtension === '.xlsx' || fileExtension === '.xls') {
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.readAsText(file, 'UTF-8');
+            }
+        });
+    }
+
+    // 🔄 עיבוד נתוני קובץ מתקדם
+    async processFileData(fileData, file, fileType) {
+        const fileExtension = this.getFileExtension(file.name);
+        
+        let processedData;
+        switch (fileExtension) {
+            case '.csv':
+                processedData = await this.processCSV(fileData, file);
+                break;
+            case '.xlsx':
+            case '.xls':
+                processedData = await this.processExcel(fileData, file, fileType);
+                break;
+            default:
+                throw new Error('סוג קובץ לא נתמך');
+        }
+
+        // הוסף מטאדטה
+        processedData.metadata = {
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: fileType,
+            uploadTime: new Date(),
+            fileExtension: fileExtension
         };
 
-        // 👥 נתוני משתמשים מורשים
-        const SYSTEM_USERS = {
-            'admin': 'admin123',
-            'manager': 'manager456', 
-            'analyst': 'analyst789',
-            'demo': 'demo123'
-        };
+        return processedData;
+    }
 
-        // ⚖️ פרמטרי דירוג אשראי עם משקולות
-        const RATING_PARAMETERS = {
-            historyLength: { 
-                weight: 0.12, 
-                name: 'אורך היסטוריה',
-                description: 'מספר חודשים של היסטוריית עסקאות עם המושך'
-            },
-            transactionCount: { 
-                weight: 0.10, 
-                name: 'כמות עסקאות',
-                description: 'מספר העסקאות הכולל עם המושך'
-            },
-            averageAmount: { 
-                weight: 0.08, 
-                name: 'עסקה ממוצעת',
-                description: 'סכום העסקה הממוצע'
-            },
-            totalAmount: { 
-                weight: 0.06, 
-                name: 'סך עסקאות',
-                description: 'סכום כולל של כל העסקאות'
-            },
-            avgCreditDays: { 
-                weight: 0.08, 
-                name: 'ימי אשראי ממוצעים',
-                description: 'מספר ימי האשראי הממוצע'
-            },
-            avgCommissionRate: { 
-                weight: 0.06, 
-                name: 'שיעור עמלה ממוצע',
-                description: 'אחוז העמלה הממוצע'
-            },
-            returnedChecks: { 
-                weight: 0.15, 
-                name: 'שיקים חוזרים',
-                description: 'מספר השיקים שחזרו מחוסר כיסוי'
-            },
-            cancellations: { 
-                weight: 0.10, 
-                name: 'ביטולים',
-                description: 'מספר הביטולים והאכ"מ'
-            },
-            paymentDelay: {
-                weight: 0.13,
-                name: 'עיכובי תשלום',
-                description: 'ממוצע ימי עיכוב בתשלומים'
-            },
-            creditUtilization: {
-                weight: 0.12,
-                name: 'ניצול אשראי',
-                description: 'אחוז ניצול מסגרת האשראי'
-            }
-        };
-
-        /**
-         * קובץ ממשק משתמש למערכת חיתום אשראי
-         * מנהל את כל האינטראקציות של המשתמש עם המערכת
-         */
-
-        // 🎨 ממשק משתמש ראשי
-        class CreditSystemUI {
-            constructor() {
-                this.currentScreen = 'login';
-                this.selectedPayer = null;
-                this.searchResults = [];
-                this.init();
+    // 📊 עיבוד קובץ Excel מתקדם
+    async processExcel(excelData, file, fileType) {
+        try {
+            // בדוק אם XLSX זמין
+            if (typeof XLSX === 'undefined') {
+                throw new Error('ספריית XLSX לא נטענה. נא לטעון קובץ CSV במקום.');
             }
 
-            // 🚀 אתחול המערכת
-            init() {
-                this.createLoginScreen();
-                this.bindEvents();
-                console.log('מערכת חיתום אשראי - ממשק משתמש הותחל');
+            console.log('📊 מעבד קובץ Excel...');
+            
+            const workbook = XLSX.read(excelData, { 
+                type: 'array',
+                cellStyles: true,
+                cellFormulas: true,
+                cellDates: true,
+                cellNF: true,
+                sheetStubs: true
+            });
+
+            console.log('📋 גיליונות זמינים:', workbook.SheetNames);
+
+            // קביעת איזה גיליון לקרוא
+            let sheetName;
+            if (fileType === 'main' && workbook.SheetNames.includes('גיליון1')) {
+                sheetName = 'גיליון1';
+            } else if (workbook.SheetNames.length > 0) {
+                sheetName = workbook.SheetNames[0];
+            } else {
+                throw new Error('לא נמצאו גיליונות בקובץ');
             }
 
-            // 🔐 יצירת מסך התחברות
-            createLoginScreen() {
-                const loginHTML = `
-                    <div id="loginScreen" class="screen active">
-                        <div class="login-container">
-                            <div class="login-header">
-                                <h1>🏦 מערכת חיתום אשראי</h1>
-                                <p>נא הזן פרטי התחברות</p>
-                            </div>
-                            <form id="loginForm" class="login-form">
-                                <div class="input-group">
-                                    <label for="username">שם משתמש:</label>
-                                    <input type="text" id="username" name="username" required>
-                                </div>
-                                <div class="input-group">
-                                    <label for="password">סיסמה:</label>
-                                    <input type="password" id="password" name="password" required>
-                                </div>
-                                <button type="submit" class="btn btn-primary">התחבר</button>
-                                <div id="loginError" class="error-message"></div>
-                            </form>
-                            <div class="demo-users">
-                                <h3>משתמשי דמו:</h3>
-                                <ul>
-                                    <li>admin / admin123</li>
-                                    <li>manager / manager456</li>
-                                    <li>analyst / analyst789</li>
-                                    <li>demo / demo123</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.body.innerHTML = loginHTML;
+            console.log(`📄 קורא גיליון: ${sheetName}`);
+
+            const worksheet = workbook.Sheets[sheetName];
+            
+            // המרה ל-JSON עם שמירת הכותרות
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+                header: 1,
+                defval: '',
+                blankrows: false
+            });
+
+            if (jsonData.length === 0) {
+                throw new Error('הגיליון ריק או לא מכיל נתונים');
             }
 
-            // 🏠 יצירת מסך ראשי
-            createMainScreen() {
-                const mainHTML = `
-                    <div id="mainScreen" class="screen active">
-                        <header class="main-header">
-                            <div class="header-content">
-                                <h1>🏦 מערכת חיתום אשראי</h1>
-                                <div class="user-info">
-                                    <span>שלום, ${window.CreditSystem.currentUser}</span>
-                                    <button id="logoutBtn" class="btn btn-secondary">התנתק</button>
-                                </div>
-                            </div>
-                        </header>
+            // הכותרות הן השורה הראשונה
+            const headers = jsonData[0].map(header => 
+                header ? header.toString().trim() : ''
+            ).filter(header => header !== '');
 
-                        <nav class="main-nav">
-                            <button id="navUpload" class="nav-btn active" data-section="upload">
-                                📤 העלאת נתונים
-                            </button>
-                            <button id="navSearch" class="nav-btn" data-section="search">
-                                🔍 חיפוש מושך
-                            </button>
-                            <button id="navRating" class="nav-btn" data-section="rating">
-                                ⭐ דירוג אשראי
-                            </button>
-                        </nav>
+            // הנתונים הם השורות הבאות
+            const dataRows = jsonData.slice(1);
+            
+            // המרת השורות לאובייקטים
+            const data = dataRows
+                .filter(row => row && row.some(cell => cell !== null && cell !== ''))
+                .map((row, index) => {
+                    const rowObject = {};
+                    headers.forEach((header, colIndex) => {
+                        if (header && colIndex < row.length) {
+                            let value = row[colIndex];
+                            
+                            // טיפול מיוחד בתאריכים של Excel
+                            if (typeof value === 'number' && this.isExcelDate(value)) {
+                                value = this.excelDateToJSDate(value);
+                            }
+                            
+                            rowObject[header] = value !== null && value !== undefined ? value : '';
+                        }
+                    });
+                    rowObject._rowIndex = index + 2; // +2 כי אנחנו מתחילים משורה 2
+                    return rowObject;
+                });
 
-                        <main class="main-content">
-                            <div id="uploadSection" class="content-section active">
-                                ${this.createUploadSection()}
-                            </div>
-                            <div id="searchSection" class="content-section">
-                                ${this.createSearchSection()}
-                            </div>
-                            <div id="ratingSection" class="content-section">
-                                ${this.createRatingSection()}
-                            </div>
-                        </main>
-                    </div>
-                `;
-                document.body.innerHTML = mainHTML;
-            }
+            console.log(`✅ עובדו ${data.length} רשומות מקובץ Excel`);
 
-            // 📤 יצירת סקציית העלאה
-            createUploadSection() {
-                return `
-                    <div class="upload-container">
-                        <h2>העלאת קובץ נתונים</h2>
-                        <div class="upload-area" id="uploadArea">
-                            <div class="upload-content">
-                                <div class="upload-icon">📋</div>
-                                <p>גרור קובץ Excel לכאן או לחץ לבחירה</p>
-                                <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;">
-                                <button id="selectFileBtn" class="btn btn-primary">בחר קובץ</button>
-                            </div>
-                        </div>
-                        <div id="uploadResult" class="upload-result"></div>
-                    </div>
-                `;
-            }
+            return {
+                headers: headers,
+                data: data,
+                rowCount: data.length,
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: 'Excel',
+                sheetName: sheetName,
+                availableSheets: workbook.SheetNames
+            };
 
-            // 🔍 יצירת סקציית חיפוש
-            createSearchSection() {
-                return `
-                    <div class="search-container">
-                        <h2>חיפוש מושך</h2>
-                        <div class="search-form">
-                            <div class="search-input-container">
-                                <input type="text" id="payerSearch" placeholder="הזן שם מושך או מספר זהות..." class="search-input">
-                                <button id="searchBtn" class="btn btn-primary">חפש</button>
-                            </div>
-                            <div id="searchSuggestions" class="search-suggestions"></div>
-                        </div>
-                        <div id="searchResults" class="search-results"></div>
-                    </div>
-                `;
-            }
+        } catch (error) {
+            console.error('❌ שגיאה בעיבוד Excel:', error);
+            throw new Error(`שגיאה בעיבוד קובץ Excel: ${error.message}`);
+        }
+    }
 
-            // ⭐ יצירת סקציית דירוג
-            createRatingSection() {
-                return `
-                    <div class="rating-container">
-                        <h2>דירוג אשראי</h2>
-                        <div id="ratingContent">
-                            <div class="no-selection">
-                                <div class="empty-state">
-                                    <div class="empty-icon">⭐</div>
-                                    <p>נא בחר מושך מתוך תוצאות החיפוש כדי לראות את הדירוג</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+    // 📊 עיבוד קובץ CSV מתקדם
+    async processCSV(csvData, file) {
+        try {
+            console.log('📊 מעבד קובץ CSV...');
 
-            // 🎯 קישור אירועים
-            bindEvents() {
-                // אירועי התחברות
-                document.addEventListener('submit', (e) => {
-                    if (e.target.id === 'loginForm') {
-                        e.preventDefault();
-                        this.handleLogin();
+            // ניסוי לזהות encoding
+            const encoding = this.detectCSVEncoding(csvData);
+            console.log(`🔤 זיהוי קידוד: ${encoding}`);
+
+            let processedData;
+
+            // אם Papa Parse זמין, השתמש בו
+            if (typeof Papa !== 'undefined') {
+                const result = Papa.parse(csvData, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    delimitersToGuess: [',', '\t', ';', '|'],
+                    encoding: 'UTF-8',
+                    error: function(err) {
+                        console.warn('⚠️ אזהרת Papa Parse:', err);
                     }
                 });
 
-                // אירועי ניווט
-                document.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('nav-btn')) {
-                        this.switchSection(e.target.dataset.section);
-                    }
-                    
-                    if (e.target.id === 'logoutBtn') {
-                        this.handleLogout();
-                    }
+                if (result.errors && result.errors.length > 0) {
+                    console.warn('⚠️ שגיאות בפרסור CSV:', result.errors);
+                }
 
-                    if (e.target.id === 'selectFileBtn') {
-                        document.getElementById('fileInput').click();
-                    }
+                processedData = {
+                    headers: result.meta.fields || [],
+                    data: result.data,
+                    rowCount: result.data.length,
+                    errors: result.errors
+                };
 
-                    if (e.target.id === 'searchBtn') {
-                        this.performSearch();
-                    }
-                });
+            } else {
+                // פרסור ידני אם Papa Parse לא זמין
+                const lines = csvData.split('\n');
+                const headers = this.parseCSVLine(lines[0]);
+                const data = [];
 
-                // אירועי העלאת קובץ
-                document.addEventListener('change', (e) => {
-                    if (e.target.id === 'fileInput') {
-                        this.handleFileUpload(e.target.files[0]);
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line) {
+                        const values = this.parseCSVLine(line);
+                        const row = {};
+                        
+                        headers.forEach((header, index) => {
+                            row[header.trim()] = values[index] ? values[index].trim() : '';
+                        });
+                        
+                        row._rowIndex = i + 1;
+                        data.push(row);
                     }
-                });
+                }
 
-                // אירועי חיפוש
-                document.addEventListener('input', (e) => {
-                    if (e.target.id === 'payerSearch') {
-                        this.handleSearchInput(e.target.value);
-                    }
-                });
+                processedData = {
+                    headers: headers,
+                    data: data,
+                    rowCount: data.length
+                };
             }
 
-            // 🔐 טיפול בהתחברות
-            handleLogin() {
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
-                const errorElement = document.getElementById('loginError');
+            console.log(`✅ עובדו ${processedData.rowCount} רשומות מקובץ CSV`);
 
-                if (SYSTEM_USERS[username] && SYSTEM_USERS[username] === password) {
-                    window.CreditSystem.currentUser = username;
-                    window.CreditSystem.isInitialized = true;
-                    this.createMainScreen();
-                    this.bindEvents();
-                    errorElement.textContent = '';
+            return {
+                ...processedData,
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: 'CSV'
+            };
+
+        } catch (error) {
+            console.error('❌ שגיאה בעיבוד CSV:', error);
+            throw new Error(`שגיאה בעיבוד קובץ CSV: ${error.message}`);
+        }
+    }
+
+    // 📅 פונקציות עזר לתאריכי Excel
+    isExcelDate(value) {
+        // בדוק אם זה מספר שיכול להיות תאריך Excel
+        return typeof value === 'number' && 
+               value > 0 && 
+               value < 2958466 && // תאריך מקסימלי של Excel
+               value % 1 !== 0; // לא מספר שלם
+    }
+
+    excelDateToJSDate(excelDate) {
+        // Excel מחשיב תאריכים מ-1/1/1900
+        const excelEpoch = new Date(1899, 11, 30); // 30/12/1899
+        const jsDate = new Date(excelEpoch.getTime() + excelDate * 24 * 60 * 60 * 1000);
+        return jsDate;
+    }
+
+    // 🔤 זיהוי קידוד CSV
+    detectCSVEncoding(csvData) {
+        // בדיקה פשוטה לתווים עבריים
+        const hebrewPattern = /[\u0590-\u05FF]/;
+        if (hebrewPattern.test(csvData)) {
+            return 'UTF-8';
+        }
+        return 'UTF-8'; // ברירת מחדל
+    }
+
+    // 🔧 פיצול שורת CSV מתקדם
+    parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        let quoteChar = null;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (!inQuotes) {
+                if (char === '"' || char === "'") {
+                    inQuotes = true;
+                    quoteChar = char;
+                } else if (char === ',' || char === ';' || char === '\t') {
+                    result.push(current.trim());
+                    current = '';
                 } else {
-                    errorElement.textContent = 'שם משתמש או סיסמה שגויים';
+                    current += char;
                 }
-            }
-
-            // 🚪 התנתקות
-            handleLogout() {
-                window.CreditSystem.currentUser = null;
-                window.CreditSystem.isInitialized = false;
-                this.createLoginScreen();
-                this.bindEvents();
-            }
-
-            // 🔄 החלפת סקציה
-            switchSection(sectionName) {
-                // הסרת פעיל מכל הכפתורים והסקציות
-                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-                document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
-
-                // הוספת פעיל לכפתור והסקציה הנבחרים
-                document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
-                document.getElementById(`${sectionName}Section`).classList.add('active');
-
-                this.currentScreen = sectionName;
-            }
-
-            // 📤 טיפול בהעלאת קובץ
-            handleFileUpload(file) {
-                if (!file) return;
-
-                const resultElement = document.getElementById('uploadResult');
-                
-                // סימולציה של העלאה
-                setTimeout(() => {
-                    resultElement.innerHTML = `
-                        <div class="success-message">
-                            ✅ הקובץ ${file.name} הועלה בהצלחה!<br>
-                            נמצאו ${Math.floor(Math.random() * 1000 + 500)} רשומות מושכים.
-                        </div>
-                    `;
-                }, 1000);
-            }
-
-            // 🔍 טיפול בקלט חיפוש
-            handleSearchInput(value) {
-                if (value.length < 2) {
-                    document.getElementById('searchSuggestions').innerHTML = '';
-                    return;
-                }
-
-                // סימולציה של הצעות
-                const suggestions = [
-                    'דוד כהן - 123456789',
-                    'שרה לוי - 987654321',
-                    'אברהם ישראל - 456789123',
-                    'רחל גרין - 111222333'
-                ].filter(suggestion => suggestion.includes(value));
-
-                this.showSuggestions(suggestions.slice(0, window.CreditSystem.ui.autocompleteSuggestions));
-            }
-
-            // 💡 הצגת הצעות
-            showSuggestions(suggestions) {
-                const suggestionsElement = document.getElementById('searchSuggestions');
-                if (suggestions.length === 0) {
-                    suggestionsElement.innerHTML = '';
-                    return;
-                }
-
-                const html = suggestions.map(suggestion => 
-                    `<div class="suggestion-item">${suggestion}</div>`
-                ).join('');
-                
-                suggestionsElement.innerHTML = html;
-
-                // קישור אירועים להצעות
-                suggestionsElement.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('suggestion-item')) {
-                        document.getElementById('payerSearch').value = e.target.textContent;
-                        suggestionsElement.innerHTML = '';
-                        this.performSearch();
+            } else {
+                if (char === quoteChar) {
+                    if (i + 1 < line.length && line[i + 1] === quoteChar) {
+                        // מרכאה כפולה - הוסף מרכאה אחת
+                        current += quoteChar;
+                        i++; // דלג על המרכאה הבאה
+                    } else {
+                        // סוף המחרוזת במרכאות
+                        inQuotes = false;
+                        quoteChar = null;
                     }
-                });
+                } else {
+                    current += char;
+                }
+            }
+        }
+        
+        result.push(current.trim());
+        return result.filter(item => item !== ''); // הסר ערכים ריקים
+    }
+
+    // ✅ אימות נתונים מעובדים
+    validateProcessedData(data) {
+        const warnings = [];
+        const errors = [];
+
+        // בדיקת קיום נתונים
+        if (!data.data || data.data.length === 0) {
+            errors.push('אין נתונים בקובץ');
+        }
+
+        // בדיקת כותרות
+        if (!data.headers || data.headers.length === 0) {
+            errors.push('לא נמצאו כותרות בקובץ');
+        } else {
+            // בדוק אם יש כותרות ריקות
+            const emptyHeaders = data.headers.filter(h => !h || h.trim() === '');
+            if (emptyHeaders.length > 0) {
+                warnings.push(`${emptyHeaders.length} כותרות ריקות נמצאו`);
             }
 
-            // 🔎 ביצוע חיפוש
-            performSearch() {
-                const searchTerm = document.getElementById('payerSearch').value;
-                if (!searchTerm.trim()) return;
+            // בדוק התאמה לכותרות צפויות
+            const matchingHeaders = data.headers.filter(header => 
+                this.expectedHeaders.some(expected => 
+                    header.includes(expected) || expected.includes(header)
+                )
+            );
 
-                const resultsElement = document.getElementById('searchResults');
-                resultsElement.innerHTML = `
-                    <div class="search-result-card">
-                        <div class="payer-header">
-                            <h3>דוד כהן</h3>
-                            <span class="payer-id">מספר זהות: 123456789</span>
-                        </div>
-                        <div class="payer-stats">
-                            <div class="stat-item">
-                                <label>סה"כ עסקאות:</label>
-                                <span>47</span>
-                            </div>
-                            <div class="stat-item">
-                                <label>היקף כולל:</label>
-                                <span>₪285,000</span>
-                            </div>
-                            <div class="stat-item">
-                                <label>שיקים חוזרים:</label>
-                                <span class="warning">3</span>
-                            </div>
-                        </div>
-                        <div class="payer-actions">
-                            <button class="btn btn-primary" onclick="creditUI.showPayerRating('123456789')">
-                                הצג דירוג אשראי
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-
-            // ⭐ הצגת דירוג מושך
-            showPayerRating(payerId) {
-                this.switchSection('rating');
-                
-                const ratingElement = document.getElementById('ratingContent');
-                ratingElement.innerHTML = `
-                    <div class="rating-card">
-                        <div class="rating-header">
-                            <h3>דירוג אשראי - דוד כהן</h3>
-                            <div class="credit-score">
-                                <span class="score-value">78</span>
-                                <span class="score-label">נקודות</span>
-                                <div class="score-grade good">טוב</div>
-                            </div>
-                        </div>
-                        
-                        <div class="rating-breakdown">
-                            <h4>פירוט הדירוג</h4>
-                            <p>המערכת מחשבת את הדירוג על בסיס ${Object.keys(RATING_PARAMETERS).length} פרמטרים שונים</p>
-                            <p>כל פרמטר משפיע על הציון הסופי בהתאם למשקל שהוגדר במערכת</p>
-                        </div>
-                        
-                        <div class="risk-assessment">
-                            <h4>הערכת סיכון</h4>
-                            <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px;">
-                                <strong>סיכון נמוך</strong><br>
-                                מושך אמין עם היסטוריה טובה
-                            </div>
-                        </div>
-                        
-                        <div class="recommendations">
-                            <h4>המלצות</h4>
-                            <ul style="list-style: none; padding: 0;">
-                                <li style="padding: 5px 0;">✅ ניתן לאשר אשראי עד ₪50,000</li>
-                                <li style="padding: 5px 0;">✅ תנאי תשלום: עד 60 יום</li>
-                                <li style="padding: 5px 0;">⚠️ מומלץ מעקב על שיקים חוזרים</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
+            const matchPercentage = (matchingHeaders.length / this.expectedHeaders.length) * 100;
+            if (matchPercentage < 30) {
+                warnings.push(`רק ${matchPercentage.toFixed(1)}% מהכותרות מזוהות כצפויות`);
             }
         }
 
-        // 🎬 אתחול המערכת
-        let creditUI;
-        document.addEventListener('DOMContentLoaded', () => {
-            creditUI = new CreditSystemUI();
+        // בדיקת איכות נתונים
+        if (data.data && data.data.length > 0) {
+            const firstRow = data.data[0];
+            const emptyFields = Object.keys(firstRow).filter(key => 
+                !firstRow[key] || firstRow[key].toString().trim() === ''
+            ).length;
+            
+            if (emptyFields > Object.keys(firstRow).length * 0.5) {
+                warnings.push('שיעור גבוה של שדות ריקים בנתונים');
+            }
+
+            // בדיקת שורות כפולות
+            const duplicateCheck = this.findDuplicateRows(data.data);
+            if (duplicateCheck.duplicates > 0) {
+                warnings.push(`נמצאו ${duplicateCheck.duplicates} שורות כפולות אפשריות`);
+            }
+        }
+
+        // בדיקת גודל נתונים
+        if (data.rowCount > 50000) {
+            warnings.push('קובץ גדול מאוד - ביצועים עלולים להיפגע');
+        }
+
+        return {
+            isValid: errors.length === 0,
+            errors: errors,
+            warnings: warnings,
+            quality: {
+                headerMatch: matchingHeaders ? (matchingHeaders.length / this.expectedHeaders.length) * 100 : 0,
+                dataCompleteness: this.calculateDataCompleteness(data),
+                duplicateRows: duplicateCheck ? duplicateCheck.duplicates : 0
+            }
+        };
+    }
+
+    // 🔍 מציאת שורות כפולות
+    findDuplicateRows(data) {
+        const seen = new Set();
+        let duplicates = 0;
+
+        data.forEach(row => {
+            // יצירת מזהה ייחודי על בסיס שדות מרכזיים
+            const key = `${row['מספר זהות מושך'] || ''}_${row['סכום'] || ''}_${row['תאריך הפקדה/מסירה'] || ''}`;
+            
+            if (seen.has(key)) {
+                duplicates++;
+            } else {
+                seen.add(key);
+            }
         });
 
-        // 🌍 הפיכה לגלובלי
-        window.CreditSystemUI = CreditSystemUI;
-    </script>
-</body>
-</html>
+        return { duplicates, total: data.length };
+    }
+
+    // 📊 חישוב שלמות נתונים
+    calculateDataCompleteness(data) {
+        if (!data.data || data.data.length === 0) return 0;
+
+        const importantFields = [
+            'שם מושך', 'מספר זהות מושך', 'סכום', 'תאריך הפקדה/מסירה', 'סטטוס'
+        ];
+
+        let completedFields = 0;
+        let totalFields = 0;
+
+        data.data.forEach(row => {
+            importantFields.forEach(field => {
+                totalFields++;
+                if (row[field] && row[field].toString().trim() !== '') {
+                    completedFields++;
+                }
+            });
+        });
+
+        return totalFields > 0 ? (completedFields / totalFields) * 100 : 0;
+    }
+
+    // 📊 יצירת סיכום נתונים מתקדם
+    generateDataSummary(processedData) {
+        const summary = {
+            basicInfo: {
+                totalRows: processedData.rowCount,
+                totalColumns: processedData.headers ? processedData.headers.length : 0,
+                fileName: processedData.fileName,
+                fileSize: this.formatFileSize(processedData.fileSize),
+                fileType: processedData.fileType,
+                uploadTime: new Date()
+            },
+            
+            columnAnalysis: [],
+            dataQuality: {
+                completeness: this.calculateDataCompleteness(processedData),
+                consistency: 0, // יחושב בהמשך
+                accuracy: 0 // יחושב בהמשך
+            },
+            
+            preview: processedData.data.slice(0, 5), // 5 שורות ראשונות
+            
+            insights: []
+        };
+
+        // ניתוח עמודות
+        if (processedData.headers) {
+            summary.columnAnalysis = processedData.headers.map(header => ({
+                name: header,
+                type: this.detectColumnType(processedData.data, header),
+                sampleValues: this.getSampleValues(processedData.data, header),
+                nullCount: this.countNullValues(processedData.data, header),
+                uniqueValues: this.countUniqueValues(processedData.data, header)
+            }));
+        }
+
+        // זיהוי עמודות מרכזיות
+        const keyColumns = this.identifyKeyColumns(processedData);
+        summary.keyColumns = keyColumns;
+
+        // תובנות אוטומטיות
+        summary.insights = this.generateAutomaticInsights(processedData, summary);
+
+        return summary;
+    }
+
+    // 🔍 זיהוי עמודות מרכזיות
+    identifyKeyColumns(data) {
+        const keyColumns = {};
+        
+        if (data.headers) {
+            // זיהוי עמודת מזהה מושך
+            const payerIdColumn = data.headers.find(h => 
+                h.includes('מספר זהות מושך') || h.includes('מושך') || h.includes('זהות')
+            );
+            if (payerIdColumn) keyColumns.payerId = payerIdColumn;
+
+            // זיהוי עמודת סכום
+            const amountColumn = data.headers.find(h => 
+                h.includes('סכום') || h.includes('amount')
+            );
+            if (amountColumn) keyColumns.amount = amountColumn;
+
+            // זיהוי עמודת תאריך
+            const dateColumn = data.headers.find(h => 
+                h.includes('תאריך') || h.includes('date') || h.includes('פקדה')
+            );
+            if (dateColumn) keyColumns.date = dateColumn;
+
+            // זיהוי עמודת סטטוס
+            const statusColumn = data.headers.find(h => 
+                h.includes('סטטוס') || h.includes('status')
+            );
+            if (statusColumn) keyColumns.status = statusColumn;
+        }
+
+        return keyColumns;
+    }
+
+    // 💡 יצירת תובנות אוטומטיות
+    generateAutomaticInsights(data, summary) {
+        const insights = [];
+
+        // תובנה על גודל הקובץ
+        if (data.rowCount > 10000) {
+            insights.push({
+                type: 'size',
+                message: `קובץ גדול עם ${data.rowCount.toLocaleString()} רשומות`,
+                recommendation: 'מומלץ לפרק לקבצים קטנים יותר לביצועים טובים יותר'
+            });
+        }
+
+        // תובנה על איכות נתונים
+        if (summary.dataQuality.completeness < 80) {
+            insights.push({
+                type: 'quality',
+                message: `איכות נתונים נמוכה: ${summary.dataQuality.completeness.toFixed(1)}% שלמות`,
+                recommendation: 'מומלץ לבדוק ולהשלים נתונים חסרים'
+            });
+        }
+
+        // תובנה על עמודות מרכזיות
+        const missingKeyColumns = [];
+        const expectedKeys = ['payerId', 'amount', 'date'];
+        expectedKeys.forEach(key => {
+            if (!summary.keyColumns || !summary.keyColumns[key]) {
+                missingKeyColumns.push(key);
+            }
+        });
+
+        if (missingKeyColumns.length > 0) {
+            insights.push({
+                type: 'structure',
+                message: `עמודות מרכזיות חסרות: ${missingKeyColumns.join(', ')}`,
+                recommendation: 'ודא שהקובץ מכיל את כל השדות הנדרשים'
+            });
+        }
+
+        return insights;
+    }
+
+    // 🔧 פונקציות עזר נוספות
+
+    detectColumnType(data, columnName) {
+        if (!data || data.length === 0) return 'unknown';
+        
+        const sampleSize = Math.min(10, data.length);
+        const samples = data.slice(0, sampleSize)
+            .map(row => row[columnName])
+            .filter(value => value !== null && value !== undefined && value !== '');
+
+        if (samples.length === 0) return 'empty';
+
+        let numberCount = 0;
+        let dateCount = 0;
+        let booleanCount = 0;
+
+        samples.forEach(value => {
+            const strValue = value.toString().toLowerCase();
+            
+            // בדיקת מספר
+            if (!isNaN(value) && !isNaN(parseFloat(value))) {
+                numberCount++;
+            }
+            
+            // בדיקת תאריך
+            if (!isNaN(Date.parse(value))) {
+                dateCount++;
+            }
+            
+            // בדיקת בוליאני
+            if (['true', 'false', 'כן', 'לא', '1', '0'].includes(strValue)) {
+                booleanCount++;
+            }
+        });
+
+        const threshold = samples.length * 0.7;
+        
+        if (numberCount >= threshold) return 'number';
+        if (dateCount >= threshold) return 'date';
+        if (booleanCount >= threshold) return 'boolean';
+        
+        return 'text';
+    }
+
+    getSampleValues(data, columnName) {
+        return data.slice(0, 3)
+            .map(row => row[columnName])
+            .filter(value => value !== null && value !== undefined && value !== '');
+    }
+
+    countNullValues(data, columnName) {
+        return data.filter(row => 
+            !row[columnName] || row[columnName].toString().trim() === ''
+        ).length;
+    }
+
+    countUniqueValues(data, columnName) {
+        const uniqueValues = new Set();
+        data.forEach(row => {
+            const value = row[columnName];
+            if (value !== null && value !== undefined && value !== '') {
+                uniqueValues.add(value.toString());
+            }
+        });
+        return uniqueValues.size;
+    }
+
+    // 🎯 טיפול באירועי קלט קובץ
+    async handleFileInput(event, inputType) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        console.log(`📁 נבחר קובץ: ${file.name} (${inputType})`);
+
+        // עדכון UI מתאים
+        this.updateFileInputUI(inputType, 'loading', `טוען ${file.name}...`);
+
+        try {
+            const result = await this.uploadFile(file, 
+                (progress, message) => this.updateProgress(inputType, progress, message), 
+                inputType
+            );
+
+            if (result.success) {
+                this.updateFileInputUI(inputType, 'success', `✅ ${file.name} נטען בהצלחה`);
+                
+                // שמור בהתאם לסוג הקובץ
+                this.saveFileData(inputType, result);
+                
+                utils.showNotification('קובץ נטען', `${file.name} נטען בהצלחה`, 'success');
+            } else {
+                this.updateFileInputUI(inputType, 'error', `❌ שגיאה: ${result.error}`);
+                utils.showNotification('שגיאה בטעינה', result.error, 'error');
+            }
+
+        } catch (error) {
+            console.error(`❌ שגיאה בטעינת ${inputType}:`, error);
+            this.updateFileInputUI(inputType, 'error', `❌ שגיאה: ${error.message}`);
+            utils.showNotification('שגיאה', error.message, 'error');
+        }
+    }
+
+    // 💾 שמירת נתוני קובץ
+    saveFileData(inputType, result) {
+        switch (inputType) {
+            case 'mainExcelFile':
+                window.CreditSystem.excelData.main = result.data;
+                break;
+            case 'scoresFile':
+                window.CreditSystem.excelData.scores = result.data;
+                break;
+            case 'returnedFile':
+                window.CreditSystem.excelData.returned = result.data;
+                break;
+            case 'warningsFile':
+                window.CreditSystem.excelData.warnings = result.data;
+                break;
+        }
+    }
+
+    // 🎨 עדכון UI
+    updateFileInputUI(inputType, status, message) {
+        const statusMap = {
+            'mainExcelFile': 'transactionsStatus',
+            'scoresFile': 'returnedStatus',
+            'returnedFile': 'returnedStatus', 
+            'warningsFile': 'warningsStatus'
+        };
+
+        const elementId = statusMap[inputType];
+        if (elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = message;
+                element.className = `status-${status}`;
+            }
+        }
+    }
+
+    updateProgress(inputType, progress, message) {
+        console.log(`📊 ${inputType}: ${progress}% - ${message}`);
+        // כאן ניתן להוסיף עדכון ויזואלי של התקדמות
+    }
+
+    // 🎯 טיפול ב-Drag & Drop
+    handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+    }
+
+    handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const files = Array.from(e.dataTransfer.files);
+        const uploadArea = e.target.closest('.upload-area, .excel-upload-section');
+        
+        if (uploadArea) {
+            uploadArea.classList.remove('dragover');
+            
+            if (files.length > 0) {
+                // טען את הקובץ הראשון
+                this.handleFileInput({ target: { files: files } }, 'mainExcelFile');
+            }
+        }
+    }
+
+    handleDragEnter(e) {
+        const uploadArea = e.target.closest('.upload-area, .excel-upload-section');
+        if (uploadArea) {
+            uploadArea.classList.add('dragover');
+        }
+    }
+
+    handleDragLeave(e) {
+        const uploadArea = e.target.closest('.upload-area, .excel-upload-section');
+        if (uploadArea && !uploadArea.contains(e.relatedTarget)) {
+            uploadArea.classList.remove('dragover');
+        }
+    }
+
+    // 🔧 פונקציות עזר כלליות
+    getFileExtension(fileName) {
+        return fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // 🔄 איפוס
+    reset() {
+        this.currentFile = null;
+        this.uploadProgress = 0;
+        window.CreditSystem.excelData = {};
+    }
+
+    // 📊 קבלת נתונים
+    getCurrentData() {
+        return window.CreditSystem.excelData;
+    }
+}
+
+// 🌍 יצירת מופע גלובלי
+window.fileLoader = new EnhancedFileLoader();
+
+// 📤 ייצוא למודולים
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = EnhancedFileLoader;
+}
