@@ -2008,8 +2008,68 @@
             const payerMetrics = payer.metrics;
             const clientMetrics = client ? client.metrics : null;
             
-            // קבלת נתוני D&B
-            const dnbInfo = dnbData.get(payer.id) || { score: 50, rating: '', riskLevel: 50 };
+            // חיפוש נתוני D&B - חיפוש משולב
+            let dnbInfo = null;
+            
+            // חיפוש ראשון לפי ח.פ.
+            if (dnbData.has(payer.id)) {
+                dnbInfo = dnbData.get(payer.id);
+                console.log(`מצא D&B לפי ח.פ.: ${payer.id}`);
+            }
+            
+            // חיפוש שני לפי שם חברה
+            if (!dnbInfo) {
+                const nameKey = `NAME_${payer.name}`;
+                if (dnbData.has(nameKey)) {
+                    dnbInfo = dnbData.get(nameKey);
+                    console.log(`מצא D&B לפי שם: ${payer.name}`);
+                }
+            }
+            
+            // חיפוש שלישי - חיפוש חלקי בשם
+            if (!dnbInfo) {
+                const foundDnb = Array.from(dnbData.values()).find(dnb => {
+                    if (!dnb.companyName) return false;
+                    
+                    const payerWords = payer.name.toLowerCase().split(' ').filter(w => w.length > 2);
+                    const dnbWords = dnb.companyName.toLowerCase().split(' ').filter(w => w.length > 2);
+                    
+                    // בדיקה אם יש לפחות 2 מילים משותפות
+                    const commonWords = payerWords.filter(word => 
+                        dnbWords.some(dnbWord => dnbWord.includes(word) || word.includes(dnbWord))
+                    );
+                    
+                    return commonWords.length >= Math.min(2, payerWords.length);
+                });
+                
+                if (foundDnb) {
+                    dnbInfo = foundDnb;
+                    console.log(`מצא D&B בחיפוש חלקי: "${payer.name}" -> "${foundDnb.companyName}"`);
+                }
+            }
+            
+            // אם לא מצאנו - צור ברירת מחדל
+            if (!dnbInfo) {
+                dnbInfo = { 
+                    dnbScore: 50, 
+                    rating: 0, 
+                    riskLevel: 50,
+                    companyName: '',
+                    yearsActive: 0,
+                    employees: 0,
+                    revenue: 0,
+                    obligation: 0
+                };
+                console.log(`לא נמצא D&B עבור: ${payer.name} (${payer.id}) - משתמש ברירת מחדל`);
+            } else {
+                console.log(`נתוני D&B למושך ${payer.name}:`, {
+                    companyName: dnbInfo.companyName,
+                    dnbScore: dnbInfo.dnbScore,
+                    yearsActive: dnbInfo.yearsActive,
+                    employees: dnbInfo.employees,
+                    revenue: dnbInfo.revenue
+                });
+            }
             
             // קבלת נתוני התנהגות לקוח
             const clientBehaviorInfo = client && behaviorData.has(client.name) 
@@ -2024,7 +2084,7 @@
                 clientHistory: clientMetrics ? Math.min(100, (clientMetrics.transactionCount / 5) * 25) : 0,
                 clientReliability: clientMetrics ? Math.max(0, clientMetrics.reliability) : 50,
                 clientBehavior: clientBehaviorInfo.behaviorScore,
-                dnbRating: dnbInfo.riskLevel,
+                dnbRating: dnbInfo.dnbScore, // השתמש בציון המחושב
                 returnedChecks: Math.max(0, 100 - (payerMetrics.returnedChecks * 25)),
                 cancellations: Math.max(0, 100 - (payerMetrics.cancellations * 20))
             };
