@@ -689,30 +689,21 @@
                         <div class="file-upload-section">
                             <div class="file-status empty" id="mainFileStatus">ריק</div>
                             <h4>📊 קובץ עסקאות ראשי</h4>
-                            <input type="file" id="mainFile" accept=".xlsx,.xls,.csv" onchange="loadFile('main')" style="display: none;">
-                            <button onclick="document.getElementById('mainFile').click()" class="upload-btn">
-                                🔄 בחר קובץ
-                            </button>
+                            <input type="file" id="mainFile" accept=".xlsx,.xls,.csv" onchange="handleFileUpload(this, 'main')">
                             <div id="mainFileValidation" class="file-validation" style="display: none;"></div>
                         </div>
 
                         <div class="file-upload-section">
                             <div class="file-status empty" id="returnedFolderStatus">ריק</div>
                             <h4>💳 תיקיית שיקים חוזרים</h4>
-                            <input type="file" id="returnedFolder" accept=".xlsx,.xls,.csv" multiple webkitdirectory onchange="loadFolder('returned')" style="display: none;">
-                            <button onclick="document.getElementById('returnedFolder').click()" class="upload-btn">
-                                🔄 בחר תיקייה
-                            </button>
+                            <input type="file" id="returnedFolder" accept=".xlsx,.xls,.csv" multiple onchange="handleFolderUpload(this, 'returned')">
                             <div id="returnedFolderValidation" class="file-validation" style="display: none;"></div>
                         </div>
 
                         <div class="file-upload-section">
                             <div class="file-status empty" id="warningsFileStatus">ריק</div>
                             <h4>⚠️ קובץ ביטולים/אכ"מ</h4>
-                            <input type="file" id="warningsFile" accept=".xlsx,.xls,.csv" onchange="loadFile('warnings')" style="display: none;">
-                            <button onclick="document.getElementById('warningsFile').click()" class="upload-btn">
-                                🔄 בחר קובץ
-                            </button>
+                            <input type="file" id="warningsFile" accept=".xlsx,.xls,.csv" onchange="handleFileUpload(this, 'warnings')">
                             <div id="warningsFileValidation" class="file-validation" style="display: none;"></div>
                         </div>
 
@@ -720,10 +711,7 @@
                             <div class="file-status empty" id="creditFileStatus">ריק</div>
                             <h4>🏢 קובץ חיתום אשראי (D&B)</h4>
                             <p style="font-size: 12px; margin-top: 5px;">טבלה: scoreM_N</p>
-                            <input type="file" id="creditFile" accept=".xlsx,.xls" onchange="loadFile('credit')" style="display: none;">
-                            <button onclick="document.getElementById('creditFile').click()" class="upload-btn">
-                                🔄 בחר קובץ
-                            </button>
+                            <input type="file" id="creditFile" accept=".xlsx,.xls" onchange="handleFileUpload(this, 'credit')">
                             <div id="creditFileValidation" class="file-validation" style="display: none;"></div>
                         </div>
 
@@ -731,20 +719,14 @@
                             <div class="file-status empty" id="behaviorFolderStatus">ריק</div>
                             <h4>📈 תיקיית ניתוח נתונים</h4>
                             <p style="font-size: 12px; margin-top: 5px;">התנהגות לקוח - מזומן/הלוואות</p>
-                            <input type="file" id="behaviorFolder" accept=".xlsx,.xls,.csv" multiple webkitdirectory onchange="loadFolder('behavior')" style="display: none;">
-                            <button onclick="document.getElementById('behaviorFolder').click()" class="upload-btn">
-                                🔄 בחר תיקייה
-                            </button>
+                            <input type="file" id="behaviorFolder" accept=".xlsx,.xls,.csv" multiple onchange="handleFolderUpload(this, 'behavior')">
                             <div id="behaviorFolderValidation" class="file-validation" style="display: none;"></div>
                         </div>
 
                         <div class="file-upload-section">
                             <div class="file-status empty" id="allFilesStatus">ריק</div>
                             <h4>📁 העלאת כל הקבצים יחד</h4>
-                            <input type="file" id="allFiles" accept=".xlsx,.xls,.csv" multiple onchange="loadMultipleFiles()" style="display: none;">
-                            <button onclick="document.getElementById('allFiles').click()" class="upload-btn">
-                                🔄 בחר קבצים מרובים
-                            </button>
+                            <input type="file" id="allFiles" accept=".xlsx,.xls,.csv" multiple onchange="handleMultipleFiles(this)">
                             <div id="allFilesValidation" class="file-validation" style="display: none;"></div>
                         </div>
                     </div>
@@ -1167,16 +1149,16 @@
             }
         }
 
-        // טעינת קבצים - גרסה משופרת עם דיבוג
+        // טעינת קבצים - גרסה מפושטת וחזקה
         async function loadFile(type) {
-            console.log(`🚀 התחלת טעינת קובץ סוג: ${type}`);
+            console.log(`🚀 מתחיל טעינת קובץ: ${type}`);
             
             const fileInput = document.getElementById(type + 'File');
             const statusElement = document.getElementById(type + 'FileStatus');
             
             if (!fileInput) {
-                console.error(`❌ לא נמצא אלמנט קלט קובץ: ${type}File`);
-                showNotification(`שגיאה: לא נמצא שדה לקובץ ${type}`, 'error');
+                console.error(`❌ לא נמצא שדה קובץ: ${type}File`);
+                showNotification(`שגיאה: לא נמצא שדה עבור ${type}`, 'error');
                 return;
             }
             
@@ -1187,114 +1169,172 @@
             }
 
             const file = fileInput.files[0];
-            console.log(`📁 קובץ נבחר:`, {
+            console.log(`📁 מעלה קובץ:`, {
                 name: file.name,
-                size: file.size,
-                type: file.type,
-                lastModified: new Date(file.lastModified).toLocaleString()
+                size: (file.size / 1024).toFixed(1) + 'KB',
+                type: file.type
             });
 
-            // בדיקת סוג הקובץ
-            const allowedExtensions = ['.xlsx', '.xls', '.csv'];
-            const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-            
-            if (!allowedExtensions.includes(fileExtension)) {
-                const error = `סוג קובץ לא נתמך: ${fileExtension}. נתמכים: ${allowedExtensions.join(', ')}`;
-                console.error('❌', error);
-                statusElement.textContent = '❌ סוג קובץ שגוי';
-                statusElement.className = 'file-status empty';
-                showNotification(error, 'error');
-                return;
-            }
-
-            // בדיקת גודל קובץ
-            if (file.size > 50 * 1024 * 1024) { // 50MB
-                const error = 'קובץ גדול מדי (מעל 50MB)';
-                console.error('❌', error);
-                statusElement.textContent = '❌ קובץ גדול';
-                statusElement.className = 'file-status empty';
-                showNotification(error, 'error');
-                return;
-            }
-
-            // עדכון סטטוס טעינה
-            statusElement.textContent = '🔄 טוען...';
+            // עדכון סטטוס לטעינה
+            statusElement.textContent = '🔄 טוען';
             statusElement.className = 'file-status loading';
 
             try {
-                console.log(`🔄 מתחיל לקרוא קובץ ${type}: ${file.name}`);
+                let success = false;
                 
-                let workbook;
-                if (fileExtension === '.csv') {
-                    workbook = await readCSVFile(file);
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    success = await processCSVFile(file, type);
                 } else {
-                    workbook = await readExcelFile(file);
-                }
-                
-                console.log(`📊 קובץ ${type} נקרא בהצלחה:`, {
-                    sheets: workbook.SheetNames,
-                    totalSheets: workbook.SheetNames.length
-                });
-                
-                // עיבוד הקובץ לפי סוג
-                let processResult = false;
-                if (type === 'main') {
-                    processResult = processMainFile(workbook);
-                } else if (type === 'warnings') {
-                    processResult = processWarningsFile(workbook);
-                } else if (type === 'credit') {
-                    processResult = processCreditFile(workbook);
-                } else {
-                    console.warn(`⚠️ סוג קובץ לא מוכר: ${type}`);
-                    processResult = true; // נניח שהצליח
+                    success = await processExcelFile(file, type);
                 }
 
-                if (processResult !== false) {
+                if (success) {
                     statusElement.textContent = '✅ נטען';
                     statusElement.className = 'file-status loaded';
-                    
+                    showNotification(`✅ ${getFileTypeName(type)} נטען בהצלחה`, 'success');
                     checkAllFilesLoaded();
-                    showNotification(`✅ קובץ ${getFileTypeName(type)} נטען בהצלחה (${file.name})`, 'success');
-                    console.log(`✅ קובץ ${type} עובד בהצלחה:`, file.name);
                 } else {
                     throw new Error('עיבוד הקובץ נכשל');
                 }
 
             } catch (error) {
-                console.error(`❌ שגיאה בטעינת קובץ ${type}:`, error);
-                console.error('פרטי השגיאה:', error.stack);
-                
+                console.error(`❌ שגיאה בטעינת ${type}:`, error);
                 statusElement.textContent = '❌ שגיאה';
                 statusElement.className = 'file-status empty';
-                
-                let errorMessage = `שגיאה בטעינת קובץ ${getFileTypeName(type)}: `;
-                if (error.message.includes('not supported')) {
-                    errorMessage += 'פורמט קובץ לא נתמך';
-                } else if (error.message.includes('corrupted')) {
-                    errorMessage += 'קובץ פגום או מוצפן';
-                } else {
-                    errorMessage += error.message;
-                }
-                
-                showNotification(errorMessage, 'error');
-                
-                // הצגת פרטים נוספים בקונסול לדיבוג
-                console.log('🔧 פרטי דיבוג נוספים:');
-                console.log('- סוג קובץ:', file.type);
-                console.log('- גודל קובץ:', file.size, 'bytes');
-                console.log('- שם קובץ:', file.name);
-                console.log('- אלמנט קלט:', fileInput);
+                showNotification(`❌ שגיאה בטעינת ${getFileTypeName(type)}: ${error.message}`, 'error');
             }
         }
 
-        function loadFolder(type) {
-            // פונקציה ריקה לטעינת תיקיות - יוכל להוסיף בהמשך
-            showNotification(`פיצ'ר טעינת תיקיות ${type} יבוא בעתיד`, 'warning');
+        // עיבוד קובץ Excel
+        async function processExcelFile(file, type) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        console.log(`📖 קורא קובץ Excel: ${file.name}`);
+                        
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        console.log(`📊 נמצאו ${workbook.SheetNames.length} גיליונות:`, workbook.SheetNames);
+                        
+                        let result = false;
+                        if (type === 'main') {
+                            result = processMainFileData(workbook);
+                        } else if (type === 'credit') {
+                            result = processCreditFileData(workbook);
+                        } else if (type === 'warnings') {
+                            result = processWarningsFileData(workbook);
+                        }
+                        
+                        resolve(result);
+                    } catch (error) {
+                        console.error('❌ שגיאה בעיבוד Excel:', error);
+                        reject(error);
+                    }
+                };
+                
+                reader.onerror = () => reject(new Error('שגיאה בקריאת הקובץ'));
+                reader.readAsArrayBuffer(file);
+            });
         }
 
-        function loadMultipleFiles() {
-            // פונקציה ריקה לטעינת קבצים מרובים - יוכל להוסיף בהמשך
-            showNotification('פיצ\'ר טעינת קבצים מרובים יבוא בעתיד', 'warning');
+        // עיבוד קובץ CSV
+        async function processCSVFile(file, type) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        console.log(`📖 קורא קובץ CSV: ${file.name}`);
+                        
+                        const text = e.target.result;
+                        const lines = text.split('\n');
+                        const data = lines.map(line => line.split(',').map(cell => cell.trim()));
+                        
+                        console.log(`📊 CSV: ${data.length} שורות`);
+                        
+                        if (type === 'main') {
+                            excelData.main = data;
+                            processMainData();
+                        } else if (type === 'warnings') {
+                            excelData.warnings = data;
+                        }
+                        
+                        resolve(true);
+                    } catch (error) {
+                        console.error('❌ שגיאה בעיבוד CSV:', error);
+                        reject(error);
+                    }
+                };
+                
+                reader.onerror = () => reject(new Error('שגיאה בקריאת CSV'));
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        // פונקציות טעינה פשוטות וישירות
+        function handleFileUpload(input, type) {
+            console.log(`🚀 מטפל בקובץ ${type}...`);
+            
+            if (!input.files || input.files.length === 0) {
+                console.warn(`⚠️ לא נבחר קובץ`);
+                return;
+            }
+
+            const file = input.files[0];
+            console.log(`📁 קובץ נבחר: ${file.name} (${file.size} bytes)`);
+            
+            loadFile(type);
+        }
+
+        function handleFolderUpload(input, type) {
+            console.log(`📂 מטפל בתיקייה ${type}...`);
+            
+            if (!input.files || input.files.length === 0) {
+                console.warn(`⚠️ לא נבחרו קבצים בתיקייה`);
+                return;
+            }
+
+            console.log(`📁 נבחרו ${input.files.length} קבצים בתיקייה`);
+            
+            // לעת עתה - פשוט נטען את הקובץ הראשון
+            if (input.files.length > 0) {
+                loadFile(type);
+            }
+        }
+
+        function handleMultipleFiles(input) {
+            console.log(`📁 מטפל בקבצים מרובים...`);
+            
+            if (!input.files || input.files.length === 0) {
+                console.warn(`⚠️ לא נבחרו קבצים`);
+                return;
+            }
+
+            console.log(`📁 נבחרו ${input.files.length} קבצים`);
+            
+            // נעבור על כל הקבצים ונזהה לפי השם
+            Array.from(input.files).forEach((file, index) => {
+                console.log(`קובץ ${index + 1}: ${file.name}`);
+                
+                const fileName = file.name.toLowerCase();
+                
+                // זיהוי אוטומטי של סוג הקובץ לפי השם
+                if (fileName.includes('transaction') || fileName.includes('עסק') || fileName.includes('main')) {
+                    console.log('זוהה כקובץ עסקאות ראשי');
+                    // כאן נטען את הקובץ כעסקאות ראשי
+                } else if (fileName.includes('dnb') || fileName.includes('score') || fileName.includes('חיתום')) {
+                    console.log('זוהה כקובץ D&B');
+                    // כאן נטען את הקובץ כ-D&B
+                } else if (fileName.includes('warning') || fileName.includes('ביטול')) {
+                    console.log('זוהה כקובץ ביטולים');
+                    // כאן נטען את הקובץ כביטולים
+                }
+            });
+            
+            showNotification(`נבחרו ${input.files.length} קבצים. הפיצ'ר בפיתוח...`, 'warning');
         }
 
         function processCreditFile(workbook) {
@@ -1635,110 +1675,69 @@
             return names[type] || type;
         }
 
-        // קריאת קובץ CSV
-        function readCSVFile(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const text = e.target.result;
-                        console.log(`📝 קובץ CSV נקרא: ${text.length} תווים`);
-                        
-                        // יצירת workbook פיקטיבי עבור CSV
-                        const lines = text.split('\n');
-                        const data = lines.map(line => line.split(','));
-                        
-                        const workbook = {
-                            SheetNames: ['Sheet1'],
-                            Sheets: {
-                                'Sheet1': {} // ייצור דמי
-                            }
-                        };
-                        
-                        // הוספת הנתונים לגיליון
-                        const worksheet = {};
-                        data.forEach((row, rowIndex) => {
-                            row.forEach((cell, colIndex) => {
-                                const cellAddress = XLSX.utils.encode_cell({r: rowIndex, c: colIndex});
-                                worksheet[cellAddress] = {v: cell, t: 's'};
-                            });
-                        });
-                        
-                        workbook.Sheets['Sheet1'] = worksheet;
-                        resolve(workbook);
-                    } catch (error) {
-                        console.error('❌ שגיאה בפענוח CSV:', error);
-                        reject(new Error('שגיאה בפענוח קובץ CSV: ' + error.message));
-                    }
-                };
-                reader.onerror = () => {
-                    console.error('❌ שגיאה בקריאת קובץ CSV');
-                    reject(new Error('שגיאה בקריאת קובץ CSV'));
-                };
-                reader.readAsText(file, 'UTF-8');
-            });
+        // פונקציות עיבוד מפושטות
+        function processMainFileData(workbook) {
+            try {
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                console.log(`📊 קובץ עסקאות: ${jsonData.length} שורות`);
+                
+                if (jsonData.length < 2) {
+                    throw new Error('קובץ ריק או חסרות שורות');
+                }
+                
+                excelData.main = jsonData;
+                processMainData();
+                
+                return true;
+            } catch (error) {
+                console.error('❌ שגיאה בעיבוד קובץ עסקאות:', error);
+                return false;
+            }
         }
 
-        function readExcelFile(file) {
-            return new Promise((resolve, reject) => {
-                console.log('📖 מתחיל לקרוא קובץ Excel...');
+        function processCreditFileData(workbook) {
+            try {
+                // חיפוש גיליון scoreM_N
+                let sheetName = workbook.SheetNames.find(name => 
+                    name && name.toLowerCase().includes('score')
+                ) || workbook.SheetNames[0];
                 
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        console.log('🔧 קובץ נקרא לזיכרון, מתחיל פענוח...');
-                        const data = new Uint8Array(e.target.result);
-                        console.log(`📊 גודל נתונים: ${data.length} bytes`);
-                        
-                        const workbook = XLSX.read(data, { 
-                            type: 'array',
-                            cellDates: true,
-                            cellNF: false,
-                            cellStyles: false
-                        });
-                        
-                        console.log('✅ קובץ Excel נפענח בהצלחה');
-                        console.log('📋 גיליונות שנמצאו:', workbook.SheetNames);
-                        
-                        // בדיקת תקינות הגיליונות
-                        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-                            throw new Error('לא נמצאו גיליונות בקובץ');
-                        }
-                        
-                        // בדיקה שהגיליון הראשון לא ריק
-                        const firstSheetName = workbook.SheetNames[0];
-                        const firstSheet = workbook.Sheets[firstSheetName];
-                        
-                        if (!firstSheet) {
-                            throw new Error(`גיליון "${firstSheetName}" ריק או פגום`);
-                        }
-                        
-                        resolve(workbook);
-                    } catch (error) {
-                        console.error('❌ שגיאה בפענוח Excel:', error);
-                        console.error('פרטי השגיאה:', error.stack);
-                        
-                        let errorMsg = 'שגיאה בפענוח קובץ Excel';
-                        if (error.message.includes('unsupported')) {
-                            errorMsg = 'פורמט קובץ לא נתמך - נסה להמיר ל-XLSX';
-                        } else if (error.message.includes('encrypted')) {
-                            errorMsg = 'קובץ מוגן בסיסמה - נא להסיר הגנה';
-                        } else if (error.message.includes('corrupted')) {
-                            errorMsg = 'קובץ פגום או לא תקין';
-                        }
-                        
-                        reject(new Error(errorMsg + ': ' + error.message));
-                    }
-                };
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                 
-                reader.onerror = () => {
-                    console.error('❌ שגיאה בקריאת קובץ');
-                    reject(new Error('שגיאה בקריאת הקובץ - ייתכן שהקובץ פגום'));
-                };
+                console.log(`🏢 קובץ D&B: ${jsonData.length} שורות מגיליון "${sheetName}"`);
                 
-                console.log('📂 מתחיל לקרוא את הקובץ...');
-                reader.readAsArrayBuffer(file);
-            });
+                if (jsonData.length < 2) {
+                    throw new Error('קובץ D&B ריק');
+                }
+                
+                excelData.credit = jsonData;
+                processDnbData();
+                
+                return true;
+            } catch (error) {
+                console.error('❌ שגיאה בעיבוד קובץ D&B:', error);
+                return false;
+            }
+        }
+
+        function processWarningsFileData(workbook) {
+            try {
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                console.log(`⚠️ קובץ ביטולים: ${jsonData.length} שורות`);
+                
+                excelData.warnings = jsonData;
+                return true;
+            } catch (error) {
+                console.error('❌ שגיאה בעיבוד קובץ ביטולים:', error);
+                return false;
+            }
         }
 
         function processMainFile(workbook) {
