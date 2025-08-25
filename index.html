@@ -948,25 +948,30 @@
             
             switch(type) {
                 case 'dnb':
-                    content = '🏢 === נתוני D&B ===\n';
+                    content = '🏢 === נתוני D&B מלאים ===\n';
                     content += `מספר חברות ב-D&B: ${dnbData.size}\n\n`;
                     
                     if (dnbData.size > 0) {
-                        content += 'חברות עם דירוג D&B:\n';
+                        content += 'חברות עם דירוג D&B (נתונים מלאים):\n';
                         let count = 0;
                         for (let [key, dnb] of dnbData.entries()) {
-                            if (!key.startsWith('NAME_') && count < 10) {
-                                content += `• ${dnb.companyName} (${dnb.companyId})\n`;
-                                content += `  סקור: ${dnb.sectorRating}, ענף: ${dnb.industrySector}\n`;
-                                content += `  שנות ותק: ${dnb.yearsActive}, עובדים: ${dnb.employees}\n`;
+                            if (!key.startsWith('NAME_') && count < 8) {
+                                content += `━━━ חברה ${count + 1}: ${dnb.companyName} ━━━\n`;
+                                content += `  ח.פ: ${dnb.companyId || 'לא ידוע'}\n`;
+                                content += `  סקור: ${dnb.sectorRating} | דירוג ענף: ${dnb.industrySector}\n`;
+                                content += `  שנות ותק: ${dnb.yearsActive} | עובדים: ${dnb.employees}\n`;
                                 content += `  מחזור: ₪${dnb.revenue?.toLocaleString() || '0'}\n`;
-                                content += `  ציון משוקלל: ${dnb.dnbScore?.toFixed(1)}\n\n`;
+                                content += `  כתובת: ${dnb.address || 'לא ידוע'} | עיר: ${dnb.city || 'לא ידוע'}\n`;
+                                content += `  סטטוס: ${dnb.status || 'לא ידוע'} | ענף: ${dnb.branch || 'לא ידוע'}\n`;
+                                content += `  טלפון: ${dnb.phone || 'לא ידוע'} | הקמה: ${dnb.establishedYear || 'לא ידוע'}\n`;
+                                content += `  אובליגו: ₪${dnb.currentObligation?.toLocaleString() || '0'}\n`;
+                                content += `  עסקאות: ${dnb.totalTransactions} | ציון משוקלל: ${dnb.dnbScore?.toFixed(1)}\n\n`;
                                 count++;
                             }
                         }
                         
-                        if (dnbData.size > 10) {
-                            content += `... ועוד ${dnbData.size - 10} חברות\n`;
+                        if (dnbData.size > 8) {
+                            content += `... ועוד ${dnbData.size - 8} חברות\n`;
                         }
                     } else {
                         content += '❌ לא נטענו נתוני D&B\n';
@@ -975,29 +980,54 @@
                     break;
                     
                 case 'companies':
-                    content = '📊 === חברות מושכות ===\n';
-                    content += `מספר חברות: ${payersMap.size}\n\n`;
+                    content = '📊 === חברות מושכות ולקוחות ===\n';
+                    content += `מספר חברות מושכות: ${payersMap.size}\n`;
+                    content += `מספר לקוחות: ${clientsMap.size}\n\n`;
                     
                     if (payersMap.size > 0) {
+                        content += '━━━ חברות מושכות ━━━\n';
                         let count = 0;
                         for (let [id, payer] of payersMap.entries()) {
-                            if (count < 10) {
+                            if (count < 5) {
                                 content += `• ${payer.name} (${id})\n`;
                                 content += `  עסקאות: ${payer.metrics.transactionCount}\n`;
                                 content += `  סך כולל: ₪${payer.metrics.totalAmount.toLocaleString()}\n`;
-                                content += `  ממוצע: ₪${payer.metrics.averageAmount.toLocaleString()}\n`;
+                                content += `  ממוצע לעסקה: ₪${payer.metrics.averageAmount.toLocaleString()}\n`;
                                 content += `  שיקים חוזרים: ${payer.metrics.returnedChecks}\n`;
-                                content += `  ביטולים: ${payer.metrics.cancellations}\n\n`;
+                                content += `  ביטולים: ${payer.metrics.cancellations}\n`;
+                                content += `  לקוחות שונים: ${payer.metrics.clients.size}\n\n`;
                                 count++;
                             }
                         }
                         
-                        if (payersMap.size > 10) {
-                            content += `... ועוד ${payersMap.size - 10} חברות\n`;
+                        if (payersMap.size > 5) {
+                            content += `... ועוד ${payersMap.size - 5} חברות\n\n`;
+                        }
+                    }
+                    
+                    if (clientsMap.size > 0) {
+                        content += '━━━ לקוחות ━━━\n';
+                        let count = 0;
+                        for (let [id, client] of clientsMap.entries()) {
+                            if (count < 5) {
+                                content += `• ${client.name} (${id})\n`;
+                                content += `  עסקאות: ${client.metrics.transactionCount}\n`;
+                                content += `  סך כולל: ₪${client.metrics.totalAmount.toLocaleString()}\n`;
+                                content += `  ממוצע לעסקה: ₪${client.metrics.averageAmount.toLocaleString()}\n`;
+                                content += `  אמינות: ${client.metrics.reliability}%\n`;
+                                content += `  שיקים חוזרים: ${client.metrics.returnedCount}\n`;
+                                content += `  ביטולים: ${client.metrics.cancelledCount}\n`;
+                                content += `  חברות שונות: ${client.metrics.payers.size}\n\n`;
+                                count++;
+                            }
+                        }
+                        
+                        if (clientsMap.size > 5) {
+                            content += `... ועוד ${clientsMap.size - 5} לקוחות\n`;
                         }
                     } else {
-                        content += '❌ לא נטענו חברות\n';
-                        content += '💡 נסה לטעון קובץ עסקאות ראשי';
+                        content += '❌ לא נטענו לקוחות\n';
+                        content += '💡 וודא שיש עמודות "שם לקוח" ו"ת.ז לקוח" בקובץ העסקאות';
                     }
                     break;
                     
@@ -1007,27 +1037,37 @@
                     if (excelData.credit.length > 0) {
                         content += `מספר שורות בקובץ: ${excelData.credit.length}\n\n`;
                         
-                        content += 'כותרות (שורה 1):\n';
+                        content += 'כותרות (שורה 1) עם אינדקסים:\n';
                         const headers = excelData.credit[0];
                         headers.forEach((header, index) => {
                             const columnLetter = String.fromCharCode(65 + index);
-                            content += `${columnLetter}: ${header}\n`;
+                            content += `${columnLetter}${index}: ${header}\n`;
                         });
                         
-                        // מציאת עמודת סקור
+                        // מציאת עמודות חשובות
                         const scoreIndex = headers.findIndex(h => h && h.toString().trim() === 'סקור');
-                        content += `\nעמודת "סקור" נמצאת באינדקס: ${scoreIndex >= 0 ? scoreIndex : 'לא נמצא'}\n`;
+                        const industrySectorIndex = headers.findIndex(h => h && h.toString().includes('ענף'));
+                        const yearsIndex = headers.findIndex(h => h && h.toString().includes('ותק'));
+                        const employeesIndex = headers.findIndex(h => h && h.toString().includes('עובדים'));
+                        
+                        content += `\n🎯 עמודות חשובות שנמצאו:\n`;
+                        content += `סקור: ${scoreIndex >= 0 ? String.fromCharCode(65 + scoreIndex) + scoreIndex : 'לא נמצא'}\n`;
+                        content += `דירוג ענף: ${industrySectorIndex >= 0 ? String.fromCharCode(65 + industrySectorIndex) + industrySectorIndex : 'לא נמצא'}\n`;
+                        content += `שנות ותק: ${yearsIndex >= 0 ? String.fromCharCode(65 + yearsIndex) + yearsIndex : 'לא נמצא'}\n`;
+                        content += `עובדים: ${employeesIndex >= 0 ? String.fromCharCode(65 + employeesIndex) + employeesIndex : 'לא נמצא'}\n`;
                         
                         if (scoreIndex >= 0) {
                             const scoreColumn = String.fromCharCode(65 + scoreIndex);
-                            content += `עמודת "סקור" היא עמודה: ${scoreColumn}\n\n`;
-                            
-                            content += 'דוגמאות ערכי סקור:\n';
+                            content += `\nדוגמאות ערכי סקור מעמודה ${scoreColumn}:\n`;
                             for (let i = 1; i < Math.min(6, excelData.credit.length); i++) {
                                 const row = excelData.credit[i];
                                 const companyName = row[0] || 'לא ידוע';
                                 const scoreValue = row[scoreIndex];
-                                content += `שורה ${i + 1}: "${companyName}" -> "${scoreValue}" (סוג: ${typeof scoreValue})\n`;
+                                const industrySector = industrySectorIndex >= 0 ? row[industrySectorIndex] : 'N/A';
+                                const years = yearsIndex >= 0 ? row[yearsIndex] : 'N/A';
+                                const employees = employeesIndex >= 0 ? row[employeesIndex] : 'N/A';
+                                content += `שורה ${i + 1}: "${companyName}"\n`;
+                                content += `  סקור: "${scoreValue}" | ענף: "${industrySector}" | ותק: "${years}" | עובדים: "${employees}"\n`;
                             }
                         }
                     } else {
@@ -1401,58 +1441,92 @@
             const headers = excelData.credit[0];
             const rows = excelData.credit.slice(1);
             
-            console.log('📋 כותרות D&B:', headers);
+            console.log('📋 כותרות D&B מלאות:', headers);
+            console.log('📋 אינדקס כותרות:', headers.map((h, i) => `${i}:${h}`));
             
-            // מיפוי עמודות
-            const companyNameIndex = findBestColumnMatch(headers, ['שם מושך', 'שם חברה', 'שם']);
-            const companyIdIndex = findBestColumnMatch(headers, ['מס\' ח.פ', 'ח.פ', 'מזהה']);
+            // מיפוי עמודות מורחב - כולל כל הנתונים החשובים
+            const companyNameIndex = findBestColumnMatch(headers, ['שם מושך', 'שם חברה', 'שם המושך', 'שם']);
+            const companyIdIndex = findBestColumnMatch(headers, ['מס\' ח.פ', 'ח.פ', 'מזהה', 'מספר זהות']);
             const sectorRatingIndex = findBestColumnMatch(headers, ['סקור']);
-            const industrySectorIndex = findBestColumnMatch(headers, ['סקור ענף', 'ענף']);
-            const yearsActiveIndex = findBestColumnMatch(headers, ['שנות ותק', 'ותק']);
-            const employeesIndex = findBestColumnMatch(headers, ['מס\' מועסקים', 'עובדים']);
-            const revenueIndex = findBestColumnMatch(headers, ['מחזור בא\' ₪', 'מחזור', 'הכנסות']);
+            const industrySectorIndex = findBestColumnMatch(headers, ['סקור ענף', 'דירוג ענף', 'ענף']);
+            const yearsActiveIndex = findBestColumnMatch(headers, ['שנות ותק', 'ותק', 'שנים פעילות']);
+            const employeesIndex = findBestColumnMatch(headers, ['מס\' מועסקים', 'עובדים', 'מועסקים', 'כמות עובדים']);
+            const addressIndex = findBestColumnMatch(headers, ['כתובת', 'מען', 'כתובת חברה']);
+            const cityIndex = findBestColumnMatch(headers, ['עיר', 'יישוב', 'מקום']);
+            const revenueIndex = findBestColumnMatch(headers, ['מחזור בא\' ₪', 'מחזור', 'הכנסות', 'מחזור עסקים', 'מחזור שנתי']);
+            const totalTransactionsIndex = findBestColumnMatch(headers, ['סה"כ עסקאות', 'עסקאות', 'מספר עסקאות']);
+            const currentObligationIndex = findBestColumnMatch(headers, ['אובליגו קיים', 'אובליגו', 'חוב קיים']);
+            const statusIndex = findBestColumnMatch(headers, ['סטטוס', 'מצב', 'סטטוס חברה']);
+            const branchIndex = findBestColumnMatch(headers, ['ענף', 'תחום', 'ענף עסקים']);
+            const phoneIndex = findBestColumnMatch(headers, ['טלפון', 'פון', 'טל']);
+            const establishedIndex = findBestColumnMatch(headers, ['שנת הקמה', 'הקמה', 'נוסדה']);
 
-            console.log('🎯 מיפוי עמודות D&B:', {
-                companyName: `${companyNameIndex >= 0 ? headers[companyNameIndex] : 'לא נמצא'} (עמודה ${companyNameIndex + 1})`,
-                companyId: `${companyIdIndex >= 0 ? headers[companyIdIndex] : 'לא נמצא'} (עמודה ${companyIdIndex + 1})`,
-                sectorRating: `${sectorRatingIndex >= 0 ? headers[sectorRatingIndex] : '❌ לא נמצא סקור!'} (עמודה ${sectorRatingIndex + 1})`
-            });
+            console.log('🎯 מיפוי עמודות D&B מלא:');
+            console.log(`   שם חברה: ${companyNameIndex >= 0 ? headers[companyNameIndex] : '❌'} (${companyNameIndex})`);
+            console.log(`   ח.פ: ${companyIdIndex >= 0 ? headers[companyIdIndex] : '❌'} (${companyIdIndex})`);
+            console.log(`   סקור: ${sectorRatingIndex >= 0 ? headers[sectorRatingIndex] : '❌'} (${sectorRatingIndex})`);
+            console.log(`   דירוג ענף: ${industrySectorIndex >= 0 ? headers[industrySectorIndex] : '❌'} (${industrySectorIndex})`);
+            console.log(`   שנות ותק: ${yearsActiveIndex >= 0 ? headers[yearsActiveIndex] : '❌'} (${yearsActiveIndex})`);
+            console.log(`   עובדים: ${employeesIndex >= 0 ? headers[employeesIndex] : '❌'} (${employeesIndex})`);
+            console.log(`   מחזור: ${revenueIndex >= 0 ? headers[revenueIndex] : '❌'} (${revenueIndex})`);
+            console.log(`   כתובת: ${addressIndex >= 0 ? headers[addressIndex] : '❌'} (${addressIndex})`);
+            console.log(`   עיר: ${cityIndex >= 0 ? headers[cityIndex] : '❌'} (${cityIndex})`);
 
             dnbData.clear();
             let processedCompanies = 0;
 
             rows.forEach((row, index) => {
                 try {
+                    // חילוץ כל הנתונים
                     const companyName = companyNameIndex >= 0 ? row[companyNameIndex]?.toString().trim() : '';
                     const companyId = companyIdIndex >= 0 ? row[companyIdIndex]?.toString().trim() : '';
                     const sectorRating = sectorRatingIndex >= 0 ? parseFloat(row[sectorRatingIndex]) || 0 : 0;
                     const industrySector = industrySectorIndex >= 0 ? parseFloat(row[industrySectorIndex]) || 0 : 0;
                     const yearsActive = yearsActiveIndex >= 0 ? parseFloat(row[yearsActiveIndex]) || 0 : 0;
                     const employees = employeesIndex >= 0 ? parseInt(row[employeesIndex]) || 0 : 0;
+                    const address = addressIndex >= 0 ? row[addressIndex]?.toString().trim() : '';
+                    const city = cityIndex >= 0 ? row[cityIndex]?.toString().trim() : '';
                     const revenue = revenueIndex >= 0 ? parseFloat(row[revenueIndex]) || 0 : 0;
+                    const totalTransactions = totalTransactionsIndex >= 0 ? parseInt(row[totalTransactionsIndex]) || 0 : 0;
+                    const currentObligation = currentObligationIndex >= 0 ? parseFloat(row[currentObligationIndex]) || 0 : 0;
+                    const status = statusIndex >= 0 ? row[statusIndex]?.toString().trim() : '';
+                    const branch = branchIndex >= 0 ? row[branchIndex]?.toString().trim() : '';
+                    const phone = phoneIndex >= 0 ? row[phoneIndex]?.toString().trim() : '';
+                    const establishedYear = establishedIndex >= 0 ? parseInt(row[establishedIndex]) || 0 : 0;
 
-                    // לוג מפורט לשורות הראשונות
+                    // לוג מפורט לשורות הראשונות עם כל הנתונים
                     if (index < 3) {
-                        const rawScoreValue = sectorRatingIndex >= 0 ? row[sectorRatingIndex] : 'לא נמצא';
-                        console.log(`📊 D&B חברה ${index + 1}:`, {
+                        console.log(`📊 D&B חברה מלאה ${index + 1}:`, {
                             companyName, 
                             companyId, 
-                            rawScoreValue,
                             sectorRating, 
                             industrySector, 
                             yearsActive, 
                             employees, 
-                            revenue
+                            address,
+                            city,
+                            revenue,
+                            totalTransactions,
+                            currentObligation,
+                            status,
+                            branch,
+                            phone,
+                            establishedYear
                         });
                     }
 
-                    if ((companyId || companyName) && (sectorRating > 0 || industrySector > 0 || revenue > 0 || yearsActive > 0)) {
+                    // שמירה אם יש נתונים חשובים
+                    if ((companyId || companyName) && 
+                        (sectorRating > 0 || industrySector > 0 || revenue > 0 || yearsActive > 0 || employees > 0)) {
+                        
                         const riskLevel = calculateAdvancedDnbRisk({
                             sectorRating,
                             industrySector,
                             yearsActive,
                             employees,
-                            revenue
+                            revenue,
+                            currentObligation,
+                            totalTransactions
                         });
 
                         const dnbRecord = {
@@ -1462,7 +1536,15 @@
                             industrySector, 
                             yearsActive,
                             employees,
+                            address,
+                            city,
                             revenue,
+                            totalTransactions,
+                            currentObligation,
+                            status,
+                            branch,
+                            phone,
+                            establishedYear,
                             riskLevel,
                             dnbScore: riskLevel
                         };
@@ -1477,7 +1559,9 @@
                         processedCompanies++;
 
                         if (processedCompanies <= 3) {
-                            console.log(`✅ נשמר D&B: "${companyName}" (${companyId}) - סקור: ${sectorRating}, ציון: ${riskLevel.toFixed(1)}`);
+                            console.log(`✅ נשמר D&B מלא: "${companyName}" (${companyId})`);
+                            console.log(`   סקור: ${sectorRating}, דירוג ענף: ${industrySector}, ותק: ${yearsActive} שנים, עובדים: ${employees}`);
+                            console.log(`   מחזור: ₪${revenue.toLocaleString()}, עיר: ${city}, ציון סופי: ${riskLevel.toFixed(1)}`);
                         }
                     }
                 } catch (error) {
@@ -1485,7 +1569,7 @@
                 }
             });
 
-            console.log(`✅ עובדו ${processedCompanies} חברות D&B מתוך ${rows.length} שורות`);
+            console.log(`✅ עובדו ${processedCompanies} חברות D&B מתוך ${rows.length} שורות (עם כל הנתונים)`);
         }
 
         function calculateAdvancedDnbRisk(dnbInfo) {
@@ -1639,11 +1723,31 @@
             const rows = excelData.main.slice(1);
             
             console.log('📋 כותרות קובץ ראשי:', headers);
+            console.log('📋 אינדקס כותרות:', headers.map((h, i) => `${i}:${h}`));
             
-            // חיפוש עמודות
-            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך', 'שם חברה']);
-            const payerIdIndex = findBestColumnMatch(headers, ['מספר זהות מושך', 'ח.פ', 'מזהה מושך']);
-            const amountIndex = findBestColumnMatch(headers, ['סכום', 'סכום שיק']);
+            // מיפוי עמודות מורחב - כולל נתוני לקוח
+            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך', 'שם חברה', 'מושך']);
+            const payerIdIndex = findBestColumnMatch(headers, ['מספר זהות מושך', 'ח.פ', 'מזהה מושך', 'זהות מושך']);
+            const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח', 'שם נהנה', 'נהנה', 'לקוח']);
+            const clientIdIndex = findBestColumnMatch(headers, ['מ.זהות', 'ת.ז', 'מספר זהות לקוח', 'זהות לקוח', 'מספר זהות']);
+            const amountIndex = findBestColumnMatch(headers, ['סכום', 'סכום שיק', 'סכום עסקה']);
+            const commissionIndex = findBestColumnMatch(headers, ['עמלה', 'עמלה שיק']);
+            const transactionDateIndex = findBestColumnMatch(headers, ['תאריך עיסקה', 'תאריך עסקה', 'תאריך']);
+            const dueDateIndex = findBestColumnMatch(headers, ['ת.פירעון', 'תאריך פירעון', 'פירעון']);
+            const actualPaymentDateIndex = findBestColumnMatch(headers, ['ת.פרעון בפועל', 'תאריך תשלום בפועל']);
+            const statusIndex = findBestColumnMatch(headers, ['סטטוס', 'מצב', 'סטטוס עסקה']);
+            const checkNumberIndex = findBestColumnMatch(headers, ['מספר שיק', 'מס\' שיק']);
+            const returnDateIndex = findBestColumnMatch(headers, ['תאריך החזרה', 'תאריך השבה']);
+            const branchIndex = findBestColumnMatch(headers, ['סניף', 'מספר סניף']);
+
+            console.log('🎯 מיפוי עמודות קובץ ראשי:');
+            console.log(`   שם מושך: ${payerNameIndex >= 0 ? headers[payerNameIndex] : '❌'} (${payerNameIndex})`);
+            console.log(`   ח.פ מושך: ${payerIdIndex >= 0 ? headers[payerIdIndex] : '❌'} (${payerIdIndex})`);
+            console.log(`   שם לקוח: ${clientNameIndex >= 0 ? headers[clientNameIndex] : '❌'} (${clientNameIndex})`);
+            console.log(`   ת.ז לקוח: ${clientIdIndex >= 0 ? headers[clientIdIndex] : '❌'} (${clientIdIndex})`);
+            console.log(`   סכום: ${amountIndex >= 0 ? headers[amountIndex] : '❌'} (${amountIndex})`);
+            console.log(`   עמלה: ${commissionIndex >= 0 ? headers[commissionIndex] : '❌'} (${commissionIndex})`);
+            console.log(`   סטטוס: ${statusIndex >= 0 ? headers[statusIndex] : '❌'} (${statusIndex})`);
 
             if (payerNameIndex === -1 && payerIdIndex === -1) {
                 throw new Error('לא נמצאו עמודות חיוניות (שם מושך או ח.פ.)');
@@ -1657,24 +1761,65 @@
             clientsMap.clear();
 
             let processedRows = 0;
+            let skippedRows = 0;
 
             rows.forEach((row, index) => {
                 try {
+                    // חילוץ נתוני מושך
                     const payerName = payerNameIndex >= 0 ? row[payerNameIndex]?.toString().trim() : '';
                     const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : null;
+                    
+                    // חילוץ נתוני לקוח
+                    const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
+                    const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
+                    
+                    // חילוץ נתוני עסקה
                     const amount = parseFloat(row[amountIndex]) || 0;
+                    const commission = commissionIndex >= 0 ? parseFloat(row[commissionIndex]) || 0 : 0;
+                    const status = statusIndex >= 0 ? row[statusIndex]?.toString().trim() : '';
+                    const checkNumber = checkNumberIndex >= 0 ? row[checkNumberIndex]?.toString().trim() : '';
+                    const transactionDate = transactionDateIndex >= 0 ? row[transactionDateIndex] : null;
+                    const dueDate = dueDateIndex >= 0 ? row[dueDateIndex] : null;
+                    const returnDate = returnDateIndex >= 0 ? row[returnDateIndex] : null;
 
+                    // בדיקת תקינות נתונים בסיסיים
                     if (!payerName && !payerId) {
+                        if (index < 5) {
+                            console.warn(`שורה ${index + 2}: חסר שם ומזהה מושך`);
+                        }
+                        skippedRows++;
                         return;
                     }
 
                     if (amount <= 0) {
+                        if (index < 5) {
+                            console.warn(`שורה ${index + 2}: סכום לא תקין: ${amount}`);
+                        }
+                        skippedRows++;
                         return;
                     }
 
+                    // יצירת מזהי מושך ולקוח
                     const effectivePayerId = payerId || `NAME_${payerName}`;
                     const effectivePayerName = payerName || 'לא ידוע';
 
+                    // לוג לשורות הראשונות
+                    if (index < 3) {
+                        console.log(`שורה ${index + 2} - נתונים מלאים:`, { 
+                            payerName: effectivePayerName, 
+                            payerId: effectivePayerId, 
+                            clientName, 
+                            clientId, 
+                            amount,
+                            commission,
+                            status,
+                            checkNumber,
+                            transactionDate,
+                            dueDate
+                        });
+                    }
+
+                    // עיבוד נתוני מושך (חברה)
                     if (!payersMap.has(effectivePayerId)) {
                         payersMap.set(effectivePayerId, {
                             id: effectivePayerId,
@@ -1684,28 +1829,136 @@
                                 totalAmount: 0,
                                 transactionCount: 0,
                                 averageAmount: 0,
+                                totalCommission: 0,
+                                averageCommission: 0,
                                 returnedChecks: 0,
-                                cancellations: 0
+                                cancellations: 0,
+                                clients: new Set(),
+                                firstTransactionDate: null,
+                                lastTransactionDate: null
                             }
                         });
+                        
+                        if (payersMap.size <= 5) {
+                            console.log(`יצירת מושך חדש: "${effectivePayerName}" (${effectivePayerId})`);
+                        }
                     }
 
                     const payer = payersMap.get(effectivePayerId);
                     
-                    const transaction = { amount };
+                    // יצירת עסקה מפורטת
+                    const transaction = {
+                        amount, 
+                        commission,
+                        clientName, 
+                        clientId, 
+                        status,
+                        checkNumber,
+                        transactionDate,
+                        dueDate,
+                        returnDate,
+                        row, 
+                        index,
+                        isReturned: returnDate ? true : false,
+                        isCancelled: status && (status.includes('ביטול') || status.includes('אכ"מ') || status.includes('לא שולם'))
+                    };
+                    
                     payer.transactions.push(transaction);
                     
+                    // עדכון מטריקות מושך
                     payer.metrics.totalAmount += amount;
+                    payer.metrics.totalCommission += commission;
                     payer.metrics.transactionCount++;
                     payer.metrics.averageAmount = payer.metrics.totalAmount / payer.metrics.transactionCount;
+                    payer.metrics.averageCommission = payer.metrics.totalCommission / payer.metrics.transactionCount;
+                    
+                    if (transaction.isReturned) payer.metrics.returnedChecks++;
+                    if (transaction.isCancelled) payer.metrics.cancellations++;
+                    if (clientName) payer.metrics.clients.add(clientName);
+
+                    // עיבוד נתוני לקוח - חיוני!
+                    if (clientName && clientId) {
+                        if (!clientsMap.has(clientId)) {
+                            clientsMap.set(clientId, {
+                                id: clientId,
+                                name: clientName,
+                                transactions: [],
+                                metrics: {
+                                    totalAmount: 0,
+                                    transactionCount: 0,
+                                    averageAmount: 0,
+                                    payers: new Set(),
+                                    reliability: 100,
+                                    returnedCount: 0,
+                                    cancelledCount: 0,
+                                    branches: new Set(),
+                                    firstTransactionDate: null,
+                                    lastTransactionDate: null
+                                }
+                            });
+                            
+                            if (clientsMap.size <= 5) {
+                                console.log(`יצירת לקוח חדש: "${clientName}" (${clientId})`);
+                            }
+                        }
+
+                        const client = clientsMap.get(clientId);
+                        client.transactions.push({ 
+                            amount, 
+                            commission,
+                            payerName: effectivePayerName, 
+                            payerId: effectivePayerId, 
+                            status,
+                            checkNumber,
+                            transactionDate,
+                            dueDate,
+                            isReturned: transaction.isReturned,
+                            isCancelled: transaction.isCancelled,
+                            row, 
+                            index 
+                        });
+                        
+                        client.metrics.totalAmount += amount;
+                        client.metrics.transactionCount++;
+                        client.metrics.averageAmount = client.metrics.totalAmount / client.metrics.transactionCount;
+                        client.metrics.payers.add(effectivePayerName);
+                        
+                        // הפחתת אמינות על בסיס שיקים חוזרים וביטולים
+                        if (transaction.isReturned) {
+                            client.metrics.returnedCount++;
+                            client.metrics.reliability -= 15;
+                        }
+                        if (transaction.isCancelled) {
+                            client.metrics.cancelledCount++;
+                            client.metrics.reliability -= 10;
+                        }
+                        
+                        client.metrics.reliability = Math.max(0, client.metrics.reliability);
+                    } else if (clientName && !clientId) {
+                        console.log(`⚠️ לקוח "${clientName}" ללא ת.ז - לא יישמר`);
+                    }
 
                     processedRows++;
                 } catch (error) {
                     console.error(`❌ שגיאה בעיבוד שורה ${index + 2}:`, error);
+                    skippedRows++;
                 }
             });
 
-            console.log(`✅ עובדו ${payersMap.size} מושכים`);
+            console.log(`✅ עובדו ${payersMap.size} מושכים ו-${clientsMap.size} לקוחות`);
+            console.log(`📊 סטטיסטיקות עיבוד: ${processedRows} שורות עובדו, ${skippedRows} שורות דולגו`);
+            
+            // הצגת דוגמאות ללקוחות שנוצרו
+            if (clientsMap.size > 0) {
+                console.log('👥 דוגמאות ללקוחות שנטענו:');
+                let count = 0;
+                for (let [id, client] of clientsMap.entries()) {
+                    if (count < 3) {
+                        console.log(`  לקוח ${count + 1}: ${client.name} (${id}) - ${client.metrics.transactionCount} עסקאות, אמינות: ${client.metrics.reliability}%`);
+                        count++;
+                    }
+                }
+            }
         }
 
         function processWarningsFile(workbook) {
@@ -1774,7 +2027,10 @@
             
             const payerInput = document.getElementById('payerName');
             const payerSuggestions = document.getElementById('payerNameSuggestions');
+            const clientInput = document.getElementById('clientName');
+            const clientSuggestions = document.getElementById('clientNameSuggestions');
 
+            // השלמה אוטומטית לחברות מושכות
             payerInput.addEventListener('input', function() {
                 const value = this.value.trim();
                 payerSuggestions.innerHTML = '';
@@ -1807,13 +2063,16 @@
                         const div = document.createElement('div');
                         div.className = 'autocomplete-suggestion';
                         
-                        // חיפוש נתוני D&B
+                        // חיפוש נתוני D&B מלאים
                         let dnbInfo = dnbData.get(payer.id) || dnbData.get(`NAME_${payer.name}`);
-                        const dnbText = dnbInfo ? ` | D&B: ${Math.round(dnbInfo.dnbScore)}` : '';
+                        let dnbText = '';
+                        if (dnbInfo) {
+                            dnbText = ` | D&B: ${Math.round(dnbInfo.dnbScore)} (סקור:${dnbInfo.sectorRating}, ענף:${dnbInfo.industrySector}, ותק:${dnbInfo.yearsActive})`;
+                        }
                         
                         div.innerHTML = `
                             <div class="suggestion-name">${payer.name}</div>
-                            <div class="suggestion-details">ח.פ: ${payer.id} | ${payer.metrics.transactionCount} עסקאות${dnbText}</div>
+                            <div class="suggestion-details">ח.פ: ${payer.id} | ${payer.metrics.transactionCount} עסקאות | ₪${payer.metrics.totalAmount.toLocaleString()}${dnbText}</div>
                         `;
                         div.onclick = () => {
                             payerInput.value = payer.name;
@@ -1828,11 +2087,122 @@
                 }
             });
 
+            // השלמה אוטומטית ללקוחות - עם נתונים מלאים
+            clientInput.addEventListener('input', function() {
+                const value = this.value.trim();
+                clientSuggestions.innerHTML = '';
+                
+                if (value.length >= 2) {
+                    const foundClient = Array.from(clientsMap.values())
+                        .find(client => client.name === value);
+                    
+                    if (foundClient) {
+                        document.getElementById('clientID').value = foundClient.id;
+                        console.log('XLOOKUP לקוח:', foundClient.name, '->', foundClient.id);
+                        showClientHistory(foundClient);
+                    } else {
+                        document.getElementById('clientID').value = '';
+                        document.getElementById('clientHistory').style.display = 'none';
+                    }
+                }
+                
+                if (value.length < 2) {
+                    clientSuggestions.style.display = 'none';
+                    document.getElementById('clientID').value = '';
+                    document.getElementById('clientHistory').style.display = 'none';
+                    return;
+                }
+
+                const matches = Array.from(clientsMap.values())
+                    .filter(client => client.name.toLowerCase().includes(value.toLowerCase()))
+                    .slice(0, 10);
+
+                if (matches.length > 0) {
+                    clientSuggestions.style.display = 'block';
+                    matches.forEach(client => {
+                        const div = document.createElement('div');
+                        div.className = 'autocomplete-suggestion';
+                        div.innerHTML = `
+                            <div class="suggestion-name">${client.name}</div>
+                            <div class="suggestion-details">ת.ז: ${client.id} | ${client.metrics.transactionCount} עסקאות | אמינות: ${client.metrics.reliability}% | ${client.metrics.payers.size} חברות</div>
+                        `;
+                        div.onclick = () => {
+                            clientInput.value = client.name;
+                            document.getElementById('clientID').value = client.id;
+                            clientSuggestions.style.display = 'none';
+                            showClientHistory(client);
+                            console.log('נבחר לקוח:', client.name, '->', client.id);
+                        };
+                        clientSuggestions.appendChild(div);
+                    });
+                } else {
+                    clientSuggestions.style.display = 'none';
+                }
+            });
+
             // הסתרת הצעות בלחיצה חיצונית
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.form-group')) {
                     payerSuggestions.style.display = 'none';
+                    clientSuggestions.style.display = 'none';
                 }
+            });
+
+            console.log('✅ השלמה אוטומטית הוגדרה בהצלחה');
+        }
+
+        function showClientHistory(client) {
+            try {
+                const historyDiv = document.getElementById('clientHistory');
+                const summaryDiv = document.getElementById('clientHistorySummary');
+                
+                const reliability = Math.max(0, client.metrics.reliability);
+                const avgAmount = client.metrics.averageAmount;
+                const totalAmount = client.metrics.totalAmount;
+                const transactionCount = client.metrics.transactionCount;
+                const payersCount = client.metrics.payers.size;
+                const returnedCount = client.metrics.returnedCount;
+                const cancelledCount = client.metrics.cancelledCount;
+                
+                summaryDiv.innerHTML = `
+                    <div class="history-card">
+                        <div class="history-value">${transactionCount}</div>
+                        <div>עסקאות קודמות</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value">₪${totalAmount.toLocaleString()}</div>
+                        <div>סך כולל</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value">₪${avgAmount.toLocaleString()}</div>
+                        <div>ממוצע לעסקה</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value" style="color: ${reliability >= 80 ? '#27ae60' : reliability >= 60 ? '#f39c12' : '#e74c3c'}">${reliability}%</div>
+                        <div>דירוג אמינות</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value">${payersCount}</div>
+                        <div>חברות שונות</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value" style="color: ${returnedCount > 0 ? '#e74c3c' : '#27ae60'}">${returnedCount}</div>
+                        <div>שיקים חוזרים</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value" style="color: ${cancelledCount > 0 ? '#e74c3c' : '#27ae60'}">${cancelledCount}</div>
+                        <div>ביטולים</div>
+                    </div>
+                `;
+                
+                historyDiv.style.display = 'block';
+                console.log('📋 הוצגה היסטוריית לקוח מלאה:', client.name);
+            } catch (error) {
+                console.error('❌ שגיאה בהצגת היסטוריית לקוח:', error);
+            }
+        }');
+        }
+
             });
 
             console.log('✅ השלמה אוטומטית הוגדרה בהצלחה');
@@ -1842,10 +2212,15 @@
             try {
                 const payerName = document.getElementById('payerName').value.trim();
                 const payerId = document.getElementById('payerID').value.trim();
+                const clientName = document.getElementById('clientName').value.trim();
+                const clientId = document.getElementById('clientID').value.trim();
                 const checkAmount = parseFloat(document.getElementById('checkAmount').value) || 0;
                 const creditDays = parseInt(document.getElementById('creditDays').value) || 30;
 
-                console.log('🧮 מתחיל חישוב דירוג אשראי...');
+                console.log('🧮 מתחיל חישוב דירוג אשראי עם נתונים מלאים...');
+                console.log('נתוני קלט:', {
+                    payerName, payerId, clientName, clientId, checkAmount, creditDays
+                });
 
                 if (!payerId) {
                     showNotification('נא להזין ח.פ. של החברה המושכת', 'warning');
@@ -1863,30 +2238,65 @@
                 }
 
                 const payer = payersMap.get(payerId);
+                const client = clientId && clientsMap.has(clientId) ? clientsMap.get(clientId) : null;
                 
-                // חיפוש נתוני D&B
+                console.log('📊 נתוני מושך:', {
+                    name: payer.name,
+                    transactions: payer.metrics.transactionCount,
+                    totalAmount: payer.metrics.totalAmount,
+                    returned: payer.metrics.returnedChecks,
+                    cancelled: payer.metrics.cancellations
+                });
+                
+                if (client) {
+                    console.log('👤 נתוני לקוח:', {
+                        name: client.name,
+                        transactions: client.metrics.transactionCount,
+                        reliability: client.metrics.reliability,
+                        returned: client.metrics.returnedCount,
+                        cancelled: client.metrics.cancelledCount
+                    });
+                }
+                
+                // חיפוש נתוני D&B מלאים
                 let dnbInfo = null;
                 
                 if (dnbData.has(payerId)) {
                     dnbInfo = dnbData.get(payerId);
+                    console.log(`✅ נמצא D&B לפי ח.פ. ${payerId}:`, {
+                        sectorRating: dnbInfo.sectorRating,
+                        industrySector: dnbInfo.industrySector,
+                        yearsActive: dnbInfo.yearsActive,
+                        employees: dnbInfo.employees,
+                        revenue: dnbInfo.revenue
+                    });
                 } else if (dnbData.has(`NAME_${payerName}`)) {
                     dnbInfo = dnbData.get(`NAME_${payerName}`);
+                    console.log(`✅ נמצא D&B לפי שם "${payerName}"`);
                 } else {
                     dnbInfo = Array.from(dnbData.values()).find(dnb => {
                         if (!dnb.companyName) return false;
                         return dnb.companyName.includes(payerName) || payerName.includes(dnb.companyName);
                     });
+                    if (dnbInfo) {
+                        console.log(`✅ נמצא D&B בחיפוש חלקי`);
+                    }
                 }
                 
                 if (!dnbInfo) {
                     dnbInfo = { 
                         sectorRating: 0, 
+                        industrySector: 0,
+                        yearsActive: 0,
+                        employees: 0,
+                        revenue: 0,
                         dnbScore: 25 
                     };
+                    console.log('❌ לא נמצא D&B - משתמש בברירת מחדל');
                 }
                 
-                const rating = calculateRating(payer, null, checkAmount, creditDays, dnbInfo);
-                displayResults(rating, payer, null, checkAmount, creditDays);
+                const rating = calculateRating(payer, client, checkAmount, creditDays, dnbInfo);
+                displayResults(rating, payer, client, checkAmount, creditDays);
                 
                 console.log('✅ חישוב דירוג הושלם בהצלחה');
             } catch (error) {
@@ -1898,18 +2308,22 @@
         function calculateRating(payer, client, checkAmount, creditDays, dnbInfo) {
             try {
                 const payerMetrics = payer.metrics;
+                const clientMetrics = client ? client.metrics : null;
                 
+                // חישוב פרמטרים - עם נתוני לקוח מלאים
                 const parameters = {
                     historyLength: Math.min(100, (payerMetrics.transactionCount / 10) * 30),
                     transactionCount: Math.min(100, (payerMetrics.transactionCount / 20) * 40),
                     averageAmount: Math.min(100, (payerMetrics.averageAmount / 20000) * 35),
-                    clientHistory: 0,
-                    clientReliability: 50,
-                    clientBehavior: 50,
-                    dnbRating: dnbInfo.dnbScore || 25,
+                    clientHistory: clientMetrics ? Math.min(100, (clientMetrics.transactionCount / 5) * 25) : 0,
+                    clientReliability: clientMetrics ? Math.max(0, clientMetrics.reliability) : 50,
+                    clientBehavior: 50, // יהיה מחושב בעתיד מנתוני התנהגות
+                    dnbRating: dnbInfo.dnbScore || Math.max(dnbInfo.sectorRating || 0, dnbInfo.industrySector || 0),
                     returnedChecks: Math.max(0, 100 - (payerMetrics.returnedChecks * 25)),
                     cancellations: Math.max(0, 100 - (payerMetrics.cancellations * 20))
                 };
+
+                console.log('📊 פרמטרים מחושבים:', parameters);
 
                 let totalScore = 0;
                 let normalizedParams = {};
@@ -1924,7 +2338,17 @@
                     normalizedParams[key] = normalized;
                     weightedParams[key] = weighted;
                     totalScore += weighted;
+                    
+                    console.log(`  ${param.name}: גולמי=${rawValue.toFixed(1)}, נורמל=${normalized.toFixed(1)}, משוקלל=${weighted.toFixed(2)}`);
                 });
+
+                console.log('🧮 ציון כולל לפני התאמות:', totalScore);
+
+                // התאמות נוספות על בסיס D&B
+                if (dnbInfo.sectorRating && dnbInfo.sectorRating < 20) {
+                    totalScore -= 15;
+                    console.log('⬇️ הפחתה בגלל ציון D&B נמוך');
+                }
 
                 totalScore = Math.max(0, Math.min(100, totalScore));
 
@@ -1933,7 +2357,7 @@
                 if (totalScore >= 85) {
                     letterRating = 'AAA';
                     riskLevel = 'סיכון נמוך מאוד';
-                    recommendation = 'מומלץ בחום לאישור';
+                    recommendation = 'מומלץ בחום לאישור - לקוח איכותי מעולה';
                 } else if (totalScore >= 75) {
                     letterRating = 'AA';
                     riskLevel = 'סיכון נמוך';
@@ -1991,8 +2415,32 @@
                         <div class="rating-label">ציון D&B</div>
                     </div>
                     <div class="rating-card">
+                        <div class="rating-score">${dnbInfo.sectorRating || 0}</div>
+                        <div class="rating-label">סקור</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${dnbInfo.industrySector || 0}</div>
+                        <div class="rating-label">דירוג ענף</div>
+                    </div>
+                    <div class="rating-card">
                         <div class="rating-score">${payer.metrics.transactionCount}</div>
                         <div class="rating-label">עסקאות חברה</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${client ? client.metrics.transactionCount : 0}</div>
+                        <div class="rating-label">עסקאות לקוח</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${dnbInfo.yearsActive || 0}</div>
+                        <div class="rating-label">שנות ותק</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${dnbInfo.employees || 0}</div>
+                        <div class="rating-label">מספר עובדים</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">₪${(dnbInfo.revenue || 0).toLocaleString()}</div>
+                        <div class="rating-label">מחזור שנתי</div>
                     </div>
                 `;
 
@@ -2018,7 +2466,7 @@
                     parametersDisplay.appendChild(row);
                 });
 
-                // המלצה
+                // המלצה מפורטת
                 const recommendation = document.getElementById('recommendation');
                 let recClass = 'excellent';
                 if (rating.totalScore < 75) recClass = 'good';
@@ -2031,13 +2479,16 @@
                     <h3>${rating.recommendation}</h3>
                     <p>רמת סיכון: ${rating.riskLevel}</p>
                     <p>עבור עסקה של ₪${checkAmount.toLocaleString()} ל-${creditDays} ימים</p>
+                    ${client ? `<p>לקוח: ${client.name} (אמינות: ${Math.max(0, client.metrics.reliability)}% | ${client.metrics.transactionCount} עסקאות קודמות)</p>` : ''}
+                    <p>חברה: ${payer.name} (${payer.metrics.transactionCount} עסקאות | ממוצע: ₪${payer.metrics.averageAmount.toLocaleString()})</p>
+                    ${dnbInfo.companyName ? `<p>D&B: ${dnbInfo.companyName} | ${dnbInfo.yearsActive} שנות ותק | ${dnbInfo.employees} עובדים | ₪${(dnbInfo.revenue || 0).toLocaleString()} מחזור</p>` : ''}
                 `;
 
                 // הצגת התוצאות
                 document.getElementById('resultsSection').style.display = 'block';
                 document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
 
-                console.log('✅ תוצאות הוצגו בהצלחה');
+                console.log('✅ תוצאות מלאות הוצגו בהצלחה');
             } catch (error) {
                 console.error('❌ שגיאה בהצגת תוצאות:', error);
                 throw new Error('שגיאה בהצגת התוצאות: ' + error.message);
