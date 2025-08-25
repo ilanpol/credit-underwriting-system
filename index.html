@@ -1259,27 +1259,44 @@
 
         function processCreditFile(workbook) {
             try {
-                // חיפוש הטבלה scoreM_N
-                const targetSheetName = workbook.SheetNames.find(name => 
+                console.log('🏢 מתחיל עיבוד קובץ D&B...');
+                console.log('גיליונות זמינים:', workbook.SheetNames);
+                
+                // חיפוש הטבלה scoreM_N או גיליון ראשי
+                let targetSheetName = workbook.SheetNames.find(name => 
                     name.toLowerCase().includes('scorem') || 
                     name.toLowerCase().includes('score') ||
+                    name.toLowerCase().includes('חיתום') ||
+                    name.toLowerCase().includes('דירוג') ||
                     name === 'scoreM_N'
-                ) || workbook.SheetNames[0]; // אם לא מוצא, קח את הראשון
+                );
+                
+                if (!targetSheetName) {
+                    targetSheetName = workbook.SheetNames[0]; // קח את הראשון
+                    console.log('⚠️ לא נמצא גיליון ייעודי, משתמש בראשון:', targetSheetName);
+                }
                 
                 console.log(`🏢 מעבד קובץ D&B - גיליון: ${targetSheetName}`);
                 
                 const worksheet = workbook.Sheets[targetSheetName];
                 const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                 
+                console.log('📊 נתוני D&B גולמיים (5 שורות ראשונות):');
+                for (let i = 0; i < Math.min(5, jsonData.length); i++) {
+                    console.log(`שורה ${i + 1}:`, jsonData[i]);
+                }
+                
                 if (jsonData.length > 1) {
                     excelData.credit = jsonData;
                     processDnbData();
                     console.log(`🏢 טבלת D&B ${targetSheetName}: ${jsonData.length} רשומות`);
                 } else {
-                    console.warn(`⚠️ טבלת D&B ${targetSheetName} ריקה`);
+                    console.warn(`⚠️ טבלת D&B ${targetSheetName} ריקה או לא תקינה`);
+                    showNotification('קובץ D&B נראה ריק או לא תקין', 'warning');
                 }
             } catch (error) {
                 console.error('❌ שגיאה בעיבוד קובץ D&B:', error);
+                showNotification('שגיאה בעיבוד קובץ D&B: ' + error.message, 'error');
                 throw new Error('שגיאה בעיבוד קובץ חיתום האשראי (D&B)');
             }
         }
