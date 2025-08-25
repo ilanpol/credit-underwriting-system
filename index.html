@@ -8,71 +8,38 @@ function processCreditFile(workbook) {
                     throw new Error('לא נמצאו גיליונות בקובץ');
                 }
                 
-                // חיפוש ספציפי לגיליון "סקור"
+                // חיפוש ספציפי לגיליון "scoreM_N"
                 let targetSheetName = null;
                 
-                // חיפוש ראשון: גיליון בשם "סקור"
+                // חיפוש ראשון: גיליון בשם "scoreM_N" (בדיוק)
                 targetSheetName = workbook.SheetNames.find(name => 
-                    name && (
-                        name === 'סקור' || 
-                        name.includes('סקור') ||
-                        name.toLowerCase() === 'scor' ||
-                        name.toLowerCase().includes('scor')
-                    )
+                    name && name === 'scoreM_N'
                 );
                 
                 if (targetSheetName) {
-                    console.log(`✅ נמצא גיליון "סקור": ${targetSheetName}`);
+                    console.log(`✅ נמצא גיליון "scoreM_N": ${targetSheetName}`);
                 } else {
-                    // אם לא מצאנו, חפש טבלה scoreM_N בכל גיליון
-                    console.log('🔍 לא נמצא גיליון "סקור", מחפש טבלה scoreM_N...');
+                    // חיפוש שני: גיליון שמכיל "scoreM_N"
+                    targetSheetName = workbook.SheetNames.find(name => 
+                        name && name.toLowerCase().includes('scorem')
+                    );
                     
-                    for (let sheetName of workbook.SheetNames) {
-                        try {
-                            if (!sheetName) continue;
-                            
-                            console.log(`🔍 בודק גיליון: "${sheetName}"`);
-                            const worksheet = workbook.Sheets[sheetName];
-                            
-                            if (!worksheet) {
-                                console.log(`⚠️ גיליון "${sheetName}" ריק`);
-                                continue;
-                            }
-                            
-                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                            
-                            if (!jsonData || jsonData.length === 0) {
-                                console.log(`⚠️ גיליון "${sheetName}" ללא נתונים`);
-                                continue;
-                            }
-                            
-                            // בדיקה אם יש טבלה scoreM_N או כותרות מתאימות בגיליון
-                            const hasScoreTable = jsonData.some(row => 
-                                row && row.some(cell => 
-                                    cell && (
-                                        cell.toString().includes('scoreM_N') ||
-                                        cell.toString().includes('שם מושך') ||
-                                        cell.toString().includes('סקור')
-                                    )
-                                )
-                            );
-                            
-                            if (hasScoreTable) {
-                                targetSheetName = sheetName;
-                                console.log(`✅ נמצאה טבלת נתונים מתאימה בגיליון: ${sheetName}`);
-                                break;
-                            }
-                        } catch (sheetError) {
-                            console.error(`❌ שגיאה בבדיקת גיליון "${sheetName}":`, sheetError);
-                            continue;
+                    if (targetSheetName) {
+                        console.log(`✅ נמצא גיליון דומה ל-scoreM_N: ${targetSheetName}`);
+                    } else {
+                        // חיפוש שלישי: גיליון שמכיל "score"
+                        targetSheetName = workbook.SheetNames.find(name => 
+                            name && name.toLowerCase().includes('score')
+                        );
+                        
+                        if (targetSheetName) {
+                            console.log(`✅ נמצא גיליון עם "score": ${targetSheetName}`);
+                        } else {
+                            // אם לא מצאנו, קח את הגיליון הראשון
+                            targetSheetName = workbook.SheetNames[0];
+                            console.log(`⚠️ לא נמצא גיליון מתאים, משתמש בראשון: "${targetSheetName}"`);
                         }
                     }
-                }
-                
-                // אם עדיין לא מצאנו, קח את הגיליון הראשון
-                if (!targetSheetName) {
-                    targetSheetName = workbook.SheetNames[0];
-                    console.log(`⚠️ לא נמצא גיליון מתאים, משתמש בראשון: "${targetSheetName}"`);
                 }
                 
                 // בדיקה שיש לנו גיליון תקין
@@ -94,73 +61,96 @@ function processCreditFile(workbook) {
                 }
                 
                 console.log(`📊 נתוני גיליון "${targetSheetName}" (${jsonData.length} שורות סה"כ):`);
-                console.log('🔍 מציג 10 שורות ראשונות:');
-                for (let i = 0; i < Math.min(10, jsonData.length); i++) {
+                console.log('🔍 מציג 15 שורות ראשונות:');
+                for (let i = 0; i < Math.min(15, jsonData.length); i++) {
                     console.log(`שורה ${i + 1}:`, jsonData[i]);
                 }
                 
-                // חיפוש תחילת הטבלה scoreM_N
+                // חיפוש תחילת הטבלה - הנתונים שלך מתחילים מ-K1
                 let tableStartRow = -1;
                 
-                console.log('🔍 מחפש שורת כותרות...');
+                console.log('🔍 מחפש שורת כותרות עם הכותרות שלך...');
                 
-                // חיפוש שורה שמכילה את הכותרות הספציפיות
+                // חיפוש שורה שמכילה את הכותרות הספציפיות שלך
                 for (let i = 0; i < jsonData.length; i++) {
                     const row = jsonData[i];
-                    if (!row || row.length < 5) continue;
+                    if (!row || row.length < 11) continue; // צריך לפחות 11 עמודות K-U
                     
-                    // בדיקה אם השורה מכילה את הכותרות שאנחנו מצפים להן
-                    const hasPayerName = row.some(cell => cell && cell.toString().includes('שם מושך'));
-                    const hasPayerId = row.some(cell => cell && cell.toString().includes('מס\' ח.פ'));
-                    const hasScore = row.some(cell => cell && cell.toString().includes('סקור'));
+                    // בדיקה מדויקת של הכותרות שלך
+                    const hasPayerName = row.some(cell => cell && cell.toString().trim() === 'שם מושך');
+                    const hasPayerId = row.some(cell => cell && cell.toString().trim() === 'מס\' ח.פ');
+                    const hasScore1 = row.some(cell => cell && cell.toString().trim() === 'סקור');
+                    const hasScore2 = row.some(cell => cell && cell.toString().trim() === 'סקור ענף');
+                    const hasYears = row.some(cell => cell && cell.toString().trim() === 'שנות ותק');
+                    const hasEmployees = row.some(cell => cell && cell.toString().trim() === 'מס\' מועסקים');
+                    const hasRevenue = row.some(cell => cell && cell.toString().trim() === 'מחזור בא\' ₪');
                     
-                    console.log(`שורה ${i + 1} - שם מושך: ${hasPayerName}, ח.פ: ${hasPayerId}, סקור: ${hasScore}`);
+                    console.log(`שורה ${i + 1} - כותרות נמצאו: שם=${hasPayerName}, ח.פ=${hasPayerId}, סקור=${hasScore1}, ענף=${hasScore2}, ותק=${hasYears}, עובדים=${hasEmployees}, מחזור=${hasRevenue}`);
                     
-                    if (hasPayerName && hasPayerId && hasScore) {
+                    // אם יש לפחות 5 מהכותרות העיקריות
+                    const matchCount = [hasPayerName, hasPayerId, hasScore1, hasScore2, hasYears, hasEmployees, hasRevenue].filter(Boolean).length;
+                    if (matchCount >= 5) {
                         tableStartRow = i;
-                        console.log(`✅ נמצאת תחילת טבלת scoreM_N בשורה: ${i + 1}`);
-                        console.log(`📋 כותרות טבלה:`, row);
+                        console.log(`✅ נמצאת שורת כותרות בשורה: ${i + 1} (${matchCount}/7 כותרות)`);
+                        console.log(`📋 כותרות מלאות:`, row);
                         break;
                     }
                 }
                 
-                // אם לא מצאנו כותרות מתאימות, נחפש לפי דפוס אחר
+                // אם לא מצאנו כותרות מדויקות, נחפש כותרות חלקיות
                 if (tableStartRow === -1) {
-                    console.log('🔍 לא נמצאו כותרות מדויקות, מחפש דפוס חלופי...');
+                    console.log('🔍 לא נמצאו כותרות מדויקות, מחפש כותרות חלקיות...');
                     
                     for (let i = 0; i < Math.min(20, jsonData.length); i++) {
                         const row = jsonData[i];
                         if (!row || row.length < 8) continue;
                         
-                        // חיפוש שורה עם הרבה טקסט (סימן לכותרות)
-                        let textCells = 0;
-                        let hebrewCells = 0;
-                        let nonEmptyCells = 0;
+                        // בדיקה חלקית
+                        const hasNamePartial = row.some(cell => cell && cell.toString().includes('מושך'));
+                        const hasIdPartial = row.some(cell => cell && cell.toString().includes('ח.פ'));
+                        const hasScorePartial = row.some(cell => cell && cell.toString().includes('סקור'));
+                        const hasYearsPartial = row.some(cell => cell && cell.toString().includes('ותק'));
+                        const hasRevenuePartial = row.some(cell => cell && cell.toString().includes('מחזור'));
                         
-                        row.forEach(cell => {
-                            if (cell && cell.toString().trim()) {
-                                nonEmptyCells++;
-                                if (isNaN(cell) || cell.toString().includes(' ')) {
-                                    textCells++;
-                                }
-                                if (/[\u0590-\u05FF]/.test(cell.toString())) {
-                                    hebrewCells++;
-                                }
-                            }
-                        });
+                        console.log(`שורה ${i + 1} - כותרות חלקיות: מושך=${hasNamePartial}, ח.פ=${hasIdPartial}, סקור=${hasScorePartial}, ותק=${hasYearsPartial}, מחזור=${hasRevenuePartial}`);
                         
-                        console.log(`שורה ${i + 1} - תאים מלאים: ${nonEmptyCells}, טקסט: ${textCells}, עברית: ${hebrewCells}`);
-                        
-                        if (textCells >= 6 && hebrewCells >= 4 && nonEmptyCells >= 8) {
+                        if (hasNamePartial && hasIdPartial && hasScorePartial) {
                             tableStartRow = i;
-                            console.log(`📋 משתמש בשורה ${i + 1} ככותרות (דפוס טקסט עברי):`, row);
+                            console.log(`📋 נמצאו כותרות חלקיות בשורה ${i + 1}:`, row);
                             break;
                         }
                     }
                 }
                 
+                // אם עדיין לא מצאנו, בדוק אם השורה הראשונה היא כותרות
                 if (tableStartRow === -1) {
-                    // אם עדיין לא מצאנו, קח את השורה הראשונה
+                    console.log('🔍 בודק אם השורה הראשונה היא כותרות...');
+                    const firstRow = jsonData[0];
+                    if (firstRow && firstRow.length >= 8) {
+                        // בדוק אם השורה הראשונה מכילה בעיקר טקסט
+                        let textCells = 0;
+                        let totalCells = 0;
+                        
+                        firstRow.forEach(cell => {
+                            if (cell && cell.toString().trim()) {
+                                totalCells++;
+                                if (isNaN(cell) || cell.toString().includes(' ') || /[א-ת]/.test(cell.toString())) {
+                                    textCells++;
+                                }
+                            }
+                        });
+                        
+                        console.log(`שורה ראשונה - תאי טקסט: ${textCells}/${totalCells}`);
+                        
+                        if (textCells >= totalCells * 0.7) { // אם יש לפחות 70% טקסט
+                            tableStartRow = 0;
+                            console.log(`📋 משתמש בשורה הראשונה ככותרות (יחס טקסט גבוה):`, firstRow);
+                        }
+                    }
+                }
+                
+                if (tableStartRow === -1) {
+                    // כאפשרות אחרונה, קח את השורה הראשונה
                     tableStartRow = 0;
                     console.log('⚠️ לא נמצאו כותרות ברורות, משתמש בשורה הראשונה');
                 }
@@ -171,27 +161,30 @@ function processCreditFile(workbook) {
                 const tableData = jsonData.slice(tableStartRow);
                 
                 if (tableData.length <= 1) {
-                    throw new Error(`טבלת scoreM_N בגיליון "${targetSheetName}" ריקה או מכילה רק כותרות`);
+                    throw new Error(`טבלה בגיליון "${targetSheetName}" ריקה או מכילה רק כותרות`);
                 }
                 
                 console.log(`📊 נתוני טבלה לעיבוד: ${tableData.length} שורות (כולל כותרות)`);
+                console.log('📋 כותרות שיעובדו:', tableData[0]);
+                console.log('📋 דוגמה לנתונים (שורה 2):', tableData[1]);
                 
                 excelData.credit = tableData;
                 processDnbData();
                 
                 const dataRowsCount = tableData.length - 1; // מינוס שורת הכותרות
                 console.log(`🏢 הושלם עיבוד טבלת scoreM_N מגיליון "${targetSheetName}": ${dataRowsCount} חברות`);
-                showNotification(`נמצאה טבלת D&B בגיליון "${targetSheetName}" - ${dataRowsCount} חברות`, 'success');
+                showNotification(`✅ נטענה טבלת D&B מגיליון "${targetSheetName}" - ${dataRowsCount} חברות`, 'success');
                 
             } catch (error) {
                 console.error('❌ שגיאה בעיבוד קובץ D&B:', error);
-                showNotification('שגיאה בעיבוד קובץ D&B: ' + error.message, 'error');
+                showNotification('❌ שגיאה בעיבוד קובץ D&B: ' + error.message, 'error');
                 
                 // הצגת מידע נוסף לדיבוג
                 console.log('🔧 מידע נוסף לדיבוג:');
-                console.log('- גיליונות זמינים:', workbook.SheetNames);
+                console.log('- שם הקובץ צריך להיות: "סקור" עם גיליון "scoreM_N"');
+                console.log('- גיליונות זמינים בקובץ:', workbook.SheetNames);
                 if (workbook.SheetNames && workbook.SheetNames.length > 0) {
-                    console.log('- גיליון ראשון:', workbook.SheetNames[0]);
+                    console.log('- גיליון ראשון בקובץ:', workbook.SheetNames[0]);
                 }
                 
                 throw error;
