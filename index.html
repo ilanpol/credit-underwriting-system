@@ -1,6 +1,55 @@
-function processCreditFile(workbook) {
+// פונקציית דיבוג מתקדמת לקובץ D&B
+        function debugDnbFile(workbook) {
+            console.log('🔧 === דיבוג מתקדם לקובץ D&B ===');
+            
+            // הצגת כל הגיליונות
+            console.log('📊 גיליונות בקובץ:', workbook.SheetNames);
+            
+            workbook.SheetNames.forEach((sheetName, index) => {
+                console.log(`\n📋 גיליון ${index + 1}: "${sheetName}"`);
+                
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                console.log(`   - מספר שורות: ${jsonData.length}`);
+                
+                // הצגת 3 השורות הראשונות
+                for (let i = 0; i < Math.min(3, jsonData.length); i++) {
+                    console.log(`   שורה ${i + 1}:`, jsonData[i]);
+                    
+                    // חיפוש עמודת "סקור" בכל שורה
+                    if (jsonData[i]) {
+                        const scoreIndex = jsonData[i].findIndex(cell => 
+                            cell && cell.toString().trim() === 'סקור'
+                        );
+                        if (scoreIndex >= 0) {
+                            console.log(`   🎯 נמצאה עמודת "סקור" בעמודה ${scoreIndex + 1} (${String.fromCharCode(65 + scoreIndex)})`);
+                            
+                            // הצגת הנתונים באותה עמודה מהשורות הבאות
+                            for (let j = i + 1; j < Math.min(i + 4, jsonData.length); j++) {
+                                const scoreValue = jsonData[j] ? jsonData[j][scoreIndex] : 'undefined';
+                                console.log(`   ערך סקור בשורה ${j + 1}:`, scoreValue, `(סוג: ${typeof scoreValue})`);
+                            }
+                        }
+                    }
+                }
+                
+                // בדיקה אם זה הגיליון הנכון
+                if (sheetName.toLowerCase().includes('scorem') || sheetName === 'scoreM_N') {
+                    console.log(`   ✅ זה נראה כמו הגיליון הנכון!`);
+                }
+            });
+            
+            console.log('🔧 === סיום דיבוג ===\n');
+        }
+
+        function processCreditFile(workbook) {
             try {
                 console.log('🏢 מתחיל עיבוד קובץ D&B...');
+                
+                // הפעלת דיבוג מתקדם
+                debugDnbFile(workbook);
+                
                 console.log('📊 גיליונות זמינים בקובץ:', workbook.SheetNames);
                 
                 // בדיקה בסיסית שיש גיליונות
@@ -83,8 +132,17 @@ function processCreditFile(workbook) {
                     
                     if (scoreColumnIndex >= 0) {
                         tableStartRow = i;
-                        console.log(`✅ נמצאת שורת כותרות בשורה ${i + 1} - עמודת "סקור" באינדקס ${scoreColumnIndex}`);
+                        console.log(`✅ נמצאת שורת כותרות בשורה ${i + 1} - עמודת "סקור" באינדקס ${scoreColumnIndex} (עמודה ${String.fromCharCode(65 + scoreColumnIndex)})`);
                         console.log(`📋 כותרות מלאות:`, row);
+                        
+                        // הצגת דוגמה מהנתונים מתחת לכותרת
+                        console.log('🔍 דוגמאות ערכי סקור:');
+                        for (let j = i + 1; j < Math.min(i + 4, jsonData.length); j++) {
+                            const scoreValue = jsonData[j] ? jsonData[j][scoreColumnIndex] : 'undefined';
+                            const companyName = jsonData[j] ? jsonData[j][0] : 'unknown'; // נניח שהשם בעמודה הראשונה
+                            console.log(`  שורה ${j + 1}: חברה="${companyName}", סקור="${scoreValue}" (סוג: ${typeof scoreValue})`);
+                        }
+                        
                         break;
                     }
                     
@@ -161,9 +219,9 @@ function processCreditFile(workbook) {
                 
                 if (scoreColumnIndex === -1) {
                     console.warn('⚠️ לא נמצאה עמודת "סקור" בכותרות');
-                    console.log('🔍 כותרות זמינות:', headers);
+                    console.log('🔍 כותרות זמינות:', headers.map((h, i) => `${String.fromCharCode(65 + i)}:${h}`));
                 } else {
-                    console.log(`✅ עמודת "סקור" נמצאה באינדקס ${scoreColumnIndex}`);
+                    console.log(`✅ עמודת "סקור" נמצאה באינדקס ${scoreColumnIndex} (עמודה ${String.fromCharCode(65 + scoreColumnIndex)})`);
                 }
                 
                 excelData.credit = tableData;
@@ -190,7 +248,7 @@ function processCreditFile(workbook) {
                         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                         const firstSheetData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
                         if (firstSheetData[0]) {
-                            console.log('- כותרות בגיליון הראשון:', firstSheetData[0]);
+                            console.log('- כותרות בגיליון הראשון:', firstSheetData[0].map((h, i) => `${String.fromCharCode(65 + i)}:${h}`));
                         }
                     } catch (debugError) {
                         console.log('- לא ניתן לקרוא את הגיליון הראשון');
