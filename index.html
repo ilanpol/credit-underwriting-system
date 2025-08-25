@@ -2641,9 +2641,21 @@ function processCreditFile(workbook) {
                     creditDays
                 });
 
-                if (!payerId || !payersMap.has(payerId)) {
-                    showNotification('חברה מושכת לא נמצאה בנתונים או ח.פ. ריק', 'warning');
-                    console.warn('❌ מושך לא נמצא:', { payerId, hasInMap: payersMap.has(payerId) });
+                if (!payerId) {
+                    showNotification('נא להזין ח.פ. של החברה המושכת', 'warning');
+                    console.warn('❌ חסר ח.פ. מושך');
+                    return;
+                }
+
+                if (!payersMap.has(payerId)) {
+                    showNotification('חברה מושכת לא נמצאה בקובץ העסקאות הראשי', 'warning');
+                    console.warn('❌ מושך לא נמצא במפת עסקאות:', { payerId, hasInMap: payersMap.has(payerId) });
+                    
+                    // הצגת מושכים זמינים לדיבוג
+                    console.log('🔍 מושכים זמינים במערכת (10 ראשונים):');
+                    Array.from(payersMap.entries()).slice(0, 10).forEach(([id, payer]) => {
+                        console.log(`  ${id}: ${payer.name}`);
+                    });
                     return;
                 }
 
@@ -2656,24 +2668,126 @@ function processCreditFile(workbook) {
                 const payer = payersMap.get(payerId);
                 const client = clientId && clientsMap.has(clientId) ? clientsMap.get(clientId) : null;
                 
-                console.log('📊 נתוני מושך:', {
+                console.log('📊 נתוני מושך מהמערכת:', {
                     name: payer.name,
+                    id: payer.id,
                     transactions: payer.metrics.transactionCount,
                     totalAmount: payer.metrics.totalAmount,
-                    returned: payer.metrics.returnedChecks
+                    returned: payer.metrics.returnedChecks,
+                    cancelled: payer.metrics.cancellations
                 });
                 
                 if (client) {
-                    console.log('👤 נתוני לקוח:', {
+                    console.log('👤 נתוני לקוח מהמערכת:', {
                         name: client.name,
+                        id: client.id,
                         transactions: client.metrics.transactionCount,
-                        reliability: client.metrics.reliability
+                        reliability: client.metrics.reliability,
+                        returned: client.metrics.returnedCount,
+                        cancelled: client.metrics.cancelledCount
                     });
                 } else {
-                    console.log('👤 לא נמצא לקוח במערכת');
+                    console.log('👤 לא נמצא לקוח במערכת או לא הוזן ח.פ. לקוח');
                 }
                 
-                const rating = calculateRating(payer, client, checkAmount, creditDays);
+                // חיפוש נתוני D&B - עם לוגים מפורטים
+                console.log('🏢 מחפש נתוני D&B...');
+                let dnbInfo = null;
+                
+                // חיפוש ראשון לפי ח.פ.
+                if (dnbData.has(payerId)) {
+                    dnbInfo = dnbData.get(payerId);
+                    console.log(`✅ נמצא D&B לפי ח.פ. ${payerId}:`, dnbInfo);
+                } else {
+                    console.log(`❌ לא נמצא D&B לפי ח.פ. ${payerId}`);
+                }
+                
+                // חיפוש שני לפי שם חברה
+                if (!dnbInfo && payerName) {
+                    const nameKey = `NAME_${payerName}`;
+                    if (dnbData.has(nameKey)) {
+                        dnbInfo = dnbData.get(nameKey);
+                        console.log(`✅ נמצא D&B לפי שם "${payerName}":`, dnbInfo);
+                    } else {
+                        console.log(`❌ לא נמצא D&B לפי שם "${payerName}"`);
+                    }
+                }
+                
+                // חיפוש שלישי - חיפוש חלקי בשם
+                if (!dnbInfo && payerName) {
+                    console.log('🔍 מנסה חיפוש חלקי בשמות D&B...');
+                    const foundDnb = Array.from(dnbData.values()).find(dnb => {
+                        if (!dnb.companyName) return false;
+                        
+                        // חיפוש מדויק
+                        if (dnb.companyName === payerName) {
+                            console.log(`🎯 התאמה מדויקת: "${payerName}" = "${dnb.companyName}"`);
+                            return true;
+                        }
+                        
+                        // חיפוש חלקי
+                        const payerWords = payerName.toLowerCase().split(' ').filter(w => w.length > 2);
+                        const dnbWords = dnb.companyName.toLowerCase().split(' ').filter(w => w.length > 2);
+                        
+                        const commonWords = payerWords.filter(word => 
+                            dnbWords.some(dnbWord => dnbWord.includes(word) || word.includes(dnbWord))
+                        );
+                        
+                        if (commonWords.length >= Math.min(2, payerWords.length)) {
+                            console.log(`🔍 התאמה חלקית: "${payerName}" ~ "${dnb.companyName}" (${commonWords.length} מילים משותפות: ${commonWords.join(', ')})`);
+                            return true;
+                        }
+                        
+                        return false;
+                    });
+                    
+                    if (foundDnb) {
+                        dnbInfo = foundDnb;
+                        console.log(`✅ נמצא D&B בחיפוש חלקי:`, dnbInfo);
+                    }
+                }
+                
+                // אם לא מצאנו - הצגת דוגמאות מה-D&B
+                if (!dnbInfo) {
+                    console.log('❌ לא נמצא D&B עבור החברה');
+                    console.log('🔍 דוגמאות מחברות ב-D&B (10 ראשונות):');
+                    const samples = Array.from(dnbData.entries()).slice(0, 10);
+                    samples.forEach(([key, dnb]) => {
+                        if (!key.startsWith('NAME_')) {
+                            console.log(`  ח.פ. ${key}: ${dnb.companyName} (ציון: ${dnb.sectorRating}/${dnb.industrySector})`);
+                        }
+                    });
+                    
+                    // צור ברירת מחדל
+                    dnbInfo = { 
+                        companyId: payerId,
+                        companyName: payerName,
+                        sectorRating: 0, 
+                        industrySector: 0,
+                        yearsActive: 0,
+                        employees: 0,
+                        revenue: 0,
+                        currentObligation: 0,
+                        totalTransactions: 0,
+                        dnbScore: 25 // ציון נמוך כברירת מחדל
+                    };
+                    console.log(`⚠️ משתמש בנתוני D&B ברירת מחדל (ציון נמוך):`, dnbInfo);
+                } else {
+                    // וידוא שהציונים נכונים
+                    console.log(`🏢 נתוני D&B אמיתיים לחברה "${payerName}":`, {
+                        companyName: dnbInfo.companyName,
+                        companyId: dnbInfo.companyId,
+                        sectorRating: dnbInfo.sectorRating,
+                        industrySector: dnbInfo.industrySector,
+                        yearsActive: dnbInfo.yearsActive,
+                        employees: dnbInfo.employees,
+                        revenue: dnbInfo.revenue,
+                        currentObligation: dnbInfo.currentObligation,
+                        calculatedScore: dnbInfo.dnbScore
+                    });
+                }
+                
+                const rating = calculateRating(payer, client, checkAmount, creditDays, dnbInfo);
                 displayResults(rating, payer, client, checkAmount, creditDays);
                 
                 console.log('✅ חישוב דירוג הושלם בהצלחה');
@@ -2683,74 +2797,16 @@ function processCreditFile(workbook) {
             }
         }
 
-        function calculateRating(payer, client, checkAmount, creditDays) {
+        function calculateRating(payer, client, checkAmount, creditDays, dnbInfo) {
             try {
-                console.log('🔢 מתחיל חישוב פרמטרי דירוג...');
+                console.log('🔢 מתחיל חישוב פרמטרי דירוג עם נתונים אמיתיים...');
                 
                 const payerMetrics = payer.metrics;
                 const clientMetrics = client ? client.metrics : null;
                 
-                // חיפוש נתוני D&B - חיפוש משולב
-                let dnbInfo = null;
-                
-                // חיפוש ראשון לפי ח.פ.
-                if (dnbData.has(payer.id)) {
-                    dnbInfo = dnbData.get(payer.id);
-                    console.log(`🏢 מצא D&B לפי ח.פ.: ${payer.id}`);
-                }
-                
-                // חיפוש שני לפי שם חברה
-                if (!dnbInfo) {
-                    const nameKey = `NAME_${payer.name}`;
-                    if (dnbData.has(nameKey)) {
-                        dnbInfo = dnbData.get(nameKey);
-                        console.log(`🏢 מצא D&B לפי שם: ${payer.name}`);
-                    }
-                }
-                
-                // חיפוש שלישי - חיפוש חלקי בשם
-                if (!dnbInfo) {
-                    const foundDnb = Array.from(dnbData.values()).find(dnb => {
-                        if (!dnb.companyName) return false;
-                        
-                        const payerWords = payer.name.toLowerCase().split(' ').filter(w => w.length > 2);
-                        const dnbWords = dnb.companyName.toLowerCase().split(' ').filter(w => w.length > 2);
-                        
-                        // בדיקה אם יש לפחות 2 מילים משותפות
-                        const commonWords = payerWords.filter(word => 
-                            dnbWords.some(dnbWord => dnbWord.includes(word) || word.includes(dnbWord))
-                        );
-                        
-                        return commonWords.length >= Math.min(2, payerWords.length);
-                    });
-                    
-                    if (foundDnb) {
-                        dnbInfo = foundDnb;
-                        console.log(`🏢 מצא D&B בחיפוש חלקי: "${payer.name}" -> "${foundDnb.companyName}"`);
-                    }
-                }
-                
-                // אם לא מצאנו - צור ברירת מחדל
-                if (!dnbInfo) {
-                    dnbInfo = { 
-                        dnbScore: 50, 
-                        rating: 0, 
-                        riskLevel: 50,
-                        companyName: '',
-                        yearsActive: 0,
-                        employees: 0,
-                        revenue: 0,
-                        obligation: 0
-                    };
-                    console.log(`⚠️ לא נמצא D&B עבור: ${payer.name} (${payer.id}) - משתמש ברירת מחדל`);
-                } else {
-                    console.log(`✅ נתוני D&B למושך ${payer.name}:`, {
-                        companyName: dnbInfo.companyName,
-                        dnbScore: dnbInfo.dnbScore,
-                        yearsActive: dnbInfo.yearsActive,
-                        employees: dnbInfo.employees,
-                        revenue: dnbInfo.revenue
-                    });
+                console.log('📊 מטריקות מושך לחישוב:', payerMetrics);
+                if (clientMetrics) {
+                    console.log('👤 מטריקות לקוח לחישוב:', clientMetrics);
                 }
                 
                 // קבלת נתוני התנהגות לקוח
@@ -2759,10 +2815,10 @@ function processCreditFile(workbook) {
                     : { behaviorScore: 50, totals: { transactionCount: 0 } };
                 
                 if (clientBehaviorInfo.totals.transactionCount > 0) {
-                    console.log(`📈 נמצאו נתוני התנהגות לקוח ${client.name}: ${clientBehaviorInfo.behaviorScore}`);
+                    console.log(`📈 נתוני התנהגות לקוח ${client.name}:`, clientBehaviorInfo);
                 }
                 
-                // חישוב פרמטרים משולבים
+                // חישוב פרמטרים - עם שקלול נכון
                 const parameters = {
                     historyLength: Math.min(100, (payerMetrics.transactionCount / 10) * 30),
                     transactionCount: Math.min(100, (payerMetrics.transactionCount / 20) * 40),
@@ -2770,14 +2826,28 @@ function processCreditFile(workbook) {
                     clientHistory: clientMetrics ? Math.min(100, (clientMetrics.transactionCount / 5) * 25) : 0,
                     clientReliability: clientMetrics ? Math.max(0, clientMetrics.reliability) : 50,
                     clientBehavior: clientBehaviorInfo.behaviorScore,
-                    dnbRating: dnbInfo.dnbScore, // השתמש בציון המחושב
+                    dnbRating: dnbInfo.dnbScore || Math.max(dnbInfo.sectorRating || 0, dnbInfo.industrySector || 0),
                     returnedChecks: Math.max(0, 100 - (payerMetrics.returnedChecks * 25)),
                     cancellations: Math.max(0, 100 - (payerMetrics.cancellations * 20))
                 };
 
-                console.log('📊 פרמטרים מחושבים:', parameters);
+                console.log('📊 פרמטרים גולמיים מחושבים:', parameters);
+                
+                // הצגת השפעת שיקים חוזרים וביטולים
+                if (payerMetrics.returnedChecks > 0 || payerMetrics.cancellations > 0) {
+                    console.log('⚠️ זוהו בעיות איכות:');
+                    console.log(`  - שיקים חוזרים: ${payerMetrics.returnedChecks} (ציון: ${parameters.returnedChecks})`);
+                    console.log(`  - ביטולים: ${payerMetrics.cancellations} (ציון: ${parameters.cancellations})`);
+                }
+                
+                if (clientMetrics && (clientMetrics.returnedCount > 0 || clientMetrics.cancelledCount > 0)) {
+                    console.log('⚠️ זוהו בעיות לקוח:');
+                    console.log(`  - שיקים חוזרים של הלקוח: ${clientMetrics.returnedCount}`);
+                    console.log(`  - ביטולים של הלקוח: ${clientMetrics.cancelledCount}`);
+                    console.log(`  - אמינות לקוח: ${clientMetrics.reliability}%`);
+                }
 
-                // חישוב ציון משוקלל
+                // חישוב ציון משוקלל עם הדגשת בעיות איכות
                 let totalScore = 0;
                 let normalizedParams = {};
                 let weightedParams = {};
@@ -2791,9 +2861,25 @@ function processCreditFile(workbook) {
                     normalizedParams[key] = normalized;
                     weightedParams[key] = weighted;
                     totalScore += weighted;
+                    
+                    console.log(`  ${param.name}: גולמי=${rawValue.toFixed(1)}, נורמל=${normalized.toFixed(1)}, משוקלל=${weighted.toFixed(2)} (משקל=${(param.weight*100).toFixed(1)}%)`);
                 });
 
-                console.log('🧮 ציון כולל מחושב:', totalScore);
+                console.log('🧮 ציון כולל לפני התאמות:', totalScore);
+
+                // התאמות נוספות על בסיס D&B נמוך
+                if (dnbInfo.sectorRating && dnbInfo.sectorRating < 20) {
+                    totalScore -= 15;
+                    console.log('⬇️ הפחתה בגלל ציון D&B נמוך:', -15);
+                }
+                
+                if (dnbInfo.industrySector && dnbInfo.industrySector < 20) {
+                    totalScore -= 10;
+                    console.log('⬇️ הפחתה בגלל ציון ענף נמוך:', -10);
+                }
+
+                totalScore = Math.max(0, Math.min(100, totalScore));
+                console.log('🧮 ציון כולל סופי:', totalScore);
 
                 // קביעת דירוג אותיות משולב
                 let letterRating, riskLevel, recommendation;
@@ -2844,10 +2930,13 @@ function processCreditFile(workbook) {
                     clientBehaviorInfo
                 };
 
-                console.log('✅ דירוג מחושב:', {
+                console.log('✅ דירוג סופי מחושב:', {
                     score: result.totalScore,
                     rating: result.letterRating,
-                    risk: result.riskLevel
+                    risk: result.riskLevel,
+                    dnbUsed: `${dnbInfo.sectorRating}/${dnbInfo.industrySector}`,
+                    returnedChecks: payerMetrics.returnedChecks,
+                    cancellations: payerMetrics.cancellations
                 });
 
                 return result;
