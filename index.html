@@ -678,13 +678,24 @@
 
             <div class="demo-accounts">
                 <h4>חשבונות לבדיקה:</h4>
-                <div class="demo-account" onclick="setLogin('admin', 'admin123')">
+                <div class="demo-account" onclick="quickLogin('admin', 'admin123')">
                     <span><strong>admin</strong> - מנהל מערכת</span>
                     <span>admin123</span>
                 </div>
-                <div class="demo-account" onclick="setLogin('demo', 'demo123')">
+                <div class="demo-account" onclick="quickLogin('demo', 'demo123')">
                     <span><strong>demo</strong> - משתמש דמו</span>
                     <span>demo123</span>
+                </div>
+                
+                <!-- כפתור התחברות ישירה -->
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                    <h5>התחברות ישירה:</h5>
+                    <button type="button" onclick="forceLogin('admin')" style="background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 8px; margin: 5px; cursor: pointer;">
+                        🚀 כניסה ישירה כמנהל
+                    </button>
+                    <button type="button" onclick="forceLogin('demo')" style="background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 8px; margin: 5px; cursor: pointer;">
+                        🚀 כניסה ישירה כדמו
+                    </button>
                 </div>
             </div>
         </div>
@@ -1209,30 +1220,83 @@
             console.log('🔧 === סיום דיבוג ===\n');
         }
 
-        // פונקציות התחברות
+        // פונקציות התחברות מורחבות
         function setLogin(username, password) {
             document.getElementById('username').value = username;
             document.getElementById('password').value = password;
         }
 
-        function login(event) {
-            event.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+        function quickLogin(username, password) {
+            console.log('⚡ התחברות מהירה:', username);
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
+            
+            // הפעלת התחברות אוטומטית
+            const event = new Event('submit');
+            document.querySelector('#loginScreen form').dispatchEvent(event);
+        }
 
-            if (users[username] && users[username].password === password) {
+        function forceLogin(username) {
+            console.log('🚀 כניסה ישירה:', username);
+            
+            if (!users[username]) {
+                console.error('❌ משתמש לא קיים:', username);
+                alert('משתמש לא קיים: ' + username);
+                return;
+            }
+            
+            try {
                 currentUser = { username, ...users[username] };
                 document.getElementById('currentUser').textContent = `${users[username].role}: ${username}`;
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'block';
+                document.getElementById('loginError').style.display = 'none';
                 updateCurrentDate();
-                showNotification('התחברת בהצלחה!', 'success');
-                console.log('✅ התחברות הצליחה:', username);
-            } else {
-                document.getElementById('loginError').textContent = 'שם משתמש או סיסמה שגויים';
-                document.getElementById('loginError').style.display = 'block';
-                console.log('❌ התחברות נכשלה:', username);
+                showNotification(`התחברת בהצלחה כ-${username}!`, 'success');
+                console.log('✅ כניסה ישירה הצליחה:', username);
+            } catch (error) {
+                console.error('❌ שגיאה בכניסה ישירה:', error);
+                alert('שגיאה בכניסה: ' + error.message);
             }
+        }
+
+        function login(event) {
+            event.preventDefault();
+            
+            try {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                console.log('🔐 ניסיון התחברות:', { username, password });
+                console.log('👥 משתמשים זמינים:', Object.keys(users));
+
+                if (!username || !password) {
+                    document.getElementById('loginError').textContent = 'נא למלא שם משתמש וסיסמה';
+                    document.getElementById('loginError').style.display = 'block';
+                    return false;
+                }
+
+                if (users[username] && users[username].password === password) {
+                    currentUser = { username, ...users[username] };
+                    document.getElementById('currentUser').textContent = `${users[username].role}: ${username}`;
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('mainApp').style.display = 'block';
+                    document.getElementById('loginError').style.display = 'none';
+                    updateCurrentDate();
+                    showNotification('התחברת בהצלחה!', 'success');
+                    console.log('✅ התחברות הצליחה:', username);
+                } else {
+                    const errorMsg = users[username] ? 'סיסמה שגויה' : 'שם משתמש לא קיים';
+                    document.getElementById('loginError').textContent = errorMsg;
+                    document.getElementById('loginError').style.display = 'block';
+                    console.log('❌ התחברות נכשלה:', { username, availableUsers: Object.keys(users) });
+                }
+            } catch (error) {
+                console.error('❌ שגיאה בהתחברות:', error);
+                document.getElementById('loginError').textContent = 'שגיאה בהתחברות';
+                document.getElementById('loginError').style.display = 'block';
+            }
+            
             return false;
         }
 
@@ -2617,19 +2681,63 @@
             }
         }
 
-        // אתחול
+        // אתחול - עם בדיקת התחברות
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🏦 מערכת חיתום אשראי נטענה בהצלחה - עם כלי דיבוג');
             
+            // בדיקת משתמשים
+            console.log('👥 בדיקת משתמשים זמינים:');
+            console.log('- admin:', users.admin);
+            console.log('- demo:', users.demo);
+            
+            // בדיקת אלמנטי HTML
+            const usernameField = document.getElementById('username');
+            const passwordField = document.getElementById('password');
+            const loginError = document.getElementById('loginError');
+            
+            if (!usernameField) console.error('❌ שדה שם משתמש לא נמצא');
+            if (!passwordField) console.error('❌ שדה סיסמה לא נמצא'); 
+            if (!loginError) console.error('❌ אלמנט שגיאת התחברות לא נמצא');
+            
+            // הוספת מאזין לטופס התחברות
+            const loginForm = document.querySelector('#loginScreen form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', login);
+                console.log('✅ מאזין התחברות הוגדר');
+            } else {
+                console.error('❌ טופס התחברות לא נמצא');
+            }
+            
+            // בדיקת ספריות
             if (typeof XLSX === 'undefined') {
                 console.error('❌ ספריית XLSX לא נטענה');
                 showNotification('שגיאה: ספריית Excel לא נטענה', 'error');
             } else {
                 console.log('✅ ספריית XLSX נטענה בהצלחה');
             }
+            
+            console.log('🛠️ כלי דיבוג זמינים בממשק המשתמש');
+            
+            // בדיקה ידנית של התחברות
+            console.log('🧪 בדיקה ידנית:');
+            console.log('- הקלד בקונסול: testLogin("admin", "admin123")');
+            
+            // הוספת פונקציית בדיקה גלובלית
+            window.testLogin = function(username, password) {
+                console.log('🧪 בודק התחברות:', { username, password });
+                console.log('משתמש קיים?', !!users[username]);
+                if (users[username]) {
+                    console.log('סיסמה נכונה?', users[username].password === password);
+                }
+                
+                // ניסיון התחברות ידני
+                document.getElementById('username').value = username;
+                document.getElementById('password').value = password;
+                
+                const loginEvent = new Event('submit');
+                document.querySelector('#loginScreen form').dispatchEvent(loginEvent);
+            };
         });
-
-        console.log('🛠️ כלי דיבוג זמינים בממשק המשתמש');
     </script>
 </body>
 </html>
