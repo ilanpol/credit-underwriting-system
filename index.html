@@ -1,4 +1,1130 @@
-// פונקציית דיבוג מתקדמת לקובץ D&B
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת חיתום אשראי מתקדמת</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --info-color: #17a2b8;
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            direction: rtl; 
+            color: #2c3e50;
+        }
+
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .login-card h1 { 
+            color: var(--primary-color); 
+            margin-bottom: 10px; 
+            font-size: 2.2em;
+        }
+
+        .login-subtitle {
+            color: #6c757d;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group { 
+            margin-bottom: 20px; 
+            text-align: right; 
+        }
+
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            color: var(--primary-color); 
+        }
+
+        .form-group input { 
+            width: 100%; 
+            padding: 14px 16px; 
+            border: 2px solid #e1e8ed; 
+            border-radius: var(--border-radius); 
+            font-size: 15px;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+        }
+
+        .login-btn { 
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9); 
+            color: white; 
+            padding: 14px 28px; 
+            border: none; 
+            border-radius: 25px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            width: 100%; 
+            transition: var(--transition);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .demo-accounts {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+
+        .demo-account {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: var(--transition);
+        }
+
+        .demo-account:hover {
+            background: #e9ecef;
+        }
+
+        .error-message { 
+            color: var(--danger-color); 
+            margin-top: 10px; 
+            font-size: 14px;
+            padding: 10px;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: var(--border-radius);
+        }
+
+        .main-app { 
+            display: none; 
+        }
+
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+
+        .header { 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 25px 30px; 
+            border-radius: 20px; 
+            margin-bottom: 30px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 { 
+            color: var(--primary-color); 
+            font-size: 2.5em; 
+        }
+
+        .current-date {
+            background: var(--info-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 15px;
+            margin-left: 15px;
+            font-weight: 600;
+        }
+
+        .logout-btn { 
+            background: var(--danger-color); 
+            color: white; 
+            padding: 8px 16px; 
+            border: none; 
+            border-radius: 15px; 
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        .main-content { 
+            display: grid; 
+            grid-template-columns: 1fr 1.5fr; 
+            gap: 30px; 
+            margin-bottom: 30px; 
+        }
+
+        .section-card { 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .file-upload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .file-upload-section {
+            padding: 20px; 
+            background: linear-gradient(135deg, #e8f5e8, #d4edda); 
+            border-radius: var(--border-radius); 
+            border: 2px dashed var(--success-color);
+            text-align: center;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .file-upload-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+        }
+
+        .file-upload-section h4 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            font-size: 1.1em;
+        }
+
+        .file-upload-section input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            background: white;
+            font-size: 13px;
+        }
+
+        .file-status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .file-status.loaded {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .file-status.empty {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, var(--success-color), #229954);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn { 
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9); 
+            color: white; 
+            padding: 14px 28px; 
+            border: none; 
+            border-radius: 25px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            width: 100%; 
+            margin-top: 20px;
+            transition: var(--transition);
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
+        }
+
+        .debug-btn {
+            background: #6c757d;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .debug-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .debug-results {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            display: none;
+        }
+
+        .debug-results.show {
+            display: block;
+        }
+
+        .company-search {
+            background: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+            display: none;
+        }
+
+        .company-search.show {
+            display: block;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .results-section { 
+            display: none;
+            grid-column: span 2;
+        }
+
+        .rating-display { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 30px; 
+        }
+
+        .rating-card { 
+            background: white; 
+            padding: 25px 20px; 
+            border-radius: var(--border-radius); 
+            text-align: center; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: var(--transition);
+        }
+
+        .rating-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .rating-score { 
+            font-size: 2.5em; 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+        }
+
+        .rating-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .rating-AAA { color: #27ae60; }
+        .rating-AA { color: #2ecc71; }
+        .rating-A { color: #f39c12; }
+        .rating-BBB { color: #f1c40f; }
+        .rating-BB { color: #e67e22; }
+        .rating-B { color: #e74c3c; }
+        .rating-CCC { color: #c0392b; }
+        .rating-D { color: #8b0000; }
+
+        .parameters-section { 
+            background: white; 
+            border-radius: var(--border-radius); 
+            padding: 25px; 
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .parameter-header { 
+            display: grid; 
+            grid-template-columns: 3fr 1fr 1fr 1fr 1fr; 
+            gap: 15px; 
+            padding: 15px; 
+            background: #f8f9fa; 
+            border-radius: var(--border-radius); 
+            font-weight: bold; 
+            margin-bottom: 15px; 
+        }
+
+        .parameter-row { 
+            display: grid; 
+            grid-template-columns: 3fr 1fr 1fr 1fr 1fr; 
+            gap: 15px; 
+            padding: 15px; 
+            border-bottom: 1px solid #f1f2f6; 
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .parameter-row:hover {
+            background: #f8f9fa;
+        }
+
+        .parameter-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .parameter-value {
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .autocomplete-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .autocomplete-suggestion {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: var(--transition);
+        }
+
+        .autocomplete-suggestion:hover {
+            background: #f8f9fa;
+        }
+
+        .suggestion-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .suggestion-details {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        .recommendation { 
+            text-align: center; 
+            margin: 25px 0; 
+            font-size: 1.2em; 
+            font-weight: 600; 
+            padding: 30px;
+            border-radius: var(--border-radius);
+            color: white;
+        }
+
+        .recommendation.excellent { 
+            background: linear-gradient(135deg, #27ae60, #229954); 
+        }
+
+        .recommendation.good { 
+            background: linear-gradient(135deg, #2ecc71, #27ae60); 
+        }
+
+        .recommendation.average { 
+            background: linear-gradient(135deg, #f39c12, #e67e22); 
+        }
+
+        .recommendation.poor { 
+            background: linear-gradient(135deg, #e67e22, #d35400); 
+        }
+
+        .recommendation.danger { 
+            background: linear-gradient(135deg, #e74c3c, #c0392b); 
+        }
+
+        .data-status {
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .status-loaded { color: var(--success-color); font-weight: 600; }
+        .status-error { color: var(--danger-color); font-weight: 600; }
+
+        .client-history {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .history-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .history-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .history-card:hover {
+            background: #e9ecef;
+        }
+
+        .history-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            color: white;
+            z-index: 9999;
+            min-width: 300px;
+            text-align: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success { background: var(--success-color); }
+        .notification.error { background: var(--danger-color); }
+        .notification.warning { background: var(--warning-color); }
+
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .main-content { 
+                grid-template-columns: 1fr; 
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .file-upload-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .parameter-header,
+            .parameter-row { 
+                grid-template-columns: 1fr; 
+                text-align: center;
+            }
+            
+            .rating-display { 
+                grid-template-columns: repeat(2, 1fr); 
+            }
+
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- מסך התחברות -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+            <h1>🏦 מערכת חיתום אשראי</h1>
+            <p class="login-subtitle">ניתוח וחישוב דירוג אשראי מתקדם</p>
+            
+            <form onsubmit="return login(event)">
+                <div class="form-group">
+                    <label>שם משתמש</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label>סיסמה</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="login-btn">התחבר למערכת</button>
+                <div id="loginError" class="error-message" style="display: none;"></div>
+            </form>
+
+            <div class="demo-accounts">
+                <h4>חשבונות לבדיקה:</h4>
+                <div class="demo-account" onclick="setLogin('admin', 'admin123')">
+                    <span><strong>admin</strong> - מנהל מערכת</span>
+                    <span>admin123</span>
+                </div>
+                <div class="demo-account" onclick="setLogin('demo', 'demo123')">
+                    <span><strong>demo</strong> - משתמש דמו</span>
+                    <span>demo123</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- מסך ראשי -->
+    <div id="mainApp" class="main-app">
+        <div class="container">
+            <div class="header">
+                <div>
+                    <h1>🏦 מערכת חיתום אשראי</h1>
+                    <p>ניתוח וחישוב דירוג אשראי מבוסס נתונים</p>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <div class="current-date" id="currentDate"></div>
+                    <div style="text-align: left; margin-left: 15px;">
+                        <div id="currentUser" style="margin-bottom: 10px; font-weight: 600;"></div>
+                        <button onclick="logout()" class="logout-btn">התנתק</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <!-- קלט נתונים -->
+                <div class="section-card">
+                    <h2 class="section-title">📋 נתוני העסקה</h2>
+                    
+                    <!-- סטטוס נתונים עם כלי דיבוג -->
+                    <div class="data-status">
+                        <h3>📊 מצב טעינת נתונים</h3>
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <span>📈 עסקאות ראשי</span>
+                                <span id="transactionsStatus" class="status-error">❌ לא נטען</span>
+                            </div>
+                            <div class="status-item">
+                                <span>💳 שיקים חוזרים</span>
+                                <span id="returnedStatus" class="status-error">❌ לא נטען</span>
+                            </div>
+                            <div class="status-item">
+                                <span>⚠️ ביטולים</span>
+                                <span id="warningsStatus" class="status-error">❌ לא נטען</span>
+                            </div>
+                        </div>
+                        
+                        <!-- כלי דיבוג חדשים -->
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                            <h4>🔧 כלי דיבוג</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                                <button onclick="showDebugInfo('dnb')" class="debug-btn">🏢 הצג נתוני D&B</button>
+                                <button onclick="showDebugInfo('companies')" class="debug-btn">📊 הצג חברות</button>
+                                <button onclick="showDebugInfo('rawData')" class="debug-btn">🗃️ נתונים גולמיים</button>
+                                <button onclick="testCompanySearch()" class="debug-btn">🔍 בדוק חיפוש חברה</button>
+                                <button onclick="clearAllData()" class="debug-btn">🧹 נקה הכל</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- תיבות דיבוג -->
+                    <div id="debugResults" class="debug-results"></div>
+                    
+                    <div id="companySearch" class="company-search">
+                        <h4>🔍 חיפוש חברה</h4>
+                        <div style="display: flex; gap: 10px; align-items: center; margin: 10px 0;">
+                            <input type="text" id="searchCompanyName" placeholder="שם החברה לחיפוש" style="flex: 1; padding: 8px;">
+                            <button onclick="searchSpecificCompany()" class="debug-btn">חפש</button>
+                        </div>
+                        <div id="searchResults"></div>
+                    </div>
+
+                    <!-- העלאת קבצים -->
+                    <div class="file-upload-grid">
+                        <div class="file-upload-section">
+                            <div class="file-status empty" id="mainFileStatus">ריק</div>
+                            <h4>📊 קובץ עסקאות ראשי</h4>
+                            <input type="file" id="mainFile" accept=".xlsx,.xls,.csv" onchange="loadFile('main')">
+                            <button onclick="document.getElementById('mainFile').click()" class="upload-btn">
+                                🔄 בחר קובץ
+                            </button>
+                        </div>
+
+                        <div class="file-upload-section">
+                            <div class="file-status empty" id="returnedFolderStatus">ריק</div>
+                            <h4>💳 תיקיית שיקים חוזרים</h4>
+                            <input type="file" id="returnedFolder" accept=".xlsx,.xls,.csv" multiple webkitdirectory onchange="loadFolder('returned')">
+                            <button onclick="document.getElementById('returnedFolder').click()" class="upload-btn">
+                                🔄 בחר תיקייה
+                            </button>
+                        </div>
+
+                        <div class="file-upload-section">
+                            <div class="file-status empty" id="warningsFileStatus">ריק</div>
+                            <h4>⚠️ קובץ ביטולים/אכ"מ</h4>
+                            <input type="file" id="warningsFile" accept=".xlsx,.xls,.csv" onchange="loadFile('warnings')">
+                            <button onclick="document.getElementById('warningsFile').click()" class="upload-btn">
+                                🔄 בחר קובץ
+                            </button>
+                        </div>
+
+                        <div class="file-upload-section">
+                            <div class="file-status empty" id="creditFileStatus">ריק</div>
+                            <h4>🏢 קובץ חיתום אשראי (D&B)</h4>
+                            <p style="font-size: 12px; margin-top: 5px;">טבלה: scoreM_N</p>
+                            <input type="file" id="creditFile" accept=".xlsx,.xls" onchange="loadFile('credit')">
+                            <button onclick="document.getElementById('creditFile').click()" class="upload-btn">
+                                🔄 בחר קובץ
+                            </button>
+                        </div>
+
+                        <div class="file-upload-section">
+                            <div class="file-status empty" id="behaviorFolderStatus">ריק</div>
+                            <h4>📈 תיקיית ניתוח נתונים</h4>
+                            <p style="font-size: 12px; margin-top: 5px;">התנהגות לקוח - מזומן/הלוואות</p>
+                            <input type="file" id="behaviorFolder" accept=".xlsx,.xls,.csv" multiple webkitdirectory onchange="loadFolder('behavior')">
+                            <button onclick="document.getElementById('behaviorFolder').click()" class="upload-btn">
+                                🔄 בחר תיקייה
+                            </button>
+                        </div>
+
+                        <div class="file-upload-section">
+                            <div class="file-status empty" id="allFilesStatus">ריק</div>
+                            <h4>📁 העלאת כל הקבצים יחד</h4>
+                            <input type="file" id="allFiles" accept=".xlsx,.xls,.csv" multiple onchange="loadMultipleFiles()">
+                            <button onclick="document.getElementById('allFiles').click()" class="upload-btn">
+                                🔄 בחר קבצים מרובים
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- פרטי עסקה -->
+                    <div class="form-group" style="position: relative;">
+                        <label>שם מושך (חברה)</label>
+                        <input type="text" id="payerName" placeholder="התחל להקליד שם החברה המושכת...">
+                        <div id="payerNameSuggestions" class="autocomplete-suggestions"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>ח.פ. / ע.מ. של המושך</label>
+                        <input type="text" id="payerID" placeholder="יתמלא אוטומטית או הזן ידנית">
+                    </div>
+
+                    <div class="form-group" style="position: relative;">
+                        <label>שם לקוח (נהנה)</label>
+                        <input type="text" id="clientName" placeholder="שם הלקוח שמקבל את הכסף...">
+                        <div id="clientNameSuggestions" class="autocomplete-suggestions"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>מספר זהות לקוח</label>
+                        <input type="text" id="clientID" placeholder="מספר תעודת זהות של הלקוח">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>תאריך העסקה</label>
+                            <input type="date" id="transactionDate" value="">
+                        </div>
+                        <div class="form-group">
+                            <label>תאריך פירעון</label>
+                            <input type="date" id="dueDate" value="">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>סכום השיק (₪)</label>
+                            <input type="number" id="checkAmount" placeholder="0" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>ימי אשראי</label>
+                            <input type="number" id="creditDays" placeholder="30" value="30" min="0" readonly>
+                            <small style="color: #6c757d; font-size: 12px;">מחושב אוטומטית מהתאריכים</small>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="calculateCreditRating()" id="calculateBtn" disabled>
+                        🧮 חשב דירוג אשראי
+                    </button>
+
+                    <button class="btn btn-secondary" onclick="loadSampleData()">
+                        📋 טען נתוני דוגמה לבדיקה
+                    </button>
+
+                    <!-- היסטוריית לקוח -->
+                    <div id="clientHistory" class="client-history" style="display: none;">
+                        <h3>📋 היסטוריית לקוח</h3>
+                        <div class="history-summary" id="clientHistorySummary"></div>
+                    </div>
+                </div>
+
+                <!-- תוצאות -->
+                <div class="section-card results-section" id="resultsSection">
+                    <h2 class="section-title">📊 תוצאות דירוג אשראי</h2>
+                    
+                    <div class="rating-display" id="ratingDisplay"></div>
+                    
+                    <div class="parameters-section">
+                        <h3>פירוט פרמטרי הדירוג</h3>
+                        <div class="parameter-header">
+                            <div>פרמטר</div>
+                            <div>משקל</div>
+                            <div>ערך</div>
+                            <div>נורמל</div>
+                            <div>משוקלל</div>
+                        </div>
+                        <div id="parametersDisplay"></div>
+                    </div>
+
+                    <div id="recommendation" class="recommendation"></div>
+
+                    <div style="text-align: center; margin-top: 25px;">
+                        <button class="btn btn-secondary" onclick="resetForm()">
+                            🔄 עסקה חדשה
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // משתנים גלובליים
+        let currentUser = null;
+        let excelData = { 
+            main: [], 
+            returned: [], 
+            warnings: [],
+            credit: [],
+            behavior: []
+        };
+        let payersMap = new Map();
+        let clientsMap = new Map();
+        let dnbData = new Map();
+        let behaviorData = new Map();
+        let isDataLoaded = false;
+        let debugMode = false;
+
+        const users = {
+            'admin': { password: 'admin123', role: 'מנהל מערכת' },
+            'demo': { password: 'demo123', role: 'משתמש דמו' }
+        };
+
+        const ratingParameters = {
+            historyLength: { weight: 0.12, name: 'אורך היסטוריה חברה' },
+            transactionCount: { weight: 0.10, name: 'כמות עסקאות חברה' },
+            averageAmount: { weight: 0.08, name: 'עסקה ממוצעת חברה' },
+            clientHistory: { weight: 0.12, name: 'היסטוריית לקוח' },
+            clientReliability: { weight: 0.10, name: 'אמינות לקוח' },
+            clientBehavior: { weight: 0.15, name: 'התנהגות לקוח' },
+            dnbRating: { weight: 0.20, name: 'דירוג D&B' },
+            returnedChecks: { weight: 0.08, name: 'שיקים חוזרים' },
+            cancellations: { weight: 0.05, name: 'ביטולים ואכ"מ' }
+        };
+
+        // פונקציות דיבוג פשוטות לממשק
+        function showDebugInfo(type) {
+            const resultsDiv = document.getElementById('debugResults');
+            resultsDiv.className = 'debug-results show';
+            
+            let content = '';
+            
+            switch(type) {
+                case 'dnb':
+                    content = '🏢 === נתוני D&B ===\n';
+                    content += `מספר חברות ב-D&B: ${dnbData.size}\n\n`;
+                    
+                    if (dnbData.size > 0) {
+                        content += 'חברות עם דירוג D&B:\n';
+                        let count = 0;
+                        for (let [key, dnb] of dnbData.entries()) {
+                            if (!key.startsWith('NAME_') && count < 10) {
+                                content += `• ${dnb.companyName} (${dnb.companyId})\n`;
+                                content += `  סקור: ${dnb.sectorRating}, ענף: ${dnb.industrySector}\n`;
+                                content += `  שנות ותק: ${dnb.yearsActive}, עובדים: ${dnb.employees}\n`;
+                                content += `  מחזור: ₪${dnb.revenue?.toLocaleString() || '0'}\n`;
+                                content += `  ציון משוקלל: ${dnb.dnbScore?.toFixed(1)}\n\n`;
+                                count++;
+                            }
+                        }
+                        
+                        if (dnbData.size > 10) {
+                            content += `... ועוד ${dnbData.size - 10} חברות\n`;
+                        }
+                    } else {
+                        content += '❌ לא נטענו נתוני D&B\n';
+                        content += '💡 נסה לטעון קובץ עם גיליון "scoreM_N" ועמודה "סקור"';
+                    }
+                    break;
+                    
+                case 'companies':
+                    content = '📊 === חברות מושכות ===\n';
+                    content += `מספר חברות: ${payersMap.size}\n\n`;
+                    
+                    if (payersMap.size > 0) {
+                        let count = 0;
+                        for (let [id, payer] of payersMap.entries()) {
+                            if (count < 10) {
+                                content += `• ${payer.name} (${id})\n`;
+                                content += `  עסקאות: ${payer.metrics.transactionCount}\n`;
+                                content += `  סך כולל: ₪${payer.metrics.totalAmount.toLocaleString()}\n`;
+                                content += `  ממוצע: ₪${payer.metrics.averageAmount.toLocaleString()}\n`;
+                                content += `  שיקים חוזרים: ${payer.metrics.returnedChecks}\n`;
+                                content += `  ביטולים: ${payer.metrics.cancellations}\n\n`;
+                                count++;
+                            }
+                        }
+                        
+                        if (payersMap.size > 10) {
+                            content += `... ועוד ${payersMap.size - 10} חברות\n`;
+                        }
+                    } else {
+                        content += '❌ לא נטענו חברות\n';
+                        content += '💡 נסה לטעון קובץ עסקאות ראשי';
+                    }
+                    break;
+                    
+                case 'rawData':
+                    content = '🗃️ === נתונים גולמיים מקובץ D&B ===\n';
+                    
+                    if (excelData.credit.length > 0) {
+                        content += `מספר שורות בקובץ: ${excelData.credit.length}\n\n`;
+                        
+                        content += 'כותרות (שורה 1):\n';
+                        const headers = excelData.credit[0];
+                        headers.forEach((header, index) => {
+                            const columnLetter = String.fromCharCode(65 + index);
+                            content += `${columnLetter}: ${header}\n`;
+                        });
+                        
+                        // מציאת עמודת סקור
+                        const scoreIndex = headers.findIndex(h => h && h.toString().trim() === 'סקור');
+                        content += `\nעמודת "סקור" נמצאת באינדקס: ${scoreIndex >= 0 ? scoreIndex : 'לא נמצא'}\n`;
+                        
+                        if (scoreIndex >= 0) {
+                            const scoreColumn = String.fromCharCode(65 + scoreIndex);
+                            content += `עמודת "סקור" היא עמודה: ${scoreColumn}\n\n`;
+                            
+                            content += 'דוגמאות ערכי סקור:\n';
+                            for (let i = 1; i < Math.min(6, excelData.credit.length); i++) {
+                                const row = excelData.credit[i];
+                                const companyName = row[0] || 'לא ידוע';
+                                const scoreValue = row[scoreIndex];
+                                content += `שורה ${i + 1}: "${companyName}" -> "${scoreValue}" (סוג: ${typeof scoreValue})\n`;
+                            }
+                        }
+                    } else {
+                        content += '❌ לא נטען קובץ D&B\n';
+                        content += '💡 נסה לטעון קובץ Excel עם גיליון scoreM_N';
+                    }
+                    break;
+            }
+            
+            resultsDiv.textContent = content;
+        }
+        
+        function testCompanySearch() {
+            const searchDiv = document.getElementById('companySearch');
+            searchDiv.className = 'company-search show';
+        }
+        
+        function searchSpecificCompany() {
+            const companyName = document.getElementById('searchCompanyName').value.trim();
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (!companyName) {
+                resultsDiv.innerHTML = '<p style="color: red;">נא להזין שם חברה</p>';
+                return;
+            }
+            
+            let results = `🔍 תוצאות חיפוש עבור: "${companyName}"\n\n`;
+            
+            // חיפוש במושכים
+            const foundPayers = Array.from(payersMap.entries()).filter(([id, payer]) => 
+                payer.name.toLowerCase().includes(companyName.toLowerCase()) || 
+                companyName.toLowerCase().includes(payer.name.toLowerCase())
+            );
+            
+            results += `📊 נמצא במושכים: ${foundPayers.length}\n`;
+            foundPayers.slice(0, 3).forEach(([id, payer]) => {
+                results += `• ${payer.name} (${id})\n`;
+            });
+            
+            // חיפוש ב-D&B
+            const foundDnb = [];
+            for (let [key, dnb] of dnbData.entries()) {
+                if (dnb.companyName && (
+                    dnb.companyName.toLowerCase().includes(companyName.toLowerCase()) || 
+                    companyName.toLowerCase().includes(dnb.companyName.toLowerCase())
+                )) {
+                    foundDnb.push([key, dnb]);
+                }
+            }
+            
+            results += `\n🏢 נמצא ב-D&B: ${foundDnb.length}\n`;
+            foundDnb.slice(0, 3).forEach(([key, dnb]) => {
+                if (!key.startsWith('NAME_')) {
+                    results += `• ${dnb.companyName} (${dnb.companyId})\n`;
+                    results += `  סקור: ${dnb.sectorRating}, ציון: ${dnb.dnbScore?.toFixed(1)}\n`;
+                }
+            });
+            
+            // בדיקת התאמה
+            if (foundPayers.length > 0 && foundDnb.length > 0) {
+                results += `\n✅ החברה קיימת בשני המקומות!\n`;
+            } else if (foundPayers.length > 0) {
+                results += `\n⚠️ החברה קיימת רק במושכים, לא ב-D&B\n`;
+            } else if (foundDnb.length > 0) {
+                results += `\n⚠️ החברה קיימת רק ב-D&B, לא במושכים\n`;
+            } else {
+                results += `\n❌ החברה לא נמצאה בשום מקום\n`;
+            }
+            
+            resultsDiv.innerHTML = `<pre>${results}</pre>`;
+        }
+        
+        function clearAllData() {
+            if (confirm('האם לנקות את כל הנתונים? פעולה זו תמחק הכל.')) {
+                payersMap.clear();
+                clientsMap.clear();
+                dnbData.clear();
+                behaviorData.clear();
+                excelData = { main: [], returned: [], warnings: [], credit: [], behavior: [] };
+                isDataLoaded = false;
+                
+                // איפוס סטטוסים
+                document.getElementById('calculateBtn').disabled = true;
+                document.querySelectorAll('.file-status').forEach(status => {
+                    status.textContent = 'ריק';
+                    status.className = 'file-status empty';
+                });
+                
+                document.getElementById('debugResults').className = 'debug-results';
+                document.getElementById('companySearch').className = 'company-search';
+                
+                updateDataStatus();
+                showNotification('🧹 כל הנתונים נמחקו', 'success');
+            }
+        }
+
+        // פונקציית דיבוג מתקדמת לקובץ D&B
         function debugDnbFile(workbook) {
             console.log('🔧 === דיבוג מתקדם לקובץ D&B ===');
             
@@ -43,6 +1169,132 @@
             console.log('🔧 === סיום דיבוג ===\n');
         }
 
+        // פונקציות התחברות
+        function setLogin(username, password) {
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
+        }
+
+        function login(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (users[username] && users[username].password === password) {
+                currentUser = { username, ...users[username] };
+                document.getElementById('currentUser').textContent = `${users[username].role}: ${username}`;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                updateCurrentDate();
+                showNotification('התחברת בהצלחה!', 'success');
+                console.log('✅ התחברות הצליחה:', username);
+            } else {
+                document.getElementById('loginError').textContent = 'שם משתמש או סיסמה שגויים';
+                document.getElementById('loginError').style.display = 'block';
+                console.log('❌ התחברות נכשלה:', username);
+            }
+            return false;
+        }
+
+        function logout() {
+            if (confirm('האם להתנתק?')) {
+                currentUser = null;
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('mainApp').style.display = 'none';
+                resetForm();
+                console.log('🚪 יצאת מהמערכת');
+            }
+        }
+
+        function updateCurrentDate() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('he-IL', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+            document.getElementById('currentDate').textContent = dateStr;
+            
+            // עדכון תאריך ברירת מחדל בטופס
+            const today = now.toISOString().split('T')[0];
+            document.getElementById('transactionDate').value = today;
+            
+            // חישוב תאריך פירעון (30 ימים קדימה)
+            const dueDate = new Date(now);
+            dueDate.setDate(dueDate.getDate() + 30);
+            document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
+            
+            // חישוב ימי אשראי
+            calculateCreditDays();
+            console.log('📅 תאריך עודכן:', today);
+        }
+
+        // חישוב אוטומטי של ימי אשראי
+        function calculateCreditDays() {
+            const transactionDate = document.getElementById('transactionDate').value;
+            const dueDate = document.getElementById('dueDate').value;
+            
+            if (transactionDate && dueDate) {
+                const startDate = new Date(transactionDate);
+                const endDate = new Date(dueDate);
+                const timeDiff = endDate - startDate;
+                const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                
+                document.getElementById('creditDays').value = Math.max(0, daysDiff);
+                console.log('⏰ ימי אשראי מחושבים:', daysDiff);
+            }
+        }
+
+        // הוספת מאזיני אירועים לתאריכים
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('transactionDate').addEventListener('change', calculateCreditDays);
+            document.getElementById('dueDate').addEventListener('change', calculateCreditDays);
+            
+            console.log('🏦 מערכת חיתום אשראי נטענה בהצלחה');
+        });
+
+        // טעינת קבצים
+        async function loadFile(type) {
+            const fileInput = document.getElementById(type + 'File');
+            const statusElement = document.getElementById(type + 'FileStatus');
+            
+            if (!fileInput.files[0]) {
+                console.warn('⚠️ לא נבחר קובץ עבור:', type);
+                return;
+            }
+
+            try {
+                const file = fileInput.files[0];
+                console.log(`🔄 טוען קובץ ${type}:`, file.name, 'גודל:', file.size, 'bytes');
+                
+                const workbook = await readExcelFile(file);
+                console.log(`📊 קובץ ${type} נקרא, גיליונות:`, workbook.SheetNames);
+                
+                // עיבוד הקובץ לפי סוג
+                if (type === 'main') {
+                    processMainFile(workbook);
+                } else if (type === 'warnings') {
+                    processWarningsFile(workbook);
+                } else if (type === 'credit') {
+                    processCreditFile(workbook);
+                }
+
+                statusElement.textContent = '✓ נטען';
+                statusElement.className = 'file-status loaded';
+                
+                checkAllFilesLoaded();
+                showNotification(`קובץ ${getFileTypeName(type)} נטען בהצלחה`, 'success');
+                console.log(`✅ קובץ ${type} עובד בהצלחה`);
+
+            } catch (error) {
+                console.error(`❌ שגיאה בטעינת קובץ ${type}:`, error);
+                statusElement.textContent = '❌ שגיאה';
+                statusElement.className = 'file-status empty';
+                showNotification(`שגיאה בטעינת קובץ ${getFileTypeName(type)}: ${error.message}`, 'error');
+            }
+        }
+
         function processCreditFile(workbook) {
             try {
                 console.log('🏢 מתחיל עיבוד קובץ D&B...');
@@ -57,7 +1309,7 @@
                     throw new Error('לא נמצאו גיליונות בקובץ');
                 }
                 
-                // חיפוש ספציפי לגיליון "scoreM_N" - חיפוש מדויק יותר
+                // חיפוש ספציפי לגיליון "scoreM_N"
                 let targetSheetName = null;
                 
                 // חיפוש ראשון: גיליון בשם "scoreM_N" בדיוק
@@ -91,41 +1343,17 @@
                     }
                 }
                 
-                // בדיקה שיש לנו גיליון תקין
-                if (!targetSheetName) {
-                    throw new Error('לא נמצא גיליון תקין לעיבוד');
-                }
-                
-                console.log(`🎯 גיליון נבחר לעיבוד: "${targetSheetName}"`);
-                
                 const worksheet = workbook.Sheets[targetSheetName];
-                if (!worksheet) {
-                    throw new Error(`גיליון "${targetSheetName}" לא קיים או ריק`);
-                }
-                
                 const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                 
-                if (!jsonData || jsonData.length === 0) {
-                    throw new Error(`גיליון "${targetSheetName}" ריק או לא מכיל נתונים`);
-                }
+                console.log(`📊 נתוני גיליון "${targetSheetName}" (${jsonData.length} שורות)`);
                 
-                console.log(`📊 נתוני גיליון "${targetSheetName}" (${jsonData.length} שורות סה"כ):`);
-                console.log('🔍 מציג 5 שורות ראשונות:');
-                for (let i = 0; i < Math.min(5, jsonData.length); i++) {
-                    console.log(`שורה ${i + 1}:`, jsonData[i]);
-                }
-                
-                // חיפוש תחילת הטבלה - חיפוש משופר
+                // חיפוש עמודת "סקור"
                 let tableStartRow = -1;
-                
-                console.log('🔍 מחפש שורת כותרות...');
-                
-                // חיפוש שורה שמכילה את הכותרות - חיפוש גמיש יותר
                 for (let i = 0; i < Math.min(10, jsonData.length); i++) {
                     const row = jsonData[i];
                     if (!row || row.length < 5) continue;
                     
-                    // חיפוש הכותרת "סקור" - זו הכותרת הקריטית
                     const scoreColumnIndex = row.findIndex(cell => 
                         cell && cell.toString().trim() === 'סקור'
                     );
@@ -133,128 +1361,824 @@
                     if (scoreColumnIndex >= 0) {
                         tableStartRow = i;
                         console.log(`✅ נמצאת שורת כותרות בשורה ${i + 1} - עמודת "סקור" באינדקס ${scoreColumnIndex} (עמודה ${String.fromCharCode(65 + scoreColumnIndex)})`);
-                        console.log(`📋 כותרות מלאות:`, row);
-                        
-                        // הצגת דוגמה מהנתונים מתחת לכותרת
-                        console.log('🔍 דוגמאות ערכי סקור:');
-                        for (let j = i + 1; j < Math.min(i + 4, jsonData.length); j++) {
-                            const scoreValue = jsonData[j] ? jsonData[j][scoreColumnIndex] : 'undefined';
-                            const companyName = jsonData[j] ? jsonData[j][0] : 'unknown'; // נניח שהשם בעמודה הראשונה
-                            console.log(`  שורה ${j + 1}: חברה="${companyName}", סקור="${scoreValue}" (סוג: ${typeof scoreValue})`);
-                        }
-                        
-                        break;
-                    }
-                    
-                    // חיפוש חלופי - חיפוש כותרות נוספות
-                    const hasPayerName = row.some(cell => cell && (
-                        cell.toString().includes('שם מושך') || 
-                        cell.toString().includes('שם חברה') ||
-                        cell.toString().includes('שם המושך')
-                    ));
-                    
-                    const hasPayerId = row.some(cell => cell && (
-                        cell.toString().includes('מס\' ח.פ') ||
-                        cell.toString().includes('ח.פ') ||
-                        cell.toString().includes('מזהה')
-                    ));
-                    
-                    const hasScore = row.some(cell => cell && (
-                        cell.toString().trim() === 'סקור' ||
-                        cell.toString().includes('דירוג') ||
-                        cell.toString().includes('ציון')
-                    ));
-                    
-                    if (hasPayerName && hasPayerId && hasScore) {
-                        tableStartRow = i;
-                        console.log(`✅ נמצאת שורת כותרות חלופית בשורה ${i + 1}`);
-                        console.log(`📋 כותרות:`, row);
                         break;
                     }
                 }
                 
-                // אם לא מצאנו כותרות, נשתמש בשורה הראשונה
                 if (tableStartRow === -1) {
-                    console.log('🔍 לא נמצאו כותרות ברורות, בודק את השורה הראשונה...');
-                    const firstRow = jsonData[0];
-                    if (firstRow && firstRow.length >= 5) {
-                        // בדוק אם יש עמודה עם "סקור"
-                        const hasScoreColumn = firstRow.some(cell => 
-                            cell && cell.toString().trim() === 'סקור'
-                        );
-                        
-                        if (hasScoreColumn) {
-                            tableStartRow = 0;
-                            console.log(`✅ נמצאה עמודת "סקור" בשורה הראשונה`);
-                        } else {
-                            // כאפשרות אחרונה - שורה הראשונה
-                            tableStartRow = 0;
-                            console.log('⚠️ משתמש בשורה הראשונה כברירת מחדל');
-                        }
-                    } else {
-                        throw new Error('לא נמצאו כותרות תקינות בגיליון');
-                    }
+                    tableStartRow = 0;
+                    console.log('⚠️ משתמש בשורה הראשונה');
                 }
                 
-                console.log(`📊 מתחיל עיבוד מהשורה ${tableStartRow + 1}`);
-                
-                // חילוץ הטבלה מהשורה המתאימה
                 const tableData = jsonData.slice(tableStartRow);
                 
                 if (tableData.length <= 1) {
-                    throw new Error(`טבלה בגיליון "${targetSheetName}" ריקה או מכילה רק כותרות`);
-                }
-                
-                console.log(`📊 נתוני טבלה לעיבוד: ${tableData.length} שורות (כולל כותרות)`);
-                console.log('📋 כותרות שיעובדו:', tableData[0]);
-                if (tableData[1]) {
-                    console.log('📋 דוגמה לנתונים (שורה 2):', tableData[1]);
-                }
-                
-                // בדיקה שיש עמודת "סקור"
-                const headers = tableData[0];
-                const scoreColumnIndex = headers ? headers.findIndex(cell => 
-                    cell && cell.toString().trim() === 'סקור'
-                ) : -1;
-                
-                if (scoreColumnIndex === -1) {
-                    console.warn('⚠️ לא נמצאה עמודת "סקור" בכותרות');
-                    console.log('🔍 כותרות זמינות:', headers.map((h, i) => `${String.fromCharCode(65 + i)}:${h}`));
-                } else {
-                    console.log(`✅ עמודת "סקור" נמצאה באינדקס ${scoreColumnIndex} (עמודה ${String.fromCharCode(65 + scoreColumnIndex)})`);
+                    throw new Error(`טבלה בגיליון "${targetSheetName}" ריקה`);
                 }
                 
                 excelData.credit = tableData;
                 processDnbData();
                 
                 const dataRowsCount = tableData.length - 1;
-                console.log(`🏢 הושלם עיבוד טבלת scoreM_N מגיליון "${targetSheetName}": ${dataRowsCount} חברות`);
-                showNotification(`✅ נטענה טבלת D&B מגיליון "${targetSheetName}" - ${dataRowsCount} חברות`, 'success');
+                console.log(`🏢 הושלם עיבוד טבלת scoreM_N: ${dataRowsCount} חברות`);
+                showNotification(`✅ נטענה טבלת D&B - ${dataRowsCount} חברות`, 'success');
                 
             } catch (error) {
                 console.error('❌ שגיאה בעיבוד קובץ D&B:', error);
                 showNotification('❌ שגיאה בעיבוד קובץ D&B: ' + error.message, 'error');
-                
-                // הצגת מידע נוסף לדיבוג
-                console.log('🔧 מידע נוסף לדיבוג:');
-                console.log('- נדרש קובץ Excel עם גיליון בשם "scoreM_N"');
-                console.log('- בגיליון צריכה להיות עמודה בשם "סקור"');
-                console.log('- גיליונות זמינים בקובץ:', workbook.SheetNames);
-                if (workbook.SheetNames && workbook.SheetNames.length > 0) {
-                    console.log('- גיליון ראשון בקובץ:', workbook.SheetNames[0]);
-                    
-                    // בדיקה מהירה של הגיליון הראשון
-                    try {
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const firstSheetData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                        if (firstSheetData[0]) {
-                            console.log('- כותרות בגיליון הראשון:', firstSheetData[0].map((h, i) => `${String.fromCharCode(65 + i)}:${h}`));
-                        }
-                    } catch (debugError) {
-                        console.log('- לא ניתן לקרוא את הגיליון הראשון');
-                    }
-                }
-                
                 throw error;
             }
         }
+
+        function processDnbData() {
+            if (excelData.credit.length < 2) {
+                console.warn('⚠️ אין מספיק נתוני D&B לעיבוד');
+                return;
+            }
+
+            console.log('🏢 מעבד נתוני D&B מטבלת scoreM_N...');
+            
+            const headers = excelData.credit[0];
+            const rows = excelData.credit.slice(1);
+            
+            console.log('📋 כותרות D&B:', headers);
+            
+            // מיפוי עמודות
+            const companyNameIndex = findBestColumnMatch(headers, ['שם מושך', 'שם חברה', 'שם']);
+            const companyIdIndex = findBestColumnMatch(headers, ['מס\' ח.פ', 'ח.פ', 'מזהה']);
+            const sectorRatingIndex = findBestColumnMatch(headers, ['סקור']);
+            const industrySectorIndex = findBestColumnMatch(headers, ['סקור ענף', 'ענף']);
+            const yearsActiveIndex = findBestColumnMatch(headers, ['שנות ותק', 'ותק']);
+            const employeesIndex = findBestColumnMatch(headers, ['מס\' מועסקים', 'עובדים']);
+            const revenueIndex = findBestColumnMatch(headers, ['מחזור בא\' ₪', 'מחזור', 'הכנסות']);
+
+            console.log('🎯 מיפוי עמודות D&B:', {
+                companyName: `${companyNameIndex >= 0 ? headers[companyNameIndex] : 'לא נמצא'} (עמודה ${companyNameIndex + 1})`,
+                companyId: `${companyIdIndex >= 0 ? headers[companyIdIndex] : 'לא נמצא'} (עמודה ${companyIdIndex + 1})`,
+                sectorRating: `${sectorRatingIndex >= 0 ? headers[sectorRatingIndex] : '❌ לא נמצא סקור!'} (עמודה ${sectorRatingIndex + 1})`
+            });
+
+            dnbData.clear();
+            let processedCompanies = 0;
+
+            rows.forEach((row, index) => {
+                try {
+                    const companyName = companyNameIndex >= 0 ? row[companyNameIndex]?.toString().trim() : '';
+                    const companyId = companyIdIndex >= 0 ? row[companyIdIndex]?.toString().trim() : '';
+                    const sectorRating = sectorRatingIndex >= 0 ? parseFloat(row[sectorRatingIndex]) || 0 : 0;
+                    const industrySector = industrySectorIndex >= 0 ? parseFloat(row[industrySectorIndex]) || 0 : 0;
+                    const yearsActive = yearsActiveIndex >= 0 ? parseFloat(row[yearsActiveIndex]) || 0 : 0;
+                    const employees = employeesIndex >= 0 ? parseInt(row[employeesIndex]) || 0 : 0;
+                    const revenue = revenueIndex >= 0 ? parseFloat(row[revenueIndex]) || 0 : 0;
+
+                    // לוג מפורט לשורות הראשונות
+                    if (index < 3) {
+                        const rawScoreValue = sectorRatingIndex >= 0 ? row[sectorRatingIndex] : 'לא נמצא';
+                        console.log(`📊 D&B חברה ${index + 1}:`, {
+                            companyName, 
+                            companyId, 
+                            rawScoreValue,
+                            sectorRating, 
+                            industrySector, 
+                            yearsActive, 
+                            employees, 
+                            revenue
+                        });
+                    }
+
+                    if ((companyId || companyName) && (sectorRating > 0 || industrySector > 0 || revenue > 0 || yearsActive > 0)) {
+                        const riskLevel = calculateAdvancedDnbRisk({
+                            sectorRating,
+                            industrySector,
+                            yearsActive,
+                            employees,
+                            revenue
+                        });
+
+                        const dnbRecord = {
+                            companyId,
+                            companyName,
+                            sectorRating,
+                            industrySector, 
+                            yearsActive,
+                            employees,
+                            revenue,
+                            riskLevel,
+                            dnbScore: riskLevel
+                        };
+
+                        if (companyId) {
+                            dnbData.set(companyId, dnbRecord);
+                        }
+                        if (companyName) {
+                            dnbData.set(`NAME_${companyName}`, dnbRecord);
+                        }
+
+                        processedCompanies++;
+
+                        if (processedCompanies <= 3) {
+                            console.log(`✅ נשמר D&B: "${companyName}" (${companyId}) - סקור: ${sectorRating}, ציון: ${riskLevel.toFixed(1)}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`❌ שגיאה בעיבוד שורת D&B ${index + 1}:`, error);
+                }
+            });
+
+            console.log(`✅ עובדו ${processedCompanies} חברות D&B מתוך ${rows.length} שורות`);
+        }
+
+        function calculateAdvancedDnbRisk(dnbInfo) {
+            let score = 50; // ציון בסיס
+
+            try {
+                // דירוג סקטוריאלי - משקל גבוה
+                if (dnbInfo.sectorRating > 0) {
+                    score += (dnbInfo.sectorRating - 50) * 0.3;
+                }
+
+                // דירוג ענף - משקל בינוני
+                if (dnbInfo.industrySector > 0) {
+                    score += (dnbInfo.industrySector - 50) * 0.2;
+                }
+
+                // שנות ותק - יציבות
+                if (dnbInfo.yearsActive > 0) {
+                    if (dnbInfo.yearsActive >= 20) {
+                        score += 15;
+                    } else if (dnbInfo.yearsActive >= 10) {
+                        score += 12;
+                    } else if (dnbInfo.yearsActive >= 5) {
+                        score += 8;
+                    } else if (dnbInfo.yearsActive < 2) {
+                        score -= 5;
+                    }
+                }
+
+                // מספר עובדים
+                if (dnbInfo.employees > 0) {
+                    if (dnbInfo.employees >= 200) {
+                        score += 15;
+                    } else if (dnbInfo.employees >= 100) {
+                        score += 12;
+                    } else if (dnbInfo.employees >= 50) {
+                        score += 8;
+                    } else if (dnbInfo.employees >= 20) {
+                        score += 5;
+                    } else if (dnbInfo.employees >= 5) {
+                        score += 2;
+                    }
+                }
+
+                // מחזור עסקים
+                if (dnbInfo.revenue > 0) {
+                    if (dnbInfo.revenue >= 50000000) {
+                        score += 15;
+                    } else if (dnbInfo.revenue >= 10000000) {
+                        score += 12;
+                    } else if (dnbInfo.revenue >= 5000000) {
+                        score += 8;
+                    } else if (dnbInfo.revenue >= 1000000) {
+                        score += 5;
+                    } else if (dnbInfo.revenue >= 500000) {
+                        score += 2;
+                    }
+                }
+
+                return Math.max(0, Math.min(100, score));
+            } catch (error) {
+                console.error('❌ שגיאה בחישוב ציון D&B:', error);
+                return 50;
+            }
+        }
+
+        function findBestColumnMatch(headers, patterns) {
+            console.log('🔍 מחפש עמודה עבור:', patterns, 'בכותרות:', headers);
+            
+            // חיפוש מדויק ראשון
+            for (let pattern of patterns) {
+                const exactIndex = headers.findIndex(header => 
+                    header && header.toString().trim() === pattern
+                );
+                if (exactIndex >= 0) {
+                    console.log(`✅ התאמה מדויקת "${pattern}" באינדקס ${exactIndex}: "${headers[exactIndex]}"`);
+                    return exactIndex;
+                }
+            }
+            
+            // חיפוש חלקי שני
+            for (let pattern of patterns) {
+                const partialIndex = headers.findIndex(header => 
+                    header && header.toString().toLowerCase().includes(pattern.toLowerCase())
+                );
+                if (partialIndex >= 0) {
+                    console.log(`✅ התאמה חלקית "${pattern}" באינדקס ${partialIndex}: "${headers[partialIndex]}"`);
+                    return partialIndex;
+                }
+            }
+            
+            console.warn('❌ לא נמצאה עמודה עבור:', patterns);
+            return -1;
+        }
+
+        function getFileTypeName(type) {
+            const names = {
+                'main': 'עסקאות ראשי',
+                'returned': 'שיקים חוזרים',
+                'warnings': 'ביטולים',
+                'credit': 'חיתום אשראי (D&B)',
+                'behavior': 'ניתוח נתונים'
+            };
+            return names[type] || type;
+        }
+
+        function readExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        resolve(workbook);
+                    } catch (error) {
+                        console.error('❌ שגיאה בפענוח Excel:', error);
+                        reject(new Error('שגיאה בפענוח קובץ Excel: ' + error.message));
+                    }
+                };
+                reader.onerror = () => {
+                    console.error('❌ שגיאה בקריאת קובץ');
+                    reject(new Error('שגיאה בקריאת הקובץ'));
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function processMainFile(workbook) {
+            try {
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                console.log(`📊 עיבוד קובץ ראשי - גיליון: ${sheetName}, שורות: ${jsonData.length}`);
+                excelData.main = jsonData;
+                processMainData();
+            } catch (error) {
+                console.error('❌ שגיאה בעיבוד קובץ ראשי:', error);
+                throw new Error('שגיאה בעיבוד קובץ העסקאות הראשי');
+            }
+        }
+
+        function processMainData() {
+            if (excelData.main.length < 2) {
+                console.warn('⚠️ אין מספיק נתונים ראשיים לעיבוד');
+                return;
+            }
+
+            console.log('📊 מעבד נתוני עסקאות ראשיים...');
+            const headers = excelData.main[0];
+            const rows = excelData.main.slice(1);
+            
+            console.log('📋 כותרות קובץ ראשי:', headers);
+            
+            // חיפוש עמודות
+            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך', 'שם חברה']);
+            const payerIdIndex = findBestColumnMatch(headers, ['מספר זהות מושך', 'ח.פ', 'מזהה מושך']);
+            const amountIndex = findBestColumnMatch(headers, ['סכום', 'סכום שיק']);
+
+            if (payerNameIndex === -1 && payerIdIndex === -1) {
+                throw new Error('לא נמצאו עמודות חיוניות (שם מושך או ח.פ.)');
+            }
+
+            if (amountIndex === -1) {
+                throw new Error('לא נמצאה עמודת הסכום');
+            }
+
+            payersMap.clear();
+            clientsMap.clear();
+
+            let processedRows = 0;
+
+            rows.forEach((row, index) => {
+                try {
+                    const payerName = payerNameIndex >= 0 ? row[payerNameIndex]?.toString().trim() : '';
+                    const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : null;
+                    const amount = parseFloat(row[amountIndex]) || 0;
+
+                    if (!payerName && !payerId) {
+                        return;
+                    }
+
+                    if (amount <= 0) {
+                        return;
+                    }
+
+                    const effectivePayerId = payerId || `NAME_${payerName}`;
+                    const effectivePayerName = payerName || 'לא ידוע';
+
+                    if (!payersMap.has(effectivePayerId)) {
+                        payersMap.set(effectivePayerId, {
+                            id: effectivePayerId,
+                            name: effectivePayerName,
+                            transactions: [],
+                            metrics: {
+                                totalAmount: 0,
+                                transactionCount: 0,
+                                averageAmount: 0,
+                                returnedChecks: 0,
+                                cancellations: 0
+                            }
+                        });
+                    }
+
+                    const payer = payersMap.get(effectivePayerId);
+                    
+                    const transaction = { amount };
+                    payer.transactions.push(transaction);
+                    
+                    payer.metrics.totalAmount += amount;
+                    payer.metrics.transactionCount++;
+                    payer.metrics.averageAmount = payer.metrics.totalAmount / payer.metrics.transactionCount;
+
+                    processedRows++;
+                } catch (error) {
+                    console.error(`❌ שגיאה בעיבוד שורה ${index + 2}:`, error);
+                }
+            });
+
+            console.log(`✅ עובדו ${payersMap.size} מושכים`);
+        }
+
+        function processWarningsFile(workbook) {
+            try {
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length > 1) {
+                    excelData.warnings = jsonData;
+                    console.log(`⚠️ קובץ ביטולים: ${jsonData.length} שורות`);
+                }
+            } catch (error) {
+                console.error('❌ שגיאה בעיבוד קובץ ביטולים:', error);
+                throw new Error('שגיאה בעיבוד קובץ הביטולים');
+            }
+        }
+
+        function checkAllFilesLoaded() {
+            console.log('🔍 בודק סטטוס טעינת קבצים...');
+            
+            if (payersMap.size > 0) {
+                isDataLoaded = true;
+                updateDataStatus();
+                setupAutocomplete();
+                document.getElementById('calculateBtn').disabled = false;
+                console.log('✅ המערכת מוכנה לחישובי דירוג');
+            }
+        }
+
+        function updateDataStatus() {
+            try {
+                const transactionsCount = payersMap.size;
+                const dnbCount = dnbData.size;
+                
+                document.getElementById('transactionsStatus').innerHTML = 
+                    `<span class="status-loaded">✓ ${transactionsCount} חברות</span>`;
+                document.getElementById('returnedStatus').innerHTML = 
+                    `<span class="status-loaded">✓ נטען</span>`;
+                document.getElementById('warningsStatus').innerHTML = 
+                    `<span class="status-loaded">✓ נטען</span>`;
+                
+                if (dnbCount > 0) {
+                    const statusGrid = document.querySelector('.status-grid');
+                    const existingDnb = document.getElementById('dnbStatusItem');
+                    if (existingDnb) existingDnb.remove();
+                    
+                    const dnbStatusItem = document.createElement('div');
+                    dnbStatusItem.id = 'dnbStatusItem';
+                    dnbStatusItem.className = 'status-item';
+                    dnbStatusItem.innerHTML = `
+                        <span>🏢 דירוגי D&B</span>
+                        <span id="dnbStatus" class="status-loaded">✓ ${dnbCount} חברות</span>
+                    `;
+                    statusGrid.appendChild(dnbStatusItem);
+                }
+
+                console.log(`📊 סטטוס נתונים עודכן: ${transactionsCount} חברות, ${dnbCount} D&B`);
+            } catch (error) {
+                console.error('❌ שגיאה בעדכון סטטוס נתונים:', error);
+            }
+        }
+
+        function setupAutocomplete() {
+            console.log('🔧 מגדיר השלמה אוטומטית...');
+            
+            const payerInput = document.getElementById('payerName');
+            const payerSuggestions = document.getElementById('payerNameSuggestions');
+
+            payerInput.addEventListener('input', function() {
+                const value = this.value.trim();
+                payerSuggestions.innerHTML = '';
+                
+                if (value.length >= 2) {
+                    const foundPayer = Array.from(payersMap.values())
+                        .find(payer => payer.name === value);
+                    
+                    if (foundPayer) {
+                        document.getElementById('payerID').value = foundPayer.id;
+                        console.log('XLOOKUP מושך:', foundPayer.name, '->', foundPayer.id);
+                    } else {
+                        document.getElementById('payerID').value = '';
+                    }
+                }
+                
+                if (value.length < 2) {
+                    payerSuggestions.style.display = 'none';
+                    document.getElementById('payerID').value = '';
+                    return;
+                }
+
+                const matches = Array.from(payersMap.values())
+                    .filter(payer => payer.name.toLowerCase().includes(value.toLowerCase()))
+                    .slice(0, 10);
+
+                if (matches.length > 0) {
+                    payerSuggestions.style.display = 'block';
+                    matches.forEach(payer => {
+                        const div = document.createElement('div');
+                        div.className = 'autocomplete-suggestion';
+                        
+                        // חיפוש נתוני D&B
+                        let dnbInfo = dnbData.get(payer.id) || dnbData.get(`NAME_${payer.name}`);
+                        const dnbText = dnbInfo ? ` | D&B: ${Math.round(dnbInfo.dnbScore)}` : '';
+                        
+                        div.innerHTML = `
+                            <div class="suggestion-name">${payer.name}</div>
+                            <div class="suggestion-details">ח.פ: ${payer.id} | ${payer.metrics.transactionCount} עסקאות${dnbText}</div>
+                        `;
+                        div.onclick = () => {
+                            payerInput.value = payer.name;
+                            document.getElementById('payerID').value = payer.id;
+                            payerSuggestions.style.display = 'none';
+                            console.log('נבחר מושך:', payer.name, '->', payer.id);
+                        };
+                        payerSuggestions.appendChild(div);
+                    });
+                } else {
+                    payerSuggestions.style.display = 'none';
+                }
+            });
+
+            // הסתרת הצעות בלחיצה חיצונית
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.form-group')) {
+                    payerSuggestions.style.display = 'none';
+                }
+            });
+
+            console.log('✅ השלמה אוטומטית הוגדרה בהצלחה');
+        }
+
+        function calculateCreditRating() {
+            try {
+                const payerName = document.getElementById('payerName').value.trim();
+                const payerId = document.getElementById('payerID').value.trim();
+                const checkAmount = parseFloat(document.getElementById('checkAmount').value) || 0;
+                const creditDays = parseInt(document.getElementById('creditDays').value) || 30;
+
+                console.log('🧮 מתחיל חישוב דירוג אשראי...');
+
+                if (!payerId) {
+                    showNotification('נא להזין ח.פ. של החברה המושכת', 'warning');
+                    return;
+                }
+
+                if (!payersMap.has(payerId)) {
+                    showNotification('חברה מושכת לא נמצאה בקובץ העסקאות הראשי', 'warning');
+                    return;
+                }
+
+                if (checkAmount <= 0) {
+                    showNotification('נא להזין סכום תקין', 'warning');
+                    return;
+                }
+
+                const payer = payersMap.get(payerId);
+                
+                // חיפוש נתוני D&B
+                let dnbInfo = null;
+                
+                if (dnbData.has(payerId)) {
+                    dnbInfo = dnbData.get(payerId);
+                } else if (dnbData.has(`NAME_${payerName}`)) {
+                    dnbInfo = dnbData.get(`NAME_${payerName}`);
+                } else {
+                    dnbInfo = Array.from(dnbData.values()).find(dnb => {
+                        if (!dnb.companyName) return false;
+                        return dnb.companyName.includes(payerName) || payerName.includes(dnb.companyName);
+                    });
+                }
+                
+                if (!dnbInfo) {
+                    dnbInfo = { 
+                        sectorRating: 0, 
+                        dnbScore: 25 
+                    };
+                }
+                
+                const rating = calculateRating(payer, null, checkAmount, creditDays, dnbInfo);
+                displayResults(rating, payer, null, checkAmount, creditDays);
+                
+                console.log('✅ חישוב דירוג הושלם בהצלחה');
+            } catch (error) {
+                console.error('❌ שגיאה בחישוב דירוג אשראי:', error);
+                showNotification('שגיאה בחישוב הדירוג: ' + error.message, 'error');
+            }
+        }
+
+        function calculateRating(payer, client, checkAmount, creditDays, dnbInfo) {
+            try {
+                const payerMetrics = payer.metrics;
+                
+                const parameters = {
+                    historyLength: Math.min(100, (payerMetrics.transactionCount / 10) * 30),
+                    transactionCount: Math.min(100, (payerMetrics.transactionCount / 20) * 40),
+                    averageAmount: Math.min(100, (payerMetrics.averageAmount / 20000) * 35),
+                    clientHistory: 0,
+                    clientReliability: 50,
+                    clientBehavior: 50,
+                    dnbRating: dnbInfo.dnbScore || 25,
+                    returnedChecks: Math.max(0, 100 - (payerMetrics.returnedChecks * 25)),
+                    cancellations: Math.max(0, 100 - (payerMetrics.cancellations * 20))
+                };
+
+                let totalScore = 0;
+                let normalizedParams = {};
+                let weightedParams = {};
+
+                Object.keys(ratingParameters).forEach(key => {
+                    const param = ratingParameters[key];
+                    const rawValue = parameters[key] || 0;
+                    const normalized = Math.max(0, Math.min(100, rawValue));
+                    const weighted = normalized * param.weight;
+                    
+                    normalizedParams[key] = normalized;
+                    weightedParams[key] = weighted;
+                    totalScore += weighted;
+                });
+
+                totalScore = Math.max(0, Math.min(100, totalScore));
+
+                let letterRating, riskLevel, recommendation;
+                
+                if (totalScore >= 85) {
+                    letterRating = 'AAA';
+                    riskLevel = 'סיכון נמוך מאוד';
+                    recommendation = 'מומלץ בחום לאישור';
+                } else if (totalScore >= 75) {
+                    letterRating = 'AA';
+                    riskLevel = 'סיכון נמוך';
+                    recommendation = 'מומלץ לאישור';
+                } else if (totalScore >= 65) {
+                    letterRating = 'A';
+                    riskLevel = 'סיכון בינוני-נמוך';
+                    recommendation = 'ניתן לאישור עם מעקב';
+                } else if (totalScore >= 55) {
+                    letterRating = 'BBB';
+                    riskLevel = 'סיכון בינוני';
+                    recommendation = 'דורש בדיקה נוספת';
+                } else if (totalScore >= 45) {
+                    letterRating = 'BB';
+                    riskLevel = 'סיכון בינוני-גבוה';
+                    recommendation = 'לא מומלץ - סיכון גבוה';
+                } else {
+                    letterRating = 'B';
+                    riskLevel = 'סיכון גבוה';
+                    recommendation = 'לא מומלץ לאישור';
+                }
+
+                return {
+                    totalScore: Math.round(totalScore),
+                    letterRating,
+                    riskLevel,
+                    recommendation,
+                    parameters: parameters,
+                    normalizedParams,
+                    weightedParams,
+                    dnbInfo
+                };
+            } catch (error) {
+                console.error('❌ שגיאה בחישוב דירוג:', error);
+                throw new Error('שגיאה בחישוב הדירוג: ' + error.message);
+            }
+        }
+
+        function displayResults(rating, payer, client, checkAmount, creditDays) {
+            try {
+                const ratingDisplay = document.getElementById('ratingDisplay');
+                const dnbInfo = rating.dnbInfo || {};
+                
+                ratingDisplay.innerHTML = `
+                    <div class="rating-card">
+                        <div class="rating-score rating-${rating.letterRating}">${rating.letterRating}</div>
+                        <div class="rating-label">דירוג אשראי</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${rating.totalScore}</div>
+                        <div class="rating-label">ציון כולל</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${Math.round(dnbInfo.dnbScore || 0)}</div>
+                        <div class="rating-label">ציון D&B</div>
+                    </div>
+                    <div class="rating-card">
+                        <div class="rating-score">${payer.metrics.transactionCount}</div>
+                        <div class="rating-label">עסקאות חברה</div>
+                    </div>
+                `;
+
+                // הצגת פרמטרים מפורטים
+                const parametersDisplay = document.getElementById('parametersDisplay');
+                parametersDisplay.innerHTML = '';
+                
+                Object.keys(ratingParameters).forEach(key => {
+                    const param = ratingParameters[key];
+                    const rawValue = rating.parameters[key] || 0;
+                    const normalized = rating.normalizedParams[key] || 0;
+                    const weighted = rating.weightedParams[key] || 0;
+                    
+                    const row = document.createElement('div');
+                    row.className = 'parameter-row';
+                    row.innerHTML = `
+                        <div class="parameter-name">${param.name}</div>
+                        <div class="parameter-value">${(param.weight * 100).toFixed(1)}%</div>
+                        <div class="parameter-value">${rawValue.toFixed(1)}</div>
+                        <div class="parameter-value">${normalized.toFixed(1)}</div>
+                        <div class="parameter-value">${weighted.toFixed(2)}</div>
+                    `;
+                    parametersDisplay.appendChild(row);
+                });
+
+                // המלצה
+                const recommendation = document.getElementById('recommendation');
+                let recClass = 'excellent';
+                if (rating.totalScore < 75) recClass = 'good';
+                if (rating.totalScore < 65) recClass = 'average';
+                if (rating.totalScore < 55) recClass = 'poor';
+                if (rating.totalScore < 45) recClass = 'danger';
+
+                recommendation.className = `recommendation ${recClass}`;
+                recommendation.innerHTML = `
+                    <h3>${rating.recommendation}</h3>
+                    <p>רמת סיכון: ${rating.riskLevel}</p>
+                    <p>עבור עסקה של ₪${checkAmount.toLocaleString()} ל-${creditDays} ימים</p>
+                `;
+
+                // הצגת התוצאות
+                document.getElementById('resultsSection').style.display = 'block';
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+                console.log('✅ תוצאות הוצגו בהצלחה');
+            } catch (error) {
+                console.error('❌ שגיאה בהצגת תוצאות:', error);
+                throw new Error('שגיאה בהצגת התוצאות: ' + error.message);
+            }
+        }
+
+        function loadSampleData() {
+            try {
+                console.log('📋 טוען נתוני דוגמה...');
+                
+                payersMap.clear();
+                clientsMap.clear();
+                dnbData.clear();
+                
+                const samplePayers = [
+                    { id: '510123456', name: 'אבג טק בע"מ', transactions: 15, total: 450000 },
+                    { id: '520987654', name: 'דפקא השקעות (1995) בע"מ', transactions: 8, total: 280000 },
+                    { id: '530555444', name: 'זח טק סולושיינס בע"מ', transactions: 25, total: 850000 }
+                ];
+
+                const sampleDnbData = [
+                    { id: '510123456', name: 'אבג טק בע"מ', score: 85, years: 12, employees: 45, revenue: 8500000 },
+                    { id: '520987654', name: 'דפקא השקעות (1995) בע"מ', score: 72, years: 28, employees: 120, revenue: 15200000 },
+                    { id: '530555444', name: 'זח טק סולושיינס בע"מ', score: 91, years: 8, employees: 85, revenue: 12800000 }
+                ];
+
+                // יצירת נתוני חברות
+                samplePayers.forEach(data => {
+                    payersMap.set(data.id, {
+                        id: data.id,
+                        name: data.name,
+                        transactions: [],
+                        metrics: {
+                            totalAmount: data.total,
+                            transactionCount: data.transactions,
+                            averageAmount: data.total / data.transactions,
+                            returnedChecks: 0,
+                            cancellations: 0
+                        }
+                    });
+                });
+
+                // יצירת נתוני D&B
+                sampleDnbData.forEach(data => {
+                    const dnbRecord = {
+                        companyId: data.id,
+                        companyName: data.name,
+                        sectorRating: data.score,
+                        industrySector: data.score - 5,
+                        yearsActive: data.years,
+                        employees: data.employees,
+                        revenue: data.revenue,
+                        riskLevel: data.score,
+                        dnbScore: data.score
+                    };
+                    
+                    dnbData.set(data.id, dnbRecord);
+                    dnbData.set(`NAME_${data.name}`, dnbRecord);
+                });
+
+                // עדכון סטטוס הקבצים
+                document.getElementById('mainFileStatus').textContent = '✓ דמו';
+                document.getElementById('mainFileStatus').className = 'file-status loaded';
+                document.getElementById('creditFileStatus').textContent = '✓ דמו';
+                document.getElementById('creditFileStatus').className = 'file-status loaded';
+
+                excelData.main = [['dummy'], ['data']];
+                excelData.credit = [['dummy'], ['data']];
+
+                isDataLoaded = true;
+                updateDataStatus();
+                setupAutocomplete();
+                document.getElementById('calculateBtn').disabled = false;
+                
+                showNotification('נתוני דוגמה נטענו בהצלחה! המערכת מוכנה לחישובים', 'success');
+                console.log('✅ נתוני דוגמה נטענו בהצלחה');
+            } catch (error) {
+                console.error('❌ שגיאה בטעינת נתוני דוגמה:', error);
+                showNotification('שגיאה בטעינת נתוני דוגמה: ' + error.message, 'error');
+            }
+        }
+
+        function resetForm() {
+            try {
+                console.log('🔄 מאפס טופס...');
+                
+                document.getElementById('payerName').value = '';
+                document.getElementById('payerID').value = '';
+                document.getElementById('clientName').value = '';
+                document.getElementById('clientID').value = '';
+                document.getElementById('checkAmount').value = '';
+                
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('transactionDate').value = today;
+                
+                const dueDate = new Date();
+                dueDate.setDate(dueDate.getDate() + 30);
+                document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
+                document.getElementById('creditDays').value = '30';
+                
+                document.getElementById('resultsSection').style.display = 'none';
+                document.getElementById('payerNameSuggestions').style.display = 'none';
+                
+                console.log('✅ טופס אופס בהצלחה');
+            } catch (error) {
+                console.error('❌ שגיאה באיפוס טופס:', error);
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            try {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 4000);
+
+                console.log(`📢 הודעה (${type}): ${message}`);
+            } catch (error) {
+                console.error('❌ שגיאה בהצגת הודעה:', error);
+            }
+        }
+
+        // אתחול
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🏦 מערכת חיתום אשראי נטענה בהצלחה - עם כלי דיבוג');
+            
+            if (typeof XLSX === 'undefined') {
+                console.error('❌ ספריית XLSX לא נטענה');
+                showNotification('שגיאה: ספריית Excel לא נטענה', 'error');
+            } else {
+                console.log('✅ ספריית XLSX נטענה בהצלחה');
+            }
+        });
+
+        console.log('🛠️ כלי דיבוג זמינים בממשק המשתמש');
+    </script>
+</body>
+</html>
