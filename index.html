@@ -1296,4 +1296,741 @@
             const establishedIndex = findBestColumnMatch(headers, ['שנת הקמה', 'הקמה', 'נוסדה']);
 
             console.log('🎯 מיפוי עמודות D&B מלא:');
-            console.log(`   שם חברה: ${companyNameIndex >= 0 ? headers[companyNameIndex] : '❌'} (${companyName
+            console.log(`   שם חברה: ${companyNameIndex >= 0 ? headers[companyNameIndex] : '❌'} (${companyNameIndex})`);
+            console.log(`   ח.פ: ${companyIdIndex >= 0 ? headers[companyIdIndex] : '❌'} (${companyIdIndex})`);
+            console.log(`   סקור: ${sectorRatingIndex >= 0 ? headers[sectorRatingIndex] : '❌'} (${sectorRatingIndex})`);
+            console.log(`   דירוג ענף: ${industrySectorIndex >= 0 ? headers[industrySectorIndex] : '❌'} (${industrySectorIndex})`);
+            console.log(`   שנות ותק: ${yearsActiveIndex >= 0 ? headers[yearsActiveIndex] : '❌'} (${yearsActiveIndex})`);
+            console.log(`   עובדים: ${employeesIndex >= 0 ? headers[employeesIndex] : '❌'} (${employeesIndex})`);
+            console.log(`   מחזור: ${revenueIndex >= 0 ? headers[revenueIndex] : '❌'} (${revenueIndex})`);
+            console.log(`   כתובת: ${addressIndex >= 0 ? headers[addressIndex] : '❌'} (${addressIndex})`);
+            console.log(`   עיר: ${cityIndex >= 0 ? headers[cityIndex] : '❌'} (${cityIndex})`);
+
+            dnbData.clear();
+            let processedCompanies = 0;
+
+            rows.forEach((row, index) => {
+                try {
+                    // חילוץ כל הנתונים
+                    const companyName = companyNameIndex >= 0 ? row[companyNameIndex]?.toString().trim() : '';
+                    const companyId = companyIdIndex >= 0 ? row[companyIdIndex]?.toString().trim() : '';
+                    const sectorRating = sectorRatingIndex >= 0 ? parseFloat(row[sectorRatingIndex]) || 0 : 0;
+                    const industrySector = industrySectorIndex >= 0 ? parseFloat(row[industrySectorIndex]) || 0 : 0;
+                    const yearsActive = yearsActiveIndex >= 0 ? parseFloat(row[yearsActiveIndex]) || 0 : 0;
+                    const employees = employeesIndex >= 0 ? parseInt(row[employeesIndex]) || 0 : 0;
+                    const address = addressIndex >= 0 ? row[addressIndex]?.toString().trim() : '';
+                    const city = cityIndex >= 0 ? row[cityIndex]?.toString().trim() : '';
+                    const revenue = revenueIndex >= 0 ? parseFloat(row[revenueIndex]) || 0 : 0;
+                    const totalTransactions = totalTransactionsIndex >= 0 ? parseInt(row[totalTransactionsIndex]) || 0 : 0;
+                    const currentObligation = currentObligationIndex >= 0 ? parseFloat(row[currentObligationIndex]) || 0 : 0;
+                    const status = statusIndex >= 0 ? row[statusIndex]?.toString().trim() : '';
+                    const branch = branchIndex >= 0 ? row[branchIndex]?.toString().trim() : '';
+                    const phone = phoneIndex >= 0 ? row[phoneIndex]?.toString().trim() : '';
+                    const establishedYear = establishedIndex >= 0 ? parseInt(row[establishedIndex]) || 0 : 0;
+
+                    // לוג מפורט לשורות הראשונות עם כל הנתונים
+                    if (index < 3) {
+                        console.log(`📊 D&B חברה מלאה ${index + 1}:`, {
+                            companyName, 
+                            companyId, 
+                            sectorRating, 
+                            industrySector, 
+                            yearsActive, 
+                            employees, 
+                            address,
+                            city,
+                            revenue,
+                            totalTransactions,
+                            currentObligation,
+                            status,
+                            branch,
+                            phone,
+                            establishedYear
+                        });
+                    }
+
+                    // שמירה אם יש נתונים חשובים
+                    if ((companyId || companyName) && 
+                        (sectorRating > 0 || industrySector > 0 || revenue > 0 || yearsActive > 0 || employees > 0)) {
+                        
+                        const riskLevel = calculateAdvancedDnbRisk({
+                            sectorRating,
+                            industrySector,
+                            yearsActive,
+                            employees,
+                            revenue,
+                            currentObligation,
+                            totalTransactions
+                        });
+
+                        const dnbRecord = {
+                            companyId,
+                            companyName,
+                            sectorRating,
+                            industrySector, 
+                            yearsActive,
+                            employees,
+                            address,
+                            city,
+                            revenue,
+                            totalTransactions,
+                            currentObligation,
+                            status,
+                            branch,
+                            phone,
+                            establishedYear,
+                            riskLevel,
+                            dnbScore: riskLevel
+                        };
+
+                        if (companyId) {
+                            dnbData.set(companyId, dnbRecord);
+                        }
+                        if (companyName) {
+                            dnbData.set(`NAME_${companyName}`, dnbRecord);
+                        }
+
+                        processedCompanies++;
+
+                        if (processedCompanies <= 3) {
+                            console.log(`✅ נשמר D&B מלא: "${companyName}" (${companyId})`);
+                            console.log(`   סקור: ${sectorRating}, דירוג ענף: ${industrySector}, ותק: ${yearsActive} שנים, עובדים: ${employees}`);
+                            console.log(`   מחזור: ₪${revenue.toLocaleString()}, עיר: ${city}, ציון סופי: ${riskLevel.toFixed(1)}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`❌ שגיאה בעיבוד שורת D&B ${index + 1}:`, error);
+                }
+            });
+
+            console.log(`✅ עובדו ${processedCompanies} חברות D&B מתוך ${rows.length} שורות (עם כל הנתונים)`);
+        }
+
+        function calculateAdvancedDnbRisk(dnbInfo) {
+            let score = 50; // ציון בסיס
+
+            try {
+                // דירוג סקטוריאלי - משקל גבוה
+                if (dnbInfo.sectorRating > 0) {
+                    score += (dnbInfo.sectorRating - 50) * 0.3;
+                }
+
+                // דירוג ענف - משקל בינוני
+                if (dnbInfo.industrySector > 0) {
+                    score += (dnbInfo.industrySector - 50) * 0.2;
+                }
+
+                // שנות ותק - יציבות
+                if (dnbInfo.yearsActive > 0) {
+                    if (dnbInfo.yearsActive >= 20) {
+                        score += 15;
+                    } else if (dnbInfo.yearsActive >= 10) {
+                        score += 12;
+                    } else if (dnbInfo.yearsActive >= 5) {
+                        score += 8;
+                    } else if (dnbInfo.yearsActive < 2) {
+                        score -= 5;
+                    }
+                }
+
+                // מספר עובדים
+                if (dnbInfo.employees > 0) {
+                    if (dnbInfo.employees >= 200) {
+                        score += 15;
+                    } else if (dnbInfo.employees >= 100) {
+                        score += 12;
+                    } else if (dnbInfo.employees >= 50) {
+                        score += 8;
+                    } else if (dnbInfo.employees >= 20) {
+                        score += 5;
+                    } else if (dnbInfo.employees >= 5) {
+                        score += 2;
+                    }
+                }
+
+                // מחזור עסקים
+                if (dnbInfo.revenue > 0) {
+                    if (dnbInfo.revenue >= 50000000) {
+                        score += 15;
+                    } else if (dnbInfo.revenue >= 10000000) {
+                        score += 12;
+                    } else if (dnbInfo.revenue >= 5000000) {
+                        score += 8;
+                    } else if (dnbInfo.revenue >= 1000000) {
+                        score += 5;
+                    } else if (dnbInfo.revenue >= 500000) {
+                        score += 2;
+                    }
+                }
+
+                return Math.max(0, Math.min(100, score));
+            } catch (error) {
+                console.error('❌ שגיאה בחישוב ציון D&B:', error);
+                return 50;
+            }
+        }
+
+        function findBestColumnMatch(headers, patterns) {
+            console.log('🔍 מחפש עמודה עבור:', patterns, 'בכותרות:', headers);
+            
+            // חיפוש מדויק ראשון
+            for (let pattern of patterns) {
+                const exactIndex = headers.findIndex(header => 
+                    header && header.toString().trim() === pattern
+                );
+                if (exactIndex >= 0) {
+                    console.log(`✅ התאמה מדויקת "${pattern}" באינדקס ${exactIndex}: "${headers[exactIndex]}"`);
+                    return exactIndex;
+                }
+            }
+            
+            // חיפוש חלקי שני
+            for (let pattern of patterns) {
+                const partialIndex = headers.findIndex(header => 
+                    header && header.toString().toLowerCase().includes(pattern.toLowerCase())
+                );
+                if (partialIndex >= 0) {
+                    console.log(`✅ התאמה חלקית "${pattern}" באינדקס ${partialIndex}: "${headers[partialIndex]}"`);
+                    return partialIndex;
+                }
+            }
+            
+            console.warn('❌ לא נמצאה עמודה עבור:', patterns);
+            return -1;
+        }
+
+        function getFileTypeName(type) {
+            const names = {
+                'main': 'עסקאות ראשי',
+                'returned': 'שיקים חוזרים',
+                'warnings': 'ביטולים',
+                'credit': 'חיתום אשראי (D&B)',
+                'behavior': 'ניתוח נתונים'
+            };
+            return names[type] || type;
+        }
+
+        function readExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        resolve(workbook);
+                    } catch (error) {
+                        console.error('❌ שגיאה בפענוח Excel:', error);
+                        reject(new Error('שגיאה בפענוח קובץ Excel: ' + error.message));
+                    }
+                };
+                reader.onerror = () => {
+                    console.error('❌ שגיאה בקריאת קובץ');
+                    reject(new Error('שגיאה בקריאת הקובץ'));
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function processMainFile(workbook) {
+            try {
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                console.log(`📊 עיבוד קובץ ראשי - גיליון: ${sheetName}, שורות: ${jsonData.length}`);
+                excelData.main = jsonData;
+                processMainData();
+            } catch (error) {
+                console.error('❌ שגיאה בעיבוד קובץ ראשי:', error);
+                throw new Error('שגיאה בעיבוד קובץ העסקאות הראשי');
+            }
+        }
+
+        function processMainData() {
+            if (excelData.main.length < 2) {
+                console.warn('⚠️ אין מספיק נתונים ראשיים לעיבוד');
+                return;
+            }
+
+            console.log('📊 מעבד נתוני עסקאות ראשיים...');
+            const headers = excelData.main[0];
+            const rows = excelData.main.slice(1);
+            
+            console.log('📋 כותרות קובץ ראשי:', headers);
+            console.log('📋 אינדקס כותרות:', headers.map((h, i) => `${i}:${h}`));
+            
+            // מיפוי עמודות מורחב - כולל נתוני לקוח
+            const payerNameIndex = findBestColumnMatch(headers, ['שם מושך', 'שם חברה', 'מושך']);
+            const payerIdIndex = findBestColumnMatch(headers, ['מספר זהות מושך', 'ח.פ', 'מזהה מושך', 'זהות מושך']);
+            const clientNameIndex = findBestColumnMatch(headers, ['שם לקוח', 'שם נהנה', 'נהנה', 'לקוח']);
+            const clientIdIndex = findBestColumnMatch(headers, ['מ.זהות', 'ת.ז', 'מספר זהות לקוח', 'זהות לקוח', 'מספר זהות']);
+            const amountIndex = findBestColumnMatch(headers, ['סכום', 'סכום שיק', 'סכום עסקה']);
+            const commissionIndex = findBestColumnMatch(headers, ['עמלה', 'עמלה שיק']);
+            const transactionDateIndex = findBestColumnMatch(headers, ['תאריך עיסקה', 'תאריך עסקה', 'תאריך']);
+            const dueDateIndex = findBestColumnMatch(headers, ['ת.פירעון', 'תאריך פירעון', 'פירעון']);
+            const actualPaymentDateIndex = findBestColumnMatch(headers, ['ת.פרעון בפועל', 'תאריך תשלום בפועל']);
+            const statusIndex = findBestColumnMatch(headers, ['סטטוס', 'מצב', 'סטטוס עסקה']);
+            const checkNumberIndex = findBestColumnMatch(headers, ['מספר שיק', 'מס\' שיק']);
+            const returnDateIndex = findBestColumnMatch(headers, ['תאריך החזרה', 'תאריך השבה']);
+            const branchIndex = findBestColumnMatch(headers, ['סניף', 'מספר סניף']);
+
+            console.log('🎯 מיפוי עמודות קובץ ראשי:');
+            console.log(`   שם מושך: ${payerNameIndex >= 0 ? headers[payerNameIndex] : '❌'} (${payerNameIndex})`);
+            console.log(`   ח.פ מושך: ${payerIdIndex >= 0 ? headers[payerIdIndex] : '❌'} (${payerIdIndex})`);
+            console.log(`   שם לקוח: ${clientNameIndex >= 0 ? headers[clientNameIndex] : '❌'} (${clientNameIndex})`);
+            console.log(`   ת.ז לקוח: ${clientIdIndex >= 0 ? headers[clientIdIndex] : '❌'} (${clientIdIndex})`);
+            console.log(`   סכום: ${amountIndex >= 0 ? headers[amountIndex] : '❌'} (${amountIndex})`);
+            console.log(`   עמלה: ${commissionIndex >= 0 ? headers[commissionIndex] : '❌'} (${commissionIndex})`);
+            console.log(`   סטטוס: ${statusIndex >= 0 ? headers[statusIndex] : '❌'} (${statusIndex})`);
+
+            if (payerNameIndex === -1 && payerIdIndex === -1) {
+                throw new Error('לא נמצאו עמודות חיוניות (שם מושך או ח.פ.)');
+            }
+
+            if (amountIndex === -1) {
+                throw new Error('לא נמצאה עמודת הסכום');
+            }
+
+            payersMap.clear();
+            clientsMap.clear();
+
+            let processedRows = 0;
+            let skippedRows = 0;
+
+            rows.forEach((row, index) => {
+                try {
+                    // חילוץ נתוני מושך
+                    const payerName = payerNameIndex >= 0 ? row[payerNameIndex]?.toString().trim() : '';
+                    const payerId = payerIdIndex >= 0 ? row[payerIdIndex]?.toString().trim() : null;
+                    
+                    // חילוץ נתוני לקוח
+                    const clientName = clientNameIndex >= 0 ? row[clientNameIndex]?.toString().trim() : '';
+                    const clientId = clientIdIndex >= 0 ? row[clientIdIndex]?.toString().trim() : '';
+                    
+                    // חילוץ נתוני עסקה
+                    const amount = parseFloat(row[amountIndex]) || 0;
+                    const commission = commissionIndex >= 0 ? parseFloat(row[commissionIndex]) || 0 : 0;
+                    const status = statusIndex >= 0 ? row[statusIndex]?.toString().trim() : '';
+                    const checkNumber = checkNumberIndex >= 0 ? row[checkNumberIndex]?.toString().trim() : '';
+                    const transactionDate = transactionDateIndex >= 0 ? row[transactionDateIndex] : null;
+                    const dueDate = dueDateIndex >= 0 ? row[dueDateIndex] : null;
+                    const returnDate = returnDateIndex >= 0 ? row[returnDateIndex] : null;
+
+                    // בדיקת תקינות נתונים בסיסיים
+                    if (!payerName && !payerId) {
+                        if (index < 5) {
+                            console.warn(`שורה ${index + 2}: חסר שם ומזהה מושך`);
+                        }
+                        skippedRows++;
+                        return;
+                    }
+
+                    if (amount <= 0) {
+                        if (index < 5) {
+                            console.warn(`שורה ${index + 2}: סכום לא תקין: ${amount}`);
+                        }
+                        skippedRows++;
+                        return;
+                    }
+
+                    // יצירת מזהי מושך ולקוח
+                    const effectivePayerId = payerId || `NAME_${payerName}`;
+                    const effectivePayerName = payerName || 'לא ידוע';
+
+                    // לוג לשורות הראשונות
+                    if (index < 3) {
+                        console.log(`שורה ${index + 2} - נתונים מלאים:`, { 
+                            payerName: effectivePayerName, 
+                            payerId: effectivePayerId, 
+                            clientName, 
+                            clientId, 
+                            amount,
+                            commission,
+                            status,
+                            checkNumber,
+                            transactionDate,
+                            dueDate
+                        });
+                    }
+
+                    // עיבוד נתוני מושך (חברה)
+                    if (!payersMap.has(effectivePayerId)) {
+                        payersMap.set(effectivePayerId, {
+                            id: effectivePayerId,
+                            name: effectivePayerName,
+                            transactions: [],
+                            metrics: {
+                                totalAmount: 0,
+                                transactionCount: 0,
+                                averageAmount: 0,
+                                totalCommission: 0,
+                                averageCommission: 0,
+                                returnedChecks: 0,
+                                cancellations: 0,
+                                clients: new Set(),
+                                firstTransactionDate: null,
+                                lastTransactionDate: null
+                            }
+                        });
+                        
+                        if (payersMap.size <= 5) {
+                            console.log(`יצירת מושך חדש: "${effectivePayerName}" (${effectivePayerId})`);
+                        }
+                    }
+
+                    const payer = payersMap.get(effectivePayerId);
+                    
+                    // יצירת עסקה מפורטת
+                    const transaction = {
+                        amount, 
+                        commission,
+                        clientName, 
+                        clientId, 
+                        status,
+                        checkNumber,
+                        transactionDate,
+                        dueDate,
+                        returnDate,
+                        row, 
+                        index,
+                        isReturned: returnDate ? true : false,
+                        isCancelled: status && (status.includes('ביטול') || status.includes('אכ"מ') || status.includes('לא שולם'))
+                    };
+                    
+                    payer.transactions.push(transaction);
+                    
+                    // עדכון מטריקות מושך
+                    payer.metrics.totalAmount += amount;
+                    payer.metrics.totalCommission += commission;
+                    payer.metrics.transactionCount++;
+                    payer.metrics.averageAmount = payer.metrics.totalAmount / payer.metrics.transactionCount;
+                    payer.metrics.averageCommission = payer.metrics.totalCommission / payer.metrics.transactionCount;
+                    
+                    if (transaction.isReturned) payer.metrics.returnedChecks++;
+                    if (transaction.isCancelled) payer.metrics.cancellations++;
+                    if (clientName) payer.metrics.clients.add(clientName);
+
+                    // עיבוד נתוני לקוח - חיוני!
+                    if (clientName && clientId) {
+                        if (!clientsMap.has(clientId)) {
+                            clientsMap.set(clientId, {
+                                id: clientId,
+                                name: clientName,
+                                transactions: [],
+                                metrics: {
+                                    totalAmount: 0,
+                                    transactionCount: 0,
+                                    averageAmount: 0,
+                                    payers: new Set(),
+                                    reliability: 100,
+                                    returnedCount: 0,
+                                    cancelledCount: 0,
+                                    branches: new Set(),
+                                    firstTransactionDate: null,
+                                    lastTransactionDate: null
+                                }
+                            });
+                            
+                            if (clientsMap.size <= 5) {
+                                console.log(`יצירת לקוח חדש: "${clientName}" (${clientId})`);
+                            }
+                        }
+
+                        const client = clientsMap.get(clientId);
+                        client.transactions.push({ 
+                            amount, 
+                            commission,
+                            payerName: effectivePayerName, 
+                            payerId: effectivePayerId, 
+                            status,
+                            checkNumber,
+                            transactionDate,
+                            dueDate,
+                            isReturned: transaction.isReturned,
+                            isCancelled: transaction.isCancelled,
+                            row, 
+                            index 
+                        });
+                        
+                        client.metrics.totalAmount += amount;
+                        client.metrics.transactionCount++;
+                        client.metrics.averageAmount = client.metrics.totalAmount / client.metrics.transactionCount;
+                        client.metrics.payers.add(effectivePayerName);
+                        
+                        // הפחתת אמינות על בסיס שיקים חוזרים וביטולים
+                        if (transaction.isReturned) {
+                            client.metrics.returnedCount++;
+                            client.metrics.reliability -= 15;
+                        }
+                        if (transaction.isCancelled) {
+                            client.metrics.cancelledCount++;
+                            client.metrics.reliability -= 10;
+                        }
+                        
+                        client.metrics.reliability = Math.max(0, client.metrics.reliability);
+                    } else if (clientName && !clientId) {
+                        console.log(`⚠️ לקוח "${clientName}" ללא ת.ז - לא יישמר`);
+                    }
+
+                    processedRows++;
+                } catch (error) {
+                    console.error(`❌ שגיאה בעיבוד שורה ${index + 2}:`, error);
+                    skippedRows++;
+                }
+            });
+
+            console.log(`✅ עובדו ${payersMap.size} מושכים ו-${clientsMap.size} לקוחות`);
+            console.log(`📊 סטטיסטיקות עיבוד: ${processedRows} שורות עובדו, ${skippedRows} שורות דולגו`);
+            
+            // הצגת דוגמאות ללקוחות שנוצרו
+            if (clientsMap.size > 0) {
+                console.log('👥 דוגמאות ללקוחות שנטענו:');
+                let count = 0;
+                for (let [id, client] of clientsMap.entries()) {
+                    if (count < 3) {
+                        console.log(`  לקוח ${count + 1}: ${client.name} (${id}) - ${client.metrics.transactionCount} עסקאות, אמינות: ${client.metrics.reliability}%`);
+                        count++;
+                    }
+                }
+            }
+        }
+
+        function processWarningsFile(workbook) {
+            try {
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length > 1) {
+                    excelData.warnings = jsonData;
+                    console.log(`⚠️ קובץ ביטולים: ${jsonData.length} שורות`);
+                }
+            } catch (error) {
+                console.error('❌ שגיאה בעיבוד קובץ ביטולים:', error);
+                throw new Error('שגיאה בעיבוד קובץ הביטולים');
+            }
+        }
+
+        function checkAllFilesLoaded() {
+            console.log('🔍 בודק סטטוס טעינת קבצים...');
+            
+            if (payersMap.size > 0) {
+                isDataLoaded = true;
+                updateDataStatus();
+                setupAutocomplete();
+                document.getElementById('calculateBtn').disabled = false;
+                console.log('✅ המערכת מוכנה לחישובי דירוג');
+            }
+        }
+
+        function updateDataStatus() {
+            try {
+                const transactionsCount = payersMap.size;
+                const dnbCount = dnbData.size;
+                
+                document.getElementById('transactionsStatus').innerHTML = 
+                    `<span class="status-loaded">✓ ${transactionsCount} חברות</span>`;
+                document.getElementById('returnedStatus').innerHTML = 
+                    `<span class="status-loaded">✓ נטען</span>`;
+                document.getElementById('warningsStatus').innerHTML = 
+                    `<span class="status-loaded">✓ נטען</span>`;
+                
+                if (dnbCount > 0) {
+                    const statusGrid = document.querySelector('.status-grid');
+                    const existingDnb = document.getElementById('dnbStatusItem');
+                    if (existingDnb) existingDnb.remove();
+                    
+                    const dnbStatusItem = document.createElement('div');
+                    dnbStatusItem.id = 'dnbStatusItem';
+                    dnbStatusItem.className = 'status-item';
+                    dnbStatusItem.innerHTML = `
+                        <span>🏢 דירוגי D&B</span>
+                        <span id="dnbStatus" class="status-loaded">✓ ${dnbCount} חברות</span>
+                    `;
+                    statusGrid.appendChild(dnbStatusItem);
+                }
+
+                console.log(`📊 סטטוס נתונים עודכן: ${transactionsCount} חברות, ${dnbCount} D&B`);
+            } catch (error) {
+                console.error('❌ שגיאה בעדכון סטטוס נתונים:', error);
+            }
+        }
+
+        function setupAutocomplete() {
+            console.log('🔧 מגדיר השלמה אוטומטית...');
+            
+            const payerInput = document.getElementById('payerName');
+            const payerSuggestions = document.getElementById('payerNameSuggestions');
+            const clientInput = document.getElementById('clientName');
+            const clientSuggestions = document.getElementById('clientNameSuggestions');
+
+            // השלמה אוטומטית לחברות מושכות
+            payerInput.addEventListener('input', function() {
+                const value = this.value.trim();
+                payerSuggestions.innerHTML = '';
+                
+                if (value.length >= 2) {
+                    const foundPayer = Array.from(payersMap.values())
+                        .find(payer => payer.name === value);
+                    
+                    if (foundPayer) {
+                        document.getElementById('payerID').value = foundPayer.id;
+                        console.log('XLOOKUP מושך:', foundPayer.name, '->', foundPayer.id);
+                    } else {
+                        document.getElementById('payerID').value = '';
+                    }
+                }
+                
+                if (value.length < 2) {
+                    payerSuggestions.style.display = 'none';
+                    document.getElementById('payerID').value = '';
+                    return;
+                }
+
+                const matches = Array.from(payersMap.values())
+                    .filter(payer => payer.name.toLowerCase().includes(value.toLowerCase()))
+                    .slice(0, 10);
+
+                if (matches.length > 0) {
+                    payerSuggestions.style.display = 'block';
+                    matches.forEach(payer => {
+                        const div = document.createElement('div');
+                        div.className = 'autocomplete-suggestion';
+                        
+                        // חיפוש נתוני D&B מלאים
+                        let dnbInfo = dnbData.get(payer.id) || dnbData.get(`NAME_${payer.name}`);
+                        let dnbText = '';
+                        if (dnbInfo) {
+                            dnbText = ` | D&B: ${Math.round(dnbInfo.dnbScore)} (סקור:${dnbInfo.sectorRating}, ענף:${dnbInfo.industrySector}, ותק:${dnbInfo.yearsActive})`;
+                        }
+                        
+                        div.innerHTML = `
+                            <div class="suggestion-name">${payer.name}</div>
+                            <div class="suggestion-details">ח.פ: ${payer.id} | ${payer.metrics.transactionCount} עסקאות | ₪${payer.metrics.totalAmount.toLocaleString()}${dnbText}</div>
+                        `;
+                        div.onclick = () => {
+                            payerInput.value = payer.name;
+                            document.getElementById('payerID').value = payer.id;
+                            payerSuggestions.style.display = 'none';
+                            console.log('נבחר מושך:', payer.name, '->', payer.id);
+                        };
+                        payerSuggestions.appendChild(div);
+                    });
+                } else {
+                    payerSuggestions.style.display = 'none';
+                }
+            });
+
+            // השלמה אוטומטית ללקוחות - עם נתונים מלאים
+            clientInput.addEventListener('input', function() {
+                const value = this.value.trim();
+                clientSuggestions.innerHTML = '';
+                
+                if (value.length >= 2) {
+                    const foundClient = Array.from(clientsMap.values())
+                        .find(client => client.name === value);
+                    
+                    if (foundClient) {
+                        document.getElementById('clientID').value = foundClient.id;
+                        console.log('XLOOKUP לקוח:', foundClient.name, '->', foundClient.id);
+                        showClientHistory(foundClient);
+                    } else {
+                        document.getElementById('clientID').value = '';
+                        document.getElementById('clientHistory').style.display = 'none';
+                    }
+                }
+                
+                if (value.length < 2) {
+                    clientSuggestions.style.display = 'none';
+                    document.getElementById('clientID').value = '';
+                    document.getElementById('clientHistory').style.display = 'none';
+                    return;
+                }
+
+                const matches = Array.from(clientsMap.values())
+                    .filter(client => client.name.toLowerCase().includes(value.toLowerCase()))
+                    .slice(0, 10);
+
+                if (matches.length > 0) {
+                    clientSuggestions.style.display = 'block';
+                    matches.forEach(client => {
+                        const div = document.createElement('div');
+                        div.className = 'autocomplete-suggestion';
+                        div.innerHTML = `
+                            <div class="suggestion-name">${client.name}</div>
+                            <div class="suggestion-details">ת.ז: ${client.id} | ${client.metrics.transactionCount} עסקאות | אמינות: ${client.metrics.reliability}% | ${client.metrics.payers.size} חברות</div>
+                        `;
+                        div.onclick = () => {
+                            clientInput.value = client.name;
+                            document.getElementById('clientID').value = client.id;
+                            clientSuggestions.style.display = 'none';
+                            showClientHistory(client);
+                            console.log('נבחר לקוח:', client.name, '->', client.id);
+                        };
+                        clientSuggestions.appendChild(div);
+                    });
+                } else {
+                    clientSuggestions.style.display = 'none';
+                }
+            });
+
+            // הסתרת הצעות בלחיצה חיצונית
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.form-group')) {
+                    payerSuggestions.style.display = 'none';
+                    clientSuggestions.style.display = 'none';
+                }
+            });
+
+            console.log('✅ השלמה אוטומטית הוגדרה בהצלחה');
+        }
+
+        function showClientHistory(client) {
+            try {
+                const historyDiv = document.getElementById('clientHistory');
+                const summaryDiv = document.getElementById('clientHistorySummary');
+                
+                const reliability = Math.max(0, client.metrics.reliability);
+                const avgAmount = client.metrics.averageAmount;
+                const totalAmount = client.metrics.totalAmount;
+                const transactionCount = client.metrics.transactionCount;
+                const payersCount = client.metrics.payers.size;
+                const returnedCount = client.metrics.returnedCount;
+                const cancelledCount = client.metrics.cancelledCount;
+                
+                summaryDiv.innerHTML = `
+                    <div class="history-card">
+                        <div class="history-value">${transactionCount}</div>
+                        <div>עסקאות קודמות</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value">₪${totalAmount.toLocaleString()}</div>
+                        <div>סך כולל</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value">₪${avgAmount.toLocaleString()}</div>
+                        <div>ממוצע לעסקה</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value" style="color: ${reliability >= 80 ? '#27ae60' : reliability >= 60 ? '#f39c12' : '#e74c3c'}">${reliability}%</div>
+                        <div>דירוג אמינות</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value">${payersCount}</div>
+                        <div>חברות שונות</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value" style="color: ${returnedCount > 0 ? '#e74c3c' : '#27ae60'}">${returnedCount}</div>
+                        <div>שיקים חוזרים</div>
+                    </div>
+                    <div class="history-card">
+                        <div class="history-value" style="color: ${cancelledCount > 0 ? '#e74c3c' : '#27ae60'}">${cancelledCount}</div>
+                        <div>ביטולים</div>
+                    </div>
+                `;
+                
+                historyDiv.style.display = 'block';
+                console.log('📋 הוצגה היסטוריית לקוח מלאה:', client.name);
+            } catch (error) {
+                console.error('❌ שגיאה בהצגת היסטוריית לקוח:', error);
+            }
